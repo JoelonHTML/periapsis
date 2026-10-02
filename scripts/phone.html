@@ -1,0 +1,11 @@
+<!doctype html>
+<!-- Dev-only wrapper: shows the app in a phone-sized iframe so headless screenshots get real phone media queries.
+     /scripts/phone.html?w=412&h=915#<app hash> -->
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#333}iframe{border:0;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search), f = document.getElementById('f')
+  f.width = q.get('w') || 412; f.height = q.get('h') || 915
+  f.src = '/' + location.hash
+</script>
