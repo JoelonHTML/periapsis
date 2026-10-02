@@ -3,7 +3,24 @@
 Missie-ontwerp in de browser (GMAT/EMTG-stijl): zonnestelsel, Lambert/gravity-assist-optimalisatie, aardbanen, Lagrangepunten,
 planeetstelsels met manen, Melkweg, rekenmachines. React + three.js + shadcn/ui.
 
-**Alleen gebruiken of delen:** open `Periapsis.html` (dubbelklikken, werkt offline).
+## Downloaden
+
+- **Android-app (APK):** https://github.com/JoelonHTML/periapsis/releases/latest/download/Periapsis.apk
+- **Webversie (één HTML-bestand, werkt offline):** https://github.com/JoelonHTML/periapsis/releases/latest/download/Periapsis.html
+- Alle versies: https://github.com/JoelonHTML/periapsis/releases
+
+Android vraagt bij de eerste installatie om toestemming voor "apps uit onbekende bronnen". De app kijkt bij het opstarten
+zelf of er een nieuwere release is en biedt dan aan om die te downloaden.
+
+## Een nieuwe versie uitbrengen
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+De workflow `.github/workflows/release.yml` test, bouwt en hangt `Periapsis.apk` + `Periapsis.html` aan een GitHub Release.
+Met de secrets `KEYSTORE_B64` en `KEYSTORE_PASSWORD` wordt de APK met een vaste sleutel ondertekend (nodig om over een
+vorige versie heen te installeren); zonder die secrets is het een debug-build.
 
 ## Ontwikkelen
 

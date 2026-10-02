@@ -23,6 +23,8 @@ import { autoAllowed, enteredWindow, leftWindow } from '@/lib/closeup'
 import { flybyWindow, type Solution } from '@/lib/mga'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { Tour } from '@/components/tour/Tour'
+import { UpdateBanner } from '@/components/UpdateBanner'
+import { APP_VERSION } from '@/lib/update'
 import { clock, closeCloseup, closeupEnabled, openCloseup, selectedSolution, store, tickClock, useApp, type View } from '@/lib/store'
 
 const windows = new WeakMap<Solution, number[]>()
@@ -172,7 +174,7 @@ export default function App() {
             <Orbit className="size-5 text-cyan-400" />
             <div>
               <div className="text-sm font-semibold leading-none">Periapsis</div>
-              <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl</div>
+              <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
             </div>
             <Button size="icon" variant="ghost" className="ml-auto" aria-label="Paneel verbergen" title="Paneel verbergen" onClick={() => setPanel(false)}><PanelLeftClose /></Button>
           </div>
@@ -216,6 +218,7 @@ export default function App() {
           <TimeBar />
         </div>
         <Tour />
+        <UpdateBanner />
       </div>
     </TooltipProvider>
   )

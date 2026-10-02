@@ -1,5 +1,5 @@
 # Builds the single-file web app and the Android APK. Runs on every version tag (v*) and by hand ("Run workflow").
-# On a tag, both files are attached to a GitHub Release.
+# On a tag, both files are attached to a GitHub Release; the app's updater and the share links read "releases/latest".
 name: Build APK
 on:
   push:
@@ -10,6 +10,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # "0.2.0" on tag v0.2.0; manual runs are dev builds (the in-app updater ignores non x.y.z versions)
+      APP_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'dev' }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -22,14 +25,27 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: node --test src/lib/*.test.ts
-      - run: npm run build
+      - run: VITE_APP_VERSION="${APP_VERSION#v}" npm run build
       - run: npx cap sync android
-      # ponytail: debug-signed APK (key differs per run, so an update needs an uninstall first); add a release keystore secret when that hurts
-      - run: ./gradlew assembleDebug
+      - name: Build APK (release-signed when the keystore secret exists, else debug)
         working-directory: android
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          ARGS="-PappVersionName=${APP_VERSION#v} -PappVersionCode=${{ github.run_number }}"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/periapsis.p12"
+            KEYSTORE_FILE="$RUNNER_TEMP/periapsis.p12" ./gradlew assembleRelease $ARGS
+            cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/Periapsis.apk"
+          else
+            echo "::warning::No KEYSTORE_B64 secret: debug-signed APK (cannot be installed as an update over another build)"
+            ./gradlew assembleDebug $ARGS
+            cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/Periapsis.apk"
+          fi
       - run: |
           mkdir out
-          cp android/app/build/outputs/apk/debug/app-debug.apk out/Periapsis.apk
+          cp "$RUNNER_TEMP/Periapsis.apk" out/Periapsis.apk
           cp dist/index.html out/Periapsis.html
       - uses: actions/upload-artifact@v4
         with:
