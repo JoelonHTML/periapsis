@@ -23,6 +23,7 @@ import { autoAllowed, enteredWindow, leftWindow } from '@/lib/closeup'
 import { flybyWindow, type Solution } from '@/lib/mga'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { Tour } from '@/components/tour/Tour'
+import { useT } from '@/lib/i18n'
 import { MobileApp } from '@/components/Mobile'
 import { SettingsSheet } from '@/components/SettingsSheet'
 import { UpdateBanner } from '@/components/UpdateBanner'
@@ -73,10 +74,11 @@ function useSimulationLoop() {
   }, [])
 }
 
-const VIEWS: [View, string][] = [['solar', 'Zonnestelsel'], ['earth', 'Alleen Aarde'], ['earthmoon', 'Aarde–Maan'], ['system', 'Planeet & manen'], ['galaxy', 'Melkweg'], ['flyby', 'Flyby close-up']]
+const VIEWS: View[] = ['solar', 'earth', 'earthmoon', 'system', 'galaxy', 'flyby']
 
 /** compact = two columns, as wide as the right-column cards (used below 1400 px, where the top strip has no room). */
 function ViewSwitcher({ compact = false, scroll = false }: { compact?: boolean; scroll?: boolean }) {
+  const t = useT()
   const view = useApp((s) => s.view)
   const sol = useApp(selectedSolution)
   const firstFlyby = sol?.events.findIndex((e) => e.kind === 'flyby') ?? -1
@@ -87,8 +89,8 @@ function ViewSwitcher({ compact = false, scroll = false }: { compact?: boolean; 
         if (v === 'flyby') { if (sol && firstFlyby >= 0) openCloseup(sol, firstFlyby) }
         else store.set({ view: v as View })
       }}>
-      {VIEWS.map(([v, l]) => (
-        <ToggleGroupItem key={v} value={v} className={scroll ? 'h-11 px-3.5 text-sm' : compact ? 'w-full px-2 text-xs' : 'px-3 text-xs'} disabled={v === 'flyby' && firstFlyby < 0}>{l}</ToggleGroupItem>
+      {VIEWS.map((v) => (
+        <ToggleGroupItem key={v} value={v} className={scroll ? 'h-11 px-3.5 text-sm' : compact ? 'w-full px-2 text-xs' : 'px-3 text-xs'} disabled={v === 'flyby' && firstFlyby < 0}>{t(`views.${v}` as never)}</ToggleGroupItem>
       ))}
     </ToggleGroup>
   )
@@ -127,6 +129,7 @@ function CollapsibleViewCard() {
 }
 
 export default function App() {
+  const t = useT()
   useSimulationLoop()
   const tab = useUi((s) => s.tab)
   const setTab = (tab: Tab) => ui.set({ tab })
@@ -213,14 +216,14 @@ export default function App() {
               <div className="text-sm font-semibold leading-none">Periapsis</div>
               <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
             </div>
-            <Button size="icon" variant="ghost" className="ml-auto max-[999px]:size-10" data-tour="settings" aria-label="Instellingen" title="Instellingen" onClick={openSettings}><Settings /></Button>
-            <Button size="icon" variant="ghost" className="max-[999px]:size-10" aria-label="Paneel verbergen" title="Paneel verbergen" onClick={() => setPanel(false)}><PanelLeftClose /></Button>
+            <Button size="icon" variant="ghost" className="ml-auto max-[999px]:size-10" data-tour="settings" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openSettings}><Settings /></Button>
+            <Button size="icon" variant="ghost" className="max-[999px]:size-10" aria-label={t('nav.hidePanel')} title={t('nav.hidePanel')} onClick={() => setPanel(false)}><PanelLeftClose /></Button>
           </div>
           <Tabs value={tab} onValueChange={onTab} className="flex min-h-0 flex-1 flex-col gap-0">
             {/* one rounded muted pill around both rows (the stock TabsList is a fixed single row of h-8) */}
             <TabsList className="mx-3 mt-3 grid w-auto grid-cols-4 gap-0.5 group-data-horizontal/tabs:h-auto">
-              {[['mission', 'Missie'], ['earth', 'Aardbaan'], ['system', 'Stelsel'], ['calc', 'Rekenen'], ['lagrange', 'Lagrange'], ['galaxy', 'Melkweg'], ['formulas', 'Formules']].map(([v, l]) => (
-                <TabsTrigger key={v} value={v} className="h-7 text-xs">{l}</TabsTrigger>
+              {['mission', 'earth', 'system', 'calc', 'lagrange', 'galaxy', 'formulas'].map((v) => (
+                <TabsTrigger key={v} value={v} className="h-7 text-xs">{t(`tab.${v}` as never)}</TabsTrigger>
               ))}
             </TabsList>
             <ScrollArea className="min-h-0 flex-1">
@@ -248,8 +251,8 @@ export default function App() {
 
         {!panel && (
           <div className="absolute top-3 left-3 z-10 flex gap-2 max-[999px]:top-auto max-[999px]:bottom-2 max-[999px]:left-2">
-            <Button variant="outline" size="sm" className="bg-background/80 backdrop-blur" onClick={() => setPanel(true)}><PanelLeftOpen /> Paneel</Button>
-            <Button variant="outline" size="icon-sm" className="bg-background/80 backdrop-blur" aria-label="Instellingen" title="Instellingen" onClick={openSettings}><Settings /></Button>
+            <Button variant="outline" size="sm" className="bg-background/80 backdrop-blur" onClick={() => setPanel(true)}><PanelLeftOpen /> {t('nav.panel')}</Button>
+            <Button variant="outline" size="icon-sm" className="bg-background/80 backdrop-blur" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openSettings}><Settings /></Button>
           </div>
         )}
 

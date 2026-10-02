@@ -4,8 +4,9 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/compone
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { canLiveUpdate, downloadApk } from '@/components/UpdateBanner'
-import { resetSettings, setSetting, useSettings, type Settings } from '@/lib/settings'
+import { resetSettings, setSetting, useSettings, type Lang, type Settings } from '@/lib/settings'
 import { SPEEDS } from '@/lib/store'
+import { LANGS, useT } from '@/lib/i18n'
 import { startTour } from '@/lib/tour-store'
 import { ui, useUi } from '@/lib/ui-store'
 import { applyUpdate, refreshUpdates, useUpdates } from '@/lib/update-store'
@@ -15,22 +16,23 @@ const ver = (v: string) => (v === 'dev' ? 'dev' : `v${v}`)
 
 /** Big update card at the top of the settings: same store as the top banner, so both always agree. */
 function UpdateCard() {
+  const t = useT()
   const st = useUpdates((s) => s.s)
   const latest = 'latest' in st ? st.latest : null
   const live = !!latest && canLiveUpdate(latest)
   const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
   const available = (st.phase === 'available' || st.phase === 'applyfail') && latest
-  const failMsg = st.phase === 'applyfail' ? { offline: 'Geen verbinding', 'needs-apk': 'Deze update past niet in de huidige app: download de APK.', 'bad-file': 'Downloaden mislukt. Probeer opnieuw of download de APK.', storage: 'Geen opslagruimte voor de update. Download de APK.' }[st.why] : ''
+  const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t('upd.fail.bad'), storage: t('upd.fail.storage') }[st.why] : ''
   const msg = {
-    idle: 'Tik om te controleren op een nieuwe versie.',
-    checking: 'Bezig met zoeken…',
-    latest: 'Je hebt de nieuwste versie',
-    available: latest ? `Versie ${latest.version} beschikbaar` : '',
-    downloading: 'Update downladen…',
-    restarting: 'Klaar: de app herstart…',
+    idle: t('upd.idle'),
+    checking: t('upd.checking'),
+    latest: t('upd.latest'),
+    available: latest ? t('upd.available', { v: latest.version }) : '',
+    downloading: t('upd.downloading'),
+    restarting: t('upd.restarting'),
     applyfail: failMsg,
-    offline: 'Geen verbinding',
-    error: 'Kon de nieuwste versie niet ophalen. Probeer het later opnieuw.',
+    offline: t('upd.offline'),
+    error: t('upd.error'),
   }[st.phase]
   const tone = available ? (st.phase === 'applyfail' ? 'text-amber-400' : 'text-cyan-300') : st.phase === 'latest' ? 'text-emerald-400' : st.phase === 'offline' || st.phase === 'error' ? 'text-amber-400' : 'text-muted-foreground'
   const Icon = busy ? Loader2 : available ? Download : st.phase === 'latest' ? CheckCircle2 : st.phase === 'offline' ? WifiOff : RefreshCw
@@ -39,11 +41,11 @@ function UpdateCard() {
     <section className="grid gap-3 rounded-2xl border bg-card p-4" aria-live="polite">
       <div className="grid grid-cols-2 gap-3 text-center">
         <div className="rounded-xl bg-muted/50 px-2 py-2.5">
-          <div className="text-[11px] text-muted-foreground">Jouw versie</div>
+          <div className="text-[11px] text-muted-foreground">{t('upd.yours')}</div>
           <div className="text-lg font-semibold tabular-nums">{ver(APP_VERSION)}</div>
         </div>
         <div className="rounded-xl bg-muted/50 px-2 py-2.5">
-          <div className="text-[11px] text-muted-foreground">Nieuwste versie</div>
+          <div className="text-[11px] text-muted-foreground">{t('upd.newest')}</div>
           <div className="text-lg font-semibold tabular-nums">{latest ? ver(latest.version) : '–'}</div>
         </div>
       </div>
@@ -57,12 +59,12 @@ function UpdateCard() {
           else downloadApk(latest.apkUrl)
         }}>
         {available
-          ? <><Download className="size-5" /> {live && (st.phase === 'available' || retryLive) ? `Nu bijwerken naar ${latest.version}` : `Download APK ${latest.version}`}</>
-          : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? 'Controleer op updates' : 'Opnieuw controleren'}</>}
+          ? <><Download className="size-5" /> {live && (st.phase === 'available' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
+          : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? t('upd.check') : t('upd.recheck')}</>}
       </Button>
-      {available && live && <p className="text-center text-[11px] text-muted-foreground">De app herstart zichzelf. Geen installatie nodig.{' '}
-        <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>Liever de APK?</button></p>}
-      {available && !live && <p className="text-center text-[11px] text-muted-foreground">Open daarna de gedownloade APK om te installeren.</p>}
+      {available && live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}
+        <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>{t('upd.apkInstead')}</button></p>}
+      {available && !live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.apkHint')}</p>}
     </section>
   )
 }
@@ -85,38 +87,46 @@ function Toggle({ k, label, hint }: { k: { [K in keyof Settings]: Settings[K] ex
 }
 
 function Body() {
+  const t = useT()
   const speedIdx = useSettings((s) => s.speedIdx)
   const trueScale = useSettings((s) => s.trueScale)
+  const lang = useSettings((s) => s.lang)
   return (
     <div className="grid gap-4">
       <UpdateCard />
       <section className="divide-y rounded-2xl border bg-card px-4">
-        <Toggle k="showLabels" label="Labels tonen" hint="Namen bij planeten, manen en ruimtevaartuigen." />
-        <Row label="Planeetgrootte" hint={trueScale ? 'Op ware schaal: planeten zijn piepklein.' : 'Vergroot, zodat ze goed te zien zijn.'}>
+        <Row label={t('set.lang')} hint={t('set.lang.h')}>
+          <Select value={lang} onValueChange={(v) => setSetting('lang', v as Lang)}>
+            <SelectTrigger className="w-44 data-[size=default]:h-11" aria-label={t('set.lang')}><SelectValue /></SelectTrigger>
+            <SelectContent>{LANGS.map((l) => <SelectItem key={l.id} value={l.id}>{l.native}</SelectItem>)}</SelectContent>
+          </Select>
+        </Row>
+        <Toggle k="showLabels" label={t('set.labels')} hint={t('set.labels.h')} />
+        <Row label={t('set.scale')} hint={trueScale ? t('set.scale.true.h') : t('set.scale.mag.h')}>
           <Select value={trueScale ? 'true' : 'mag'} onValueChange={(v) => setSetting('trueScale', v === 'true')}>
-            <SelectTrigger className="w-36 data-[size=default]:h-11" aria-label="Planeetgrootte"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="true">Ware schaal</SelectItem><SelectItem value="mag">Vergroot</SelectItem></SelectContent>
+            <SelectTrigger className="w-44 data-[size=default]:h-11" aria-label={t('set.scale')}><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="true">{t('set.scale.true')}</SelectItem><SelectItem value="mag">{t('set.scale.mag')}</SelectItem></SelectContent>
           </Select>
         </Row>
-        <Row label="Standaard tempo" hint="Waarmee de tijd start.">
+        <Row label={t('set.speed')} hint={t('set.speed.h')}>
           <Select value={String(speedIdx)} onValueChange={(v) => setSetting('speedIdx', +v)}>
-            <SelectTrigger className="w-36 data-[size=default]:h-11" aria-label="Standaard tempo"><SelectValue /></SelectTrigger>
-            <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{s.label}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-44 data-[size=default]:h-11" aria-label={t('set.speed')}><SelectValue /></SelectTrigger>
+            <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{t(`speed.${i}` as never)}</SelectItem>)}</SelectContent>
           </Select>
         </Row>
-        <Toggle k="reduceMotion" label="Minder animaties" hint="Geen schuif- en zweefeffecten in de menu's." />
-        <Toggle k="haptics" label="Trillingen" hint="Een lichte tik bij knoppen en als de lade vastklikt." />
-        <Toggle k="keepAwake" label="Scherm aan houden" hint="Het scherm gaat niet uit zolang de app open is." />
+        <Toggle k="reduceMotion" label={t('set.motion')} hint={t('set.motion.h')} />
+        <Toggle k="haptics" label={t('set.haptics')} hint={t('set.haptics.h')} />
+        <Toggle k="keepAwake" label={t('set.awake')} hint={t('set.awake.h')} />
       </section>
       <section className="grid gap-2">
         <Button variant="outline" className="h-12 justify-start gap-3 text-sm" onClick={() => { ui.set({ settingsOpen: false }); startTour() }}>
-          <GraduationCap className="size-5" /> Rondleiding opnieuw starten
+          <GraduationCap className="size-5" /> {t('set.tour')}
         </Button>
         <Button variant="outline" className="h-12 justify-start gap-3 text-sm text-destructive" onClick={resetSettings}>
-          <RotateCcw className="size-5" /> Instellingen herstellen
+          <RotateCcw className="size-5" /> {t('set.reset')}
         </Button>
       </section>
-      <p className="text-center text-[11px] leading-relaxed text-muted-foreground">Periapsis werkt volledig zonder internet. Alleen de update-controle heeft een verbinding nodig.</p>
+      <p className="text-center text-[11px] leading-relaxed text-muted-foreground">{t('set.offline')}</p>
       <Credits />
     </div>
   )
@@ -124,14 +134,15 @@ function Body() {
 
 /** Signature at the bottom of the settings. */
 function Credits() {
+  const t = useT()
   return (
     <footer className="mt-2 flex flex-col items-center gap-2 border-t pt-6 pb-2 text-center">
       <Orbit className="size-5 text-cyan-400/80" strokeWidth={1.5} />
-      <div className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">Ontworpen &amp; gebouwd door</div>
+      <div className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">{t('set.by')}</div>
       <div className="font-serif text-xl tracking-wide text-foreground">Joël Nieuwkoop</div>
       <p className="max-w-[17rem] text-[10.5px] leading-relaxed text-muted-foreground">
         © {new Date().getFullYear()} Joël Nieuwkoop · Periapsis<br />
-        Niets uit deze app mag worden nagemaakt, gekopieerd of verspreid zonder uitdrukkelijke toestemming van de maker.
+        {t('set.rights')}
       </p>
     </footer>
   )
@@ -139,15 +150,16 @@ function Credits() {
 
 /** Gear menu: a bottom sheet on phones (swipe down to close), a side drawer on wide screens. */
 export function SettingsSheet({ wide }: { wide: boolean }) {
+  const t = useT()
   const open = useUi((s) => s.settingsOpen)
   return (
     <Drawer open={open} onOpenChange={(settingsOpen) => ui.set({ settingsOpen })} direction={wide ? 'right' : 'bottom'}>
       <DrawerContent className="settings-sheet max-h-[88dvh] data-[vaul-drawer-direction=right]:max-h-none data-[vaul-drawer-direction=right]:sm:max-w-[26rem]">
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <DrawerTitle className="text-lg">Instellingen</DrawerTitle>
-          <Button size="icon" variant="ghost" className="size-10" aria-label="Sluiten" onClick={() => ui.set({ settingsOpen: false })}><X className="size-5" /></Button>
+          <DrawerTitle className="text-lg">{t('set.title')}</DrawerTitle>
+          <Button size="icon" variant="ghost" className="size-10" aria-label={t('set.close')} onClick={() => ui.set({ settingsOpen: false })}><X className="size-5" /></Button>
         </div>
-        <DrawerDescription className="sr-only">Update, weergave en tempo van Periapsis</DrawerDescription>
+        <DrawerDescription className="sr-only">{t('set.desc')}</DrawerDescription>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]" data-vaul-no-drag>
           <Body />
         </div>

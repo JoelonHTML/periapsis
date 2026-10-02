@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { TOUR, clampStep } from '@/lib/tour-steps'
 import { endTour, startTour, tour, useTour } from '@/lib/tour-store'
 import { ui } from '@/lib/ui-store'
+import { LANGS, useT } from '@/lib/i18n'
+import { setSetting, useSettings } from '@/lib/settings'
 
 type Box = { x: number; y: number; w: number; h: number }
 
@@ -19,6 +21,8 @@ function find(sel?: string): Box | null {
 
 /** First-run welcome + guided tour overlay. Mounted once in App. Can be skipped at any moment, replayed from the settings. */
 export function Tour() {
+  const t = useT()
+  const lang = useSettings((s) => s.lang)
   const phase = useTour((s) => s.phase)
   const step = useTour((s) => s.step)
   const [box, setBox] = useState<Box | null>(null)
@@ -43,13 +47,19 @@ export function Tour() {
   if (phase === 'off') return null
   if (phase === 'welcome') {
     return (
-      <div className="tour-fade fixed inset-0 z-[60] grid place-items-center bg-black/70 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Welkom bij Periapsis">
+      <div className="tour-fade fixed inset-0 z-[60] grid place-items-center bg-black/70 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={t('tour.welcome')}>
         <div className="tour-pop w-full max-w-sm rounded-3xl border bg-card p-6 text-center shadow-2xl">
           <Orbit className="mx-auto size-10 text-cyan-400" strokeWidth={1.5} />
-          <h2 className="mt-3 text-2xl font-semibold">Welkom bij Periapsis</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Ontwerp missies door het zonnestelsel, plan banen om de Aarde en zie precies hoe de natuurkunde werkt. Wil je een korte rondleiding?</p>
-          <Button size="lg" className="mt-5 h-12 w-full text-base" onClick={startTour}>Start rondleiding</Button>
-          <Button size="lg" variant="ghost" className="mt-1 h-12 w-full text-base text-muted-foreground" onClick={() => endTour('skipped')}>Overslaan</Button>
+          <h2 className="mt-3 text-2xl font-semibold">{t('tour.welcome')}</h2>
+          <div className="mt-4 flex justify-center gap-2" role="radiogroup" aria-label={t('tour.lang')}>
+            {LANGS.map((l) => (
+              <button key={l.id} type="button" role="radio" aria-checked={lang === l.id} onClick={() => setSetting('lang', l.id)}
+                className={`h-11 flex-1 rounded-xl border px-2 text-sm font-medium transition-colors active:scale-95 ${lang === l.id ? 'border-cyan-400 bg-cyan-400/15 text-cyan-200' : 'text-muted-foreground'}`}>{l.native}</button>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">{t('tour.welcome.t')}</p>
+          <Button size="lg" className="mt-5 h-12 w-full text-base" onClick={startTour}>{t('tour.start')}</Button>
+          <Button size="lg" variant="ghost" className="mt-1 h-12 w-full text-base text-muted-foreground" onClick={() => endTour('skipped')}>{t('tour.skip')}</Button>
         </div>
       </div>
     )
@@ -60,7 +70,7 @@ export function Tour() {
   // card goes to the half of the screen the spotlight is not in
   const top = box ? box.y + box.h / 2 > innerHeight / 2 : false
   return (
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-label="Rondleiding">
+    <div className="fixed inset-0 z-[60]" role="dialog" aria-label={t('tour.welcome')}>
       {box ? (
         <div className="tour-ring pointer-events-none fixed rounded-2xl ring-2 ring-cyan-300 shadow-[0_0_0_100vmax_rgba(0,0,0,0.6)]"
           style={{ left: box.x - pad, top: box.y - pad, width: box.w + pad * 2, height: box.h + pad * 2 }} />
@@ -69,18 +79,18 @@ export function Tour() {
       <div key={step} className="tour-pop pointer-events-auto w-full max-w-sm rounded-2xl border bg-card p-4 shadow-2xl">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] text-muted-foreground tabular-nums">Stap {step + 1} van {TOUR.length}</div>
-            <h3 className="text-lg font-semibold">{st.title}</h3>
+            <div className="text-[11px] text-muted-foreground tabular-nums">{t('tour.step', { n: step + 1, m: TOUR.length })}</div>
+            <h3 className="text-lg font-semibold">{t(`tour.${clampStep(step)}.t` as never)}</h3>
           </div>
-          <Button size="icon" variant="ghost" className="size-10" aria-label="Rondleiding stoppen" onClick={() => endTour('skipped')}><X /></Button>
+          <Button size="icon" variant="ghost" className="size-10" aria-label={t('tour.stop')} onClick={() => endTour('skipped')}><X /></Button>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">{st.text}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t(`tour.${clampStep(step)}.x` as never)}</p>
         <div className="mt-3 flex items-center gap-2">
           <div className="flex flex-1 gap-1" aria-hidden>
             {TOUR.map((_, i) => <span key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-cyan-400' : 'bg-muted'}`} />)}
           </div>
-          <Button variant="ghost" className="h-11" disabled={step === 0} onClick={() => tour.set({ step: step - 1 })}><ChevronLeft /> Terug</Button>
-          <Button className="h-11 px-4" onClick={() => (last ? endTour('done') : tour.set({ step: step + 1 }))}>{last ? 'Klaar' : <>Volgende <ChevronRight /></>}</Button>
+          <Button variant="ghost" className="h-11" disabled={step === 0} onClick={() => tour.set({ step: step - 1 })}><ChevronLeft /> {t('tour.back')}</Button>
+          <Button className="h-11 px-4" onClick={() => (last ? endTour('done') : tour.set({ step: step + 1 }))}>{last ? t('tour.done') : <>{t('tour.next')} <ChevronRight /></>}</Button>
         </div>
       </div>
       </div>

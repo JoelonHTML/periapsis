@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { BODIES, BODY_IDS, dvBudget, fmtDateTime, toJ2000, toMs } from '@/lib/astro'
 import { SPEEDS, clock, currentSpeed, fmtSpeed, store, useApp, type Craft } from '@/lib/store'
 import { KV, NumField, Section, Tex, f } from './bits'
+import { useT } from '@/lib/i18n'
 
 function Tip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
@@ -29,6 +30,7 @@ const toLocalInput = (t: number) => {
 
 /** `datesOnly`: just the clock readout and the start date (the phone drawer has its own play/speed dock). */
 export function TimeBar({ datesOnly = false }: { datesOnly?: boolean }) {
+  const t = useT()
   const [, tick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => tick((x) => x + 1), 100)
@@ -63,7 +65,7 @@ export function TimeBar({ datesOnly = false }: { datesOnly?: boolean }) {
         </div>
         <ToggleGroup type="single" variant="outline" size="sm" value={idx >= 0 ? String(idx) : ''}
           onValueChange={(v) => { if (v !== '') { clock.target = dir * SPEEDS[+v].s; clock.paused = false } }}>
-          {SPEEDS.map((s, i) => <ToggleGroupItem key={s.s} value={String(i)} className="px-2.5 text-xs">{s.label}</ToggleGroupItem>)}
+          {SPEEDS.map((s, i) => <ToggleGroupItem key={s.s} value={String(i)} className="px-2.5 text-xs">{t(`speed.${i}` as never)}</ToggleGroupItem>)}
         </ToggleGroup>
         </>)}
         <div className={`flex items-center gap-4 ${datesOnly ? 'flex-wrap' : 'ml-auto'}`}>

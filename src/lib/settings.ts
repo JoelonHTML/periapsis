@@ -2,6 +2,9 @@ import { createStore } from './mini-store.ts'
 
 const KEY = 'periapsis.settings.v1'
 
+export type Lang = 'nl' | 'en' | 'el'
+const detectLang = (): Lang => { const l = (globalThis.navigator?.language ?? 'nl').slice(0, 2).toLowerCase(); return l === 'el' ? 'el' : l === 'en' ? 'en' : 'nl' }
+
 export interface Settings {
   showLabels: boolean
   /** true = planets at their real size, false = magnified (the store's `magnify` factor) */
@@ -11,6 +14,7 @@ export interface Settings {
   reduceMotion: boolean
   keepAwake: boolean
   haptics: boolean
+  lang: Lang
 }
 
 export const SPEED_COUNT = 6 // = SPEEDS.length in store.ts (kept as a number so this module stays store-free and testable)
@@ -22,6 +26,7 @@ export const defaultSettings = (): Settings => ({
   reduceMotion: !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   keepAwake: false,
   haptics: true,
+  lang: detectLang(),
 })
 
 /** Merge untrusted stored JSON over the defaults, dropping anything of the wrong type or out of range. */
@@ -29,7 +34,7 @@ export function normalize(raw: unknown): Settings {
   const d = defaultSettings(), r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   const bool = (k: 'showLabels' | 'trueScale' | 'reduceMotion' | 'keepAwake' | 'haptics') => (typeof r[k] === 'boolean' ? (r[k] as boolean) : d[k])
   const idx = Number.isInteger(r.speedIdx) && (r.speedIdx as number) >= 0 && (r.speedIdx as number) < SPEED_COUNT ? (r.speedIdx as number) : d.speedIdx
-  return { showLabels: bool('showLabels'), trueScale: bool('trueScale'), speedIdx: idx, reduceMotion: bool('reduceMotion'), keepAwake: bool('keepAwake'), haptics: bool('haptics') }
+  return { showLabels: bool('showLabels'), trueScale: bool('trueScale'), speedIdx: idx, reduceMotion: bool('reduceMotion'), keepAwake: bool('keepAwake'), haptics: bool('haptics'), lang: r.lang === 'nl' || r.lang === 'en' || r.lang === 'el' ? r.lang : d.lang }
 }
 
 function read(): Settings {

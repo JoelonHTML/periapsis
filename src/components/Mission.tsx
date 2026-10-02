@@ -3,6 +3,7 @@ import MgaWorker from '@/lib/mga.worker.ts?worker&inline'
 import { Crosshair, Play, Rocket, ScanSearch, Share2, Bookmark, Trash2, TriangleAlert } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { Share } from '@capacitor/share'
+import { useT } from '@/lib/i18n'
 import { deleteMission, loadMissions, saveMission, type SavedMission } from '@/lib/missions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -457,6 +458,7 @@ function shareText(sol: Solution | null, target: string) {
 
 /** Save the current mission set-up, load an earlier one (re-runs the optimizer), or share the selected route as text. */
 function SavedMissions({ params, onLoad }: { params: Record<string, unknown>; onLoad: (m: SavedMission) => void }) {
+  const t = useT()
   const [list, setList] = useState(loadMissions)
   const target = useApp((s) => s.target)
   const craft = useApp((s) => s.craft)
@@ -469,25 +471,25 @@ function SavedMissions({ params, onLoad }: { params: Record<string, unknown>; on
     try {
       if (Capacitor.isNativePlatform()) await Share.share({ title: 'Periapsis missie', text })
       else if (navigator.share) await navigator.share({ title: 'Periapsis missie', text })
-      else { await navigator.clipboard.writeText(text); flash('Gekopieerd naar het klembord') }
+      else { await navigator.clipboard.writeText(text); flash(t('sm.copied')) }
     } catch { /* the user closed the share sheet */ }
   }
   return (
-    <Section title="Opgeslagen missies">
+    <Section title={t('sm.title')}>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" className="h-11" onClick={() => { setList(saveMission({ name: label, target, craft, params })); flash('Missie opgeslagen') }}><Bookmark /> Opslaan</Button>
-        <Button variant="outline" className="h-11" onClick={share}><Share2 /> Delen</Button>
+        <Button variant="outline" className="h-11" onClick={() => { setList(saveMission({ name: label, target, craft, params })); flash(t('sm.saved')) }}><Bookmark /> {t('sm.save')}</Button>
+        <Button variant="outline" className="h-11" onClick={share}><Share2 /> {t('sm.share')}</Button>
       </div>
       {note && <p role="status" className="text-xs text-emerald-400">{note}</p>}
-      {list.length === 0 ? <p className="text-xs text-muted-foreground">Nog niets opgeslagen. Sla een set-up op om hem later met één tik terug te zetten.</p> : (
+      {list.length === 0 ? <p className="text-xs text-muted-foreground">{t('sm.empty')}</p> : (
         <ul className="grid gap-1.5">
           {list.map((m) => (
             <li key={m.id} className="flex items-center gap-1 rounded-lg border bg-muted/30 pl-3">
               <button type="button" className="min-h-11 min-w-0 flex-1 text-left" onClick={() => onLoad(m)}>
                 <div className="truncate text-sm font-medium">{m.name}</div>
-                <div className="text-[11px] text-muted-foreground">{new Date(m.savedAt).toLocaleDateString('nl-NL')} · tik om te laden</div>
+                <div className="text-[11px] text-muted-foreground">{new Date(m.savedAt).toLocaleDateString('nl-NL')} · {t('sm.load')}</div>
               </button>
-              <Button size="icon" variant="ghost" className="size-11 shrink-0" aria-label={`Verwijder ${m.name}`} onClick={() => setList(deleteMission(m.id))}><Trash2 /></Button>
+              <Button size="icon" variant="ghost" className="size-11 shrink-0" aria-label={t('sm.del', { n: m.name })} onClick={() => setList(deleteMission(m.id))}><Trash2 /></Button>
             </li>
           ))}
         </ul>

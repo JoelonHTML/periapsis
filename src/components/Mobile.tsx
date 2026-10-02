@@ -7,20 +7,18 @@ import { fmtDateTime } from '@/lib/astro'
 import { SPEEDS, clock, store, useApp } from '@/lib/store'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { snap, tap } from '@/lib/haptics'
+import { useT } from '@/lib/i18n'
 import { useClockTick } from '@/components/FlybyBar'
 
-const NAV: { tab: Tab; label: string; Icon: typeof Rocket }[] = [
-  { tab: 'mission', label: 'Missie', Icon: Rocket },
-  { tab: 'earth', label: 'Aardbaan', Icon: Orbit },
-  { tab: 'calc', label: 'Rekenen', Icon: Calculator },
-  { tab: 'view', label: 'Beeld', Icon: SlidersHorizontal },
-  { tab: 'more', label: 'Meer', Icon: Ellipsis },
+const NAV: { tab: Tab; Icon: typeof Rocket }[] = [
+  { tab: 'mission', Icon: Rocket },
+  { tab: 'earth', Icon: Orbit },
+  { tab: 'calc', Icon: Calculator },
+  { tab: 'view', Icon: SlidersHorizontal },
+  { tab: 'more', Icon: Ellipsis },
 ]
-export const MORE_TABS: { tab: Tab; label: string; hint: string }[] = [
-  { tab: 'system', label: 'Stelsel', hint: 'Planeten en hun manen' },
-  { tab: 'lagrange', label: 'Lagrange', hint: 'Evenwichtspunten L1–L5' },
-  { tab: 'galaxy', label: 'Melkweg', hint: 'De Melkweg op schaal' },
-  { tab: 'formulas', label: 'Formules', hint: 'Alle vergelijkingen' },
+export const MORE_TABS: { tab: 'system' | 'lagrange' | 'galaxy' | 'formulas' }[] = [
+  { tab: 'system' }, { tab: 'lagrange' }, { tab: 'galaxy' }, { tab: 'formulas' },
 ]
 const isMore = (t: Tab) => MORE_TABS.some((m) => m.tab === t)
 
@@ -29,6 +27,7 @@ const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)'
 
 /** Compact time controls; the full date/speed card lives in the "Beeld" tab. */
 function Dock({ onDate }: { onDate: () => void }) {
+  const t = useT()
   useClockTick(100)
   const dir = Math.sign(clock.target) || 1
   const idx = SPEEDS.findIndex((s) => s.s === Math.abs(clock.target))
@@ -40,15 +39,15 @@ function Dock({ onDate }: { onDate: () => void }) {
   const b = 'size-11 shrink-0 max-[380px]:size-10'
   return (
     <div className="flex h-12 items-center gap-0.5 px-1.5">
-      <Button size="icon" variant="ghost" className={b} aria-label="Terug naar startdatum" onClick={() => { clock.t = store.get().startT }}><SkipBack /></Button>
-      <Button size="icon" variant={dir < 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label="Terugspoelen" onClick={() => setDir(-1)}><Rewind /></Button>
-      <Button size="icon" className={b} aria-label={clock.paused ? 'Afspelen' : 'Pauzeren'} onClick={() => { tap(); clock.paused = !clock.paused }}>{clock.paused ? <Play /> : <Pause />}</Button>
-      <Button size="icon" variant={dir > 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label="Vooruitspoelen" onClick={() => setDir(1)}><FastForward /></Button>
+      <Button size="icon" variant="ghost" className={b} aria-label={t('dock.start')} onClick={() => { clock.t = store.get().startT }}><SkipBack /></Button>
+      <Button size="icon" variant={dir < 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label={t('dock.back')} onClick={() => setDir(-1)}><Rewind /></Button>
+      <Button size="icon" className={b} aria-label={clock.paused ? t('dock.play') : t('dock.pause')} onClick={() => { tap(); clock.paused = !clock.paused }}>{clock.paused ? <Play /> : <Pause />}</Button>
+      <Button size="icon" variant={dir > 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label={t('dock.fwd')} onClick={() => setDir(1)}><FastForward /></Button>
       <Select value={idx >= 0 ? String(idx) : ''} onValueChange={(v) => { clock.target = dir * SPEEDS[+v].s; clock.paused = false }}>
-        <SelectTrigger className="data-[size=default]:h-11 w-[5.4rem] shrink-0 px-2 text-xs" aria-label="Tempo"><SelectValue placeholder="tempo" /></SelectTrigger>
-        <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{s.label}</SelectItem>)}</SelectContent>
+        <SelectTrigger className="data-[size=default]:h-11 w-[5.4rem] shrink-0 px-2 text-xs" aria-label={t('dock.speed')}><SelectValue placeholder={t('dock.speed')} /></SelectTrigger>
+        <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{t(`speed.${i}` as never)}</SelectItem>)}</SelectContent>
       </Select>
-      <button type="button" onClick={onDate} className="ml-auto flex min-h-11 shrink-0 items-center whitespace-nowrap px-1 text-right font-mono text-[11px] leading-tight tabular-nums" aria-label="Datum en tijd instellen">
+      <button type="button" onClick={onDate} className="ml-auto flex min-h-11 shrink-0 items-center whitespace-nowrap px-1 text-right font-mono text-[11px] leading-tight tabular-nums" aria-label={t('dock.date')}>
         {fmtDateTime(clock.t).slice(0, 10)}<br />{fmtDateTime(clock.t).slice(11)} UTC
       </button>
     </div>
@@ -102,7 +101,7 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
   const y = drag ?? offsets[sheet]
   // tell the 3D camera how much of the screen the drawer / side panel hides (nav bar is outside the canvas area it should centre in)
   useEffect(() => {
-    const navH = document.querySelector<HTMLElement>('nav[aria-label="Hoofdmenu"]')?.offsetHeight ?? 56
+    const navH = document.querySelector<HTMLElement>('nav[data-main-nav]')?.offsetHeight ?? 56
     if (land) ui.set({ covered: { bottom: DOCK + 12, left: sheet === 'closed' ? 0 : Math.min(480, window.innerWidth * 0.52) } })
     else ui.set({ covered: { bottom: Math.max(0, h - offsets[sheet]) + navH, left: 0 } })
   }, [land, sheet, h]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -131,12 +130,13 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
 }
 
 function MorePanel({ onTab }: { onTab: (t: Tab) => void }) {
+  const t = useT()
   return (
     <div className="grid grid-cols-2 gap-3">
       {MORE_TABS.map((m) => (
         <button key={m.tab} type="button" onClick={() => onTab(m.tab)} className="flex min-h-24 flex-col items-start justify-center gap-1 rounded-2xl border bg-muted/40 p-4 text-left active:bg-muted">
-          <span className="text-base font-semibold">{m.label}</span>
-          <span className="text-xs text-muted-foreground">{m.hint}</span>
+          <span className="text-base font-semibold">{t(`tab.${m.tab}` as never)}</span>
+          <span className="text-xs text-muted-foreground">{t(`more.${m.tab}` as never)}</span>
         </button>
       ))}
     </div>
@@ -147,6 +147,7 @@ function MorePanel({ onTab }: { onTab: (t: Tab) => void }) {
 export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
   scene: ReactNode; views: ReactNode; extras: ReactNode; content: ReactNode; tab: Tab; onTab: (t: Tab) => void; land: boolean
 }) {
+  const t = useT()
   const sheet = useUi((s) => s.sheet)
   const nav = (t: Tab) => {
     tap()
@@ -164,7 +165,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-[env(safe-area-inset-top)]">
         <div className="flex h-12 items-center gap-1 pl-2">
           <div data-tour="views" className="pointer-events-auto min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views}</div>
-          <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label="Instellingen" data-tour="settings" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
+          <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label={t('nav.settings')} data-tour="settings" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10 flex max-h-[40dvh] justify-center overflow-y-auto px-2">{extras}</div>
@@ -172,7 +173,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
       <Drawer land={land} dock={<Dock onDate={() => { onTab('view'); ui.set({ sheet: 'half' }) }} />}>
         {isMore(tab) && (
           <button type="button" onClick={() => onTab('more')} className="mb-3 flex h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground active:bg-muted">
-            <ArrowLeft className="size-4" /> Meer
+            <ArrowLeft className="size-4" /> {t('tab.more')}
           </button>
         )}
         <Tabs value={tab} onValueChange={(v) => onTab(v as Tab)} className="gap-0">
@@ -181,13 +182,13 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
         </Tabs>
       </Drawer>
 
-      <nav className="absolute inset-x-0 bottom-0 z-30 flex border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" aria-label="Hoofdmenu">
-        {NAV.map(({ tab: t, label, Icon }) => {
-          const on = active === t && sheet !== 'closed'
+      <nav data-main-nav className="absolute inset-x-0 bottom-0 z-30 flex border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" aria-label={t('nav.main')}>
+        {NAV.map(({ tab: id, Icon }) => {
+          const on = active === id && sheet !== 'closed'
           return (
-            <button key={t} type="button" data-tour={`nav-${t === 'mission' ? 'mission' : t}`} onClick={() => nav(t)} aria-current={on ? 'page' : undefined}
+            <button key={id} type="button" data-tour={`nav-${id}`} onClick={() => nav(id)} aria-current={on ? 'page' : undefined}
               className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:scale-95 active:bg-muted ${on ? 'text-cyan-300' : 'text-muted-foreground'}`}>
-              <Icon className="size-5" /> {label}
+              <Icon className="size-5" /> {t(`tab.${id}` as never)}
             </button>
           )
         })}

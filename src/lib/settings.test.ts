@@ -24,3 +24,8 @@ test('setSetting persists, resetSettings clears', () => {
   assert.equal(mem.has('periapsis.settings.v1'), false)
   assert.deepEqual(settings.get(), defaultSettings())
 })
+
+test('lang must be one of nl/en/el', () => {
+  assert.equal(normalize({ lang: 'el' }).lang, 'el')
+  assert.ok(['nl', 'en', 'el'].includes(normalize({ lang: 'fr' }).lang))
+})

@@ -18,6 +18,7 @@ function apply(s: Settings, prev?: Settings) {
   store.set({ showLabels: s.showLabels, trueScale: s.trueScale })
   if (!prev || prev.speedIdx !== s.speedIdx) setSpeedNow(SPEEDS[s.speedIdx].s)
   document.documentElement.toggleAttribute('data-reduce-motion', s.reduceMotion)
+  document.documentElement.lang = s.lang
   if (!prev || prev.keepAwake !== s.keepAwake) void keepAwake(s.keepAwake)
 }
 
