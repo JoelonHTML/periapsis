@@ -200,7 +200,7 @@ export default function App() {
 
         {wide && (
           <div className="pointer-events-none absolute top-3 right-[280px] left-[416px] z-10 flex flex-col items-center gap-2">
-            <div className="hidden min-[1400px]:block"><ViewSwitcher /></div>
+            <div data-tour="views" className="hidden min-[1400px]:block"><ViewSwitcher /></div>
             {view === 'flyby' && <FlybyBar />}
             {view === 'earthmoon' && <EarthMoonBar />}
           </div>
@@ -213,7 +213,7 @@ export default function App() {
               <div className="text-sm font-semibold leading-none">Periapsis</div>
               <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
             </div>
-            <Button size="icon" variant="ghost" className="ml-auto max-[999px]:size-10" aria-label="Instellingen" title="Instellingen" onClick={openSettings}><Settings /></Button>
+            <Button size="icon" variant="ghost" className="ml-auto max-[999px]:size-10" data-tour="settings" aria-label="Instellingen" title="Instellingen" onClick={openSettings}><Settings /></Button>
             <Button size="icon" variant="ghost" className="max-[999px]:size-10" aria-label="Paneel verbergen" title="Paneel verbergen" onClick={() => setPanel(false)}><PanelLeftClose /></Button>
           </div>
           <Tabs value={tab} onValueChange={onTab} className="flex min-h-0 flex-1 flex-col gap-0">
@@ -253,7 +253,7 @@ export default function App() {
           </div>
         )}
 
-        <div className={`absolute right-3 bottom-3 z-10 max-[999px]:right-2 max-[999px]:left-2 ${panel ? 'left-[416px] max-[999px]:bottom-[calc(46dvh+16px)]' : 'left-3 max-[999px]:bottom-12'}`}>
+        <div data-tour="dock" className={`absolute right-3 bottom-3 z-10 max-[999px]:right-2 max-[999px]:left-2 ${panel ? 'left-[416px] max-[999px]:bottom-[calc(46dvh+16px)]' : 'left-3 max-[999px]:bottom-12'}`}>
           <TimeBar />
         </div>
         <Tour />

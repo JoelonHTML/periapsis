@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, GraduationCap, Loader2, RefreshCw, RotateCcw, WifiOff, X } from 'lucide-react'
+import { CheckCircle2, Download, Orbit, GraduationCap, Loader2, RefreshCw, RotateCcw, WifiOff, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -101,7 +101,23 @@ function Body() {
           <RotateCcw className="size-5" /> Instellingen herstellen
         </Button>
       </section>
+      <Credits />
     </div>
+  )
+}
+
+/** Signature at the bottom of the settings. */
+function Credits() {
+  return (
+    <footer className="mt-2 flex flex-col items-center gap-2 border-t pt-6 pb-2 text-center">
+      <Orbit className="size-5 text-cyan-400/80" strokeWidth={1.5} />
+      <div className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">Ontworpen &amp; gebouwd door</div>
+      <div className="font-serif text-xl tracking-wide text-foreground">Joël Nieuwkoop</div>
+      <p className="max-w-[17rem] text-[10.5px] leading-relaxed text-muted-foreground">
+        © {new Date().getFullYear()} Joël Nieuwkoop · Periapsis<br />
+        Niets uit deze app mag worden nagemaakt, gekopieerd of verspreid zonder uitdrukkelijke toestemming van de maker.
+      </p>
+    </footer>
   )
 }
 

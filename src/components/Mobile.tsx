@@ -114,7 +114,7 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
   return (
     <div ref={ref} className="pointer-events-auto absolute inset-x-0 z-20 flex flex-col rounded-t-3xl border-t bg-card/95 shadow-[0_-8px_30px_rgba(0,0,0,0.5)] backdrop-blur will-change-transform"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 3.5rem)', height: 'calc(100dvh - env(safe-area-inset-top) - 3.5rem - env(safe-area-inset-bottom) - 3.5rem)', transform: `translateY(${y}px)`, transition: drag === null ? `transform 280ms ${EASE}` : 'none' }}>
-      <div className="shrink-0 touch-none select-none" style={{ height: DOCK }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+      <div data-tour="dock" className="shrink-0 touch-none select-none" style={{ height: DOCK }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
         <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/40" />
         {dock}
       </div>
@@ -153,8 +153,8 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-[env(safe-area-inset-top)]">
         <div className="flex h-12 items-center gap-1 pl-2">
-          <div className="pointer-events-auto min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views}</div>
-          <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label="Instellingen" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
+          <div data-tour="views" className="pointer-events-auto min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views}</div>
+          <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label="Instellingen" data-tour="settings" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
         </div>
         <div className="flex justify-center px-2">{extras}</div>
       </div>
@@ -175,8 +175,8 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
         {NAV.map(({ tab: t, label, Icon }) => {
           const on = active === t && sheet !== 'closed'
           return (
-            <button key={t} type="button" onClick={() => nav(t)} aria-current={on ? 'page' : undefined}
-              className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:bg-muted ${on ? 'text-cyan-300' : 'text-muted-foreground'}`}>
+            <button key={t} type="button" data-tour={`nav-${t === 'mission' ? 'mission' : t}`} onClick={() => nav(t)} aria-current={on ? 'page' : undefined}
+              className={`flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors active:scale-95 active:bg-muted ${on ? 'text-cyan-300' : 'text-muted-foreground'}`}>
               <Icon className="size-5" /> {label}
             </button>
           )
