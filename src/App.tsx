@@ -23,6 +23,7 @@ import { autoAllowed, enteredWindow, leftWindow } from '@/lib/closeup'
 import { flybyWindow, type Solution } from '@/lib/mga'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { Tour } from '@/components/tour/Tour'
+import { MobileApp } from '@/components/Mobile'
 import { SettingsSheet } from '@/components/SettingsSheet'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { APP_VERSION } from '@/lib/update'
@@ -75,19 +76,19 @@ function useSimulationLoop() {
 const VIEWS: [View, string][] = [['solar', 'Zonnestelsel'], ['earth', 'Alleen Aarde'], ['earthmoon', 'Aarde–Maan'], ['system', 'Planeet & manen'], ['galaxy', 'Melkweg'], ['flyby', 'Flyby close-up']]
 
 /** compact = two columns, as wide as the right-column cards (used below 1400 px, where the top strip has no room). */
-function ViewSwitcher({ compact = false }: { compact?: boolean }) {
+function ViewSwitcher({ compact = false, scroll = false }: { compact?: boolean; scroll?: boolean }) {
   const view = useApp((s) => s.view)
   const sol = useApp(selectedSolution)
   const firstFlyby = sol?.events.findIndex((e) => e.kind === 'flyby') ?? -1
   return (
-    <ToggleGroup type="single" variant="outline" className={compact ? 'pointer-events-auto grid w-64 grid-cols-2 bg-background/80 backdrop-blur' : 'pointer-events-auto flex-wrap justify-center bg-background/80 backdrop-blur'} value={view}
+    <ToggleGroup type="single" variant="outline" className={scroll ? 'pointer-events-auto flex w-max flex-nowrap bg-background/80 backdrop-blur' : compact ? 'pointer-events-auto grid w-64 grid-cols-2 bg-background/80 backdrop-blur' : 'pointer-events-auto flex-wrap justify-center bg-background/80 backdrop-blur'} value={view}
       onValueChange={(v) => {
         if (!v) return
         if (v === 'flyby') { if (sol && firstFlyby >= 0) openCloseup(sol, firstFlyby) }
         else store.set({ view: v as View })
       }}>
       {VIEWS.map(([v, l]) => (
-        <ToggleGroupItem key={v} value={v} className={compact ? 'w-full px-2 text-xs' : 'px-3 text-xs'} disabled={v === 'flyby' && firstFlyby < 0}>{l}</ToggleGroupItem>
+        <ToggleGroupItem key={v} value={v} className={scroll ? 'h-11 px-3.5 text-sm' : compact ? 'w-full px-2 text-xs' : 'px-3 text-xs'} disabled={v === 'flyby' && firstFlyby < 0}>{l}</ToggleGroupItem>
       ))}
     </ToggleGroup>
   )
@@ -133,13 +134,15 @@ export default function App() {
   const panel = useUi((s) => s.panelOpen) // the panel can be hidden to give the 3D view the whole screen (phones!)
   const setPanel = (panelOpen: boolean) => ui.set({ panelOpen })
   const openSettings = () => ui.set({ settingsOpen: true })
-  const wide = useMedia('(min-width: 1000px)') // below: panel at the bottom, cards on top (see max-[999px] classes)
+  const land = useMedia('(max-height: 500px)') // phone held sideways: drawer becomes a side panel
+  const wide = useMedia('(min-width: 1000px) and (min-height: 501px)') // below: panel at the bottom, cards on top (see max-[999px] classes)
   useEffect(() => {
     if (view === 'galaxy') setTab('galaxy')
     else if (view === 'system') setTab('system')
   }, [view])
   const onTab = (v: string) => {
     setTab(v as Tab)
+    if (v === 'view' || v === 'more') return // phone-only tabs: never touch the 3D view
     const cur = store.get().view
     if (v === 'galaxy' || v === 'system') store.set({ view: v })
     else if (cur === 'galaxy' || cur === 'system') store.set({ view: 'solar' })
@@ -155,6 +158,38 @@ export default function App() {
     () => earthPlan(orbit, site.lat, site.lon, startT, craft.dry + craft.prop, craft.isp, craft.cd, craft.area),
     [orbit, site.lat, site.lon, startT, craft],
   )
+  const panelTabs = (
+    <>
+      <TabsContent value="mission"><MissionPanel /></TabsContent>
+      <TabsContent value="earth"><EarthPanel plan={plan} /></TabsContent>
+      <TabsContent value="system"><SystemPanel /></TabsContent>
+      <TabsContent value="calc"><CalcPanel /></TabsContent>
+      <TabsContent value="lagrange"><LagrangePanel /></TabsContent>
+      <TabsContent value="galaxy"><GalaxyPanel /></TabsContent>
+      <TabsContent value="formulas"><FormulasPanel /></TabsContent>
+      <TabsContent value="view">
+        <div className="grid gap-4 [&_[data-slot=card]]:w-full">
+          <TimeBar />
+          <ViewCard />
+          {view === 'flyby' && <FlybyCard />}
+          <TelemetryHud />
+        </div>
+      </TabsContent>
+    </>
+  )
+  if (!wide) {
+    return (
+      <TooltipProvider>
+        <MobileApp land={land} tab={tab} onTab={(t) => onTab(t)} content={panelTabs}
+          scene={<><Scene view={view} plan={plan} lat={site.lat} lon={site.lon} siteName={site.name} /><LabelLayer /></>}
+          views={<ViewSwitcher scroll />}
+          extras={<>{view === 'flyby' && <FlybyBar />}{view === 'earthmoon' && <EarthMoonBar />}</>} />
+        <Tour />
+        <SettingsSheet wide={false} />
+        <UpdateBanner />
+      </TooltipProvider>
+    )
+  }
   return (
     <TooltipProvider>
       <div className="relative h-dvh w-screen overflow-hidden bg-background text-foreground">
