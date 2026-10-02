@@ -10,6 +10,8 @@ export const ui = createStore({
   panelOpen: true,
   /** Phone: height of the bottom drawer (closed = only the time dock peeks out). */
   sheet: 'closed' as Sheet,
+  /** Phone: pixels of the 3D view covered by the drawer (bottom) or the landscape side panel (left); the camera re-centres in what is left. */
+  covered: { bottom: 0, left: 0 },
   /** Settings sheet (gear button). */
   settingsOpen: false,
 })

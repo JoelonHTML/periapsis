@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, useSyn
 import * as THREE from 'three'
 import type { Vec } from '@/lib/astro'
 import { labels } from '@/lib/labels'
+import { ui } from '@/lib/ui-store'
 import { cn } from '@/lib/utils'
 
 /** Ecliptic/equatorial (x,y,z) → three.js y-up right-handed (x, z, −y). */
@@ -156,14 +157,29 @@ export function CameraInit({ pos }: { pos: THREE.Vector3 }) {
   return null
 }
 
-/** Centres the 3D view in the free area to the right of the 416 px side panel. */
+/** Centres the 3D view in the free area: right of the 416 px side panel on desktop; on a phone above the drawer / right of the landscape panel
+ *  (eased, so it follows the drawer while that slides). */
 export function PanelOffset() {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
-  const width = useThree((s) => s.size.width)
+  const size = useThree((s) => s.size)
+  const cur = useRef({ x: 0, y: 0 })
+  const wide = size.width >= 1000 && size.height > 500
   useEffect(() => {
-    camera.filmOffset = width > 900 ? -(208 / width) * camera.getFilmWidth() : 0
+    camera.filmOffset = wide ? -(208 / size.width) * camera.getFilmWidth() : 0
+    if (wide) { camera.clearViewOffset(); cur.current = { x: 0, y: 0 } }
     camera.updateProjectionMatrix()
-  }, [camera, width])
+  }, [camera, size.width, wide])
+  useFrame((_, dt) => {
+    if (wide) return
+    const c = ui.get().covered, k = 1 - Math.exp(-dt / 0.09)
+    const tx = -c.left / 2, ty = c.bottom / 2 // sub-rectangle moves the opposite way to the picture
+    const v = cur.current
+    if (Math.abs(tx - v.x) < 0.3 && Math.abs(ty - v.y) < 0.3 && v.x === tx && v.y === ty) return
+    v.x += (tx - v.x) * k; v.y += (ty - v.y) * k
+    if (Math.abs(tx - v.x) < 0.3) v.x = tx
+    if (Math.abs(ty - v.y) < 0.3) v.y = ty
+    camera.setViewOffset(size.width, size.height, v.x, v.y, size.width, size.height)
+  })
   return null
 }
 

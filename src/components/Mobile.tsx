@@ -99,6 +99,12 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
     setDrag(null)
   }
   const y = drag ?? offsets[sheet]
+  // tell the 3D camera how much of the screen the drawer / side panel hides (nav bar is outside the canvas area it should centre in)
+  useEffect(() => {
+    const navH = document.querySelector<HTMLElement>('nav[aria-label="Hoofdmenu"]')?.offsetHeight ?? 56
+    if (land) ui.set({ covered: { bottom: DOCK + 12, left: sheet === 'closed' ? 0 : Math.min(480, window.innerWidth * 0.52) } })
+    else ui.set({ covered: { bottom: Math.max(0, h - offsets[sheet]) + navH, left: 0 } })
+  }, [land, sheet, h]) // eslint-disable-line react-hooks/exhaustive-deps
   const closed = sheet === 'closed' && drag === null
   if (land) {
     return (
