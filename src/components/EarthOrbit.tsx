@@ -9,6 +9,7 @@ import {
 import { store, useApp } from '@/lib/store'
 import { CraftFields } from './Controls'
 import { KV, NumField, Section, Tex, f } from './bits'
+import { Eclipse } from '@/features/satellites/Eclipse'
 
 type Preset = { label: string; rpAlt: number; raAlt: number; inc: number | 'site' | 'sso'; wDeg: number | null }
 const PRESETS: Record<string, Preset> = {
@@ -115,6 +116,7 @@ export function EarthPanel({ plan }: { plan: EarthPlan }) {
         <p className="text-[10.5px] text-muted-foreground">In de 3D-weergave draait het baanvlak werkelijk mee met deze drift (zichtbaar bij dag/maand per seconde). Molniya gebruikt 63,4° zodat dω/dt = 0.</p>
       </Section>
 
+      <Eclipse plan={plan} />
       <Section title="5 · Luchtweerstand (massa, Cd, frontaal oppervlak)">
         <KV k="Ballistische parameter B = Cd·A/m" v={`${f(plan.B, 5)} m²/kg`} />
         <KV k="Dichtheid in perigeum" v={`${density(o.rpAlt).toExponential(2)} kg/m³`} />
