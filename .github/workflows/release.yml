@@ -5,6 +5,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Optional: publish a release with this tag (e.g. v0.3.0) from the selected branch'
+        required: false
+        default: ''
 permissions:
   contents: write
 jobs:
@@ -12,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # "0.2.0" on tag v0.2.0; manual runs are dev builds (the in-app updater ignores non x.y.z versions)
-      APP_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'dev' }}
+      APP_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release_version || 'dev' }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -51,7 +56,7 @@ jobs:
         with:
           name: periapsis
           path: out/
-      - if: startsWith(github.ref, 'refs/tags/')
-        run: gh release create "$GITHUB_REF_NAME" out/Periapsis.apk out/Periapsis.html --title "Periapsis $GITHUB_REF_NAME" --generate-notes
+      - if: startsWith(github.ref, 'refs/tags/') || inputs.release_version != ''
+        run: gh release create "$APP_VERSION" --target "$GITHUB_SHA" out/Periapsis.apk out/Periapsis.html --title "Periapsis $APP_VERSION" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
