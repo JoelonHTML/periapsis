@@ -62,7 +62,7 @@ export const BODIES: Record<BodyId, Body> = {
   venus: { id: 'venus', name: 'Venus', mu: 324858.6, radius: 6051.8, color: '#e7c98f', safe: 1.05,
     el: [0.72333566, 0.00677672, 3.39467605, 181.9790995, 131.60246718, 76.67984255],
     rate: [0.0000039, -0.00004107, -0.0007889, 58517.81538729, 0.00268329, -0.27769418] },
-  earth: { id: 'earth', name: 'Aarde', mu: MU_EARTH, radius: 6371, color: '#3b82f6', safe: 1.05,
+  earth: { id: 'earth', name: 'Aarde', mu: MU_EARTH, radius: 6378.137, color: '#3b82f6', safe: 1.05,
     el: [1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0],
     rate: [0.00000562, -0.00004392, -0.01294668, 35999.37244981, 0.32327364, 0] },
   mars: { id: 'mars', name: 'Mars', mu: 42828.4, radius: 3389.5, color: '#dc6b3f', safe: 1.06,
@@ -227,15 +227,28 @@ export const departDv = (vinf: number, r: number, mu = MU_EARTH) => Math.sqrt(vi
 export const captureDv = (vinf: number, rp: number, mu: number, e: number) =>
   Math.sqrt(vinf * vinf + (2 * mu) / rp) - Math.sqrt((mu * (1 + e)) / rp)
 
-/** Powered-flyby Δv (Izzo/PyKEP fb_vel model): free turn up to δmax, burn covers the rest. */
+/** Powered-flyby Δv. Free turn up to what the planet can bend at periapsis rpMin; any speed change (v∞ in ≠ v∞ out) or turn beyond
+ *  that is paid by ONE burn at periapsis, at the highest periapsis that still gives the required total turn, so the Oberth effect is
+ *  included (departDv/captureDv do the same). If even rpMin cannot bend enough, the remainder is a burn at infinity (PyKEP fb_vel,
+ *  an upper bound). */
 export function flybyDv(vIn: Vec, vOut: Vec, mu: number, rpMin: number) {
-  const a2 = dot(vIn, vIn), b2 = dot(vOut, vOut)
-  const turn = Math.acos(clamp(dot(vIn, vOut) / Math.sqrt(a2 * b2), -1, 1))
-  const turnMax = 2 * Math.asin(1 / (1 + (rpMin / mu) * a2))
+  const a2 = dot(vIn, vIn), b2 = dot(vOut, vOut), vi = Math.sqrt(a2), vo = Math.sqrt(b2)
+  const turn = Math.acos(clamp(dot(vIn, vOut) / (vi * vo), -1, 1))
+  const half = (v: number, rp: number) => Math.asin(1 / (1 + (rp * v * v) / mu)) // asymptote half-turn of one hyperbola branch
+  const total = (rp: number) => half(vi, rp) + half(vo, rp)
+  const turnMax = total(rpMin)
   const excess = turn - turnMax
-  const dv = excess > 0
-    ? Math.sqrt(b2 + a2 - 2 * Math.sqrt(a2 * b2) * Math.cos(excess))
-    : Math.abs(Math.sqrt(b2) - Math.sqrt(a2))
+  let dv: number
+  if (excess <= 0) {
+    // largest periapsis radius that still turns by `turn` (total() falls as rp grows)
+    let lo = rpMin, hi = rpMin * 1e4
+    if (total(hi) >= turn) lo = hi
+    else for (let k = 0; k < 80; k++) { const m = (lo + hi) / 2; if (total(m) >= turn) lo = m; else hi = m }
+    const vp = (v: number) => Math.sqrt(v * v + (2 * mu) / lo)
+    dv = Math.abs(vp(vo) - vp(vi))
+  } else {
+    dv = Math.sqrt(b2 + a2 - 2 * vi * vo * Math.cos(excess))
+  }
   return { dv, turn, turnMax }
 }
 
@@ -309,7 +322,7 @@ export function lagrangePoints(r: Vec, v: Vec, massRatio: number): Vec[] {
 export const MASS_RATIO_EM = MU_MOON / (MU_EARTH + MU_MOON)
 export const MASS_RATIO_SE = (MU_EARTH + MU_MOON) / (MU_SUN + MU_EARTH + MU_MOON)
 
-// ---------- Moon (Meeus low-precision series, ~0.3°) & frames ----------
+// ---------- Moon (Meeus low-precision series, one term per series, no evection/variation: up to ~1–2°) & frames ----------
 export function moonGeoEcliptic(t: number): Vec {
   const d = t / DAY
   const L = (218.316 + 13.176396 * d) * DEG

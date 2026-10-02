@@ -46,6 +46,14 @@ test('unpowered flyby within turn limit costs nothing', () => {
   assert.ok(flybyDv(a, [-5, 0, 0], 42828, 3600).dv > 1)
 })
 
+test('powered flyby burns at periapsis (Oberth): cheaper than a burn at infinity, never negative', () => {
+  const rot = (v: number, a: number): Vec => [v * Math.cos(a), v * Math.sin(a), 0]
+  const r = flybyDv([7.9, 0, 0], rot(4.9, 1.05), 398600.4, 6697) // Earth, v∞ 7.9 → 4.9 km/s, 60° turn
+  assert.ok(r.dv > 1.5 && r.dv < 2.0, `Earth powered flyby ${r.dv}`) // burn at infinity would be 3.0
+  assert.ok(flybyDv([6.2, 0, 0], rot(5.5, 0.7), 324859, 6355).dv < 0.7) // Venus: infinity-burn model said 0.70
+  near(flybyDv([5, 0, 0], rot(5, 0.2), 42828, 3600).dv, 0, 1e-9)
+})
+
 test('GEO Δv: plane change makes Kennedy costlier than Kourou', () => {
   const geo = { rpAlt: 35786, raAlt: 35786, incDeg: 0, parkAlt: 200, wDeg: null }
   const ksc = earthPlan(geo, 28.573, -80.6, 0, 1000, 320, 2.2, 4)

@@ -36,7 +36,7 @@ export function FlybyCard() {
         <KV k="Max. gratis afbuiging" v={`${f(ev.turnMax! / DEG, 1)}°`} />
         <KV k="Periapsis-hoogte" v={`${(g.rp - b.radius).toFixed(0)} km`} />
         <KV k="Snelheid in periapsis" v={`${f(g.vp)} km/s`} />
-        <KV k="Winst door de planeet" v={`${gain >= 0 ? '+' : '−'}${f(Math.abs(gain))} km/s`} strong />
+        <KV k="Heliocentrische snelheidsverandering" v={`${gain >= 0 ? '+' : '−'}${f(Math.abs(gain))} km/s`} strong />
         <KV k="Motor-Δv tijdens flyby" v={free ? 'geen (gratis)' : `${f(ev.dv, 3)} km/s`} strong />
         <KV k="Duur in beeld" v={fmtDuration(2 * tWin)} />
         <Tex block tex={`\\delta_{max} = 2\\arcsin\\frac{1}{1 + r_p v_\\infty^2/\\mu}`} />

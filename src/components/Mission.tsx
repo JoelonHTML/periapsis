@@ -272,6 +272,10 @@ export function MissionPanel() {
                 ))}
               </TableBody>
             </Table>
+            {solutions.some((x) => x.tof / (365.25 * DAY) > 30) && (
+              <p className="flex items-start gap-1.5 text-xs text-amber-400"><TriangleAlert className="mt-0.5 size-3.5 shrink-0" />Een of meer routes duren langer dan 30 jaar: wiskundig zuinig, maar niet realistisch voor een missie.</p>
+            )}
+            <p className="text-[10.5px] leading-snug text-muted-foreground">Model: gepatchte kegelsneden met gravity assists, zonder deep-space-manoeuvres of resonante banen. Echte missies als Galileo of Cassini zijn hiermee niet exact na te bouwen; de Δv is een schatting voor het ontwerp, niet voor navigatie.</p>
             <p className="text-[10.5px] text-muted-foreground">Groen = past binnen je Δv-budget ({f(budget)} km/s) en de v∞-limieten, oranje = te duur voor dit ruimtevaartuig of limiet overschreden.</p>
           </Section>
           <SolutionDetails />
