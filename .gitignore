@@ -28,3 +28,6 @@ Periapsis.html
 
 # dev screenshots
 .shots
+
+# agent worktrees (temporary)
+.claude/worktrees/
