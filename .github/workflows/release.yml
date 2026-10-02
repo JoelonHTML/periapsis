@@ -43,6 +43,9 @@ jobs:
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/periapsis.p12"
             KEYSTORE_FILE="$RUNNER_TEMP/periapsis.p12" ./gradlew assembleRelease $ARGS
             cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/Periapsis.apk"
+          elif [ "${{ startsWith(github.ref, 'refs/tags/') || inputs.release_version != '' }}" = "true" ]; then
+            echo "::error::No KEYSTORE_B64 secret: refusing to publish a debug-signed release (users could never update over it)"
+            exit 1
           else
             echo "::warning::No KEYSTORE_B64 secret: debug-signed APK (cannot be installed as an update over another build)"
             ./gradlew assembleDebug $ARGS

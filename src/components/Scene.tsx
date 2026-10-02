@@ -1,6 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Line, OrbitControls } from '@react-three/drei'
 import { useMemo, useRef, useState } from 'react'
+import { hideSplash } from '@/native'
 import * as THREE from 'three'
 import {
   AU, BODIES, BODY_IDS, DAY, MASS_RATIO_EM, MASS_RATIO_SE, MU_EARTH, R_MOON, R_SUN, RE,
@@ -481,7 +482,7 @@ export function Scene({ view, plan, lat, lon, siteName }: {
   const camFit = useApp((s) => s.camFit)
   const cam: [number, number, number] = view === 'solar' && camFit > 0 ? [0, camFit * 1.15, camFit * 1.55] : CAMERAS[view]
   return (
-    <Canvas gl={{ logarithmicDepthBuffer: true, antialias: true }} camera={{ position: CAMERAS.solar, fov: 45, near: 1e-5, far: 1e7 }}>
+    <Canvas onCreated={() => requestAnimationFrame(hideSplash)} dpr={[1, 1.5]} performance={{ min: 0.6 }} gl={{ logarithmicDepthBuffer: true, antialias: window.devicePixelRatio < 2, powerPreference: 'high-performance' }} camera={{ position: CAMERAS.solar, fov: 45, near: 1e-5, far: 1e7 }}>
       <color attach="background" args={['#04060b']} />
       {view !== 'galaxy' && <Starfield />}
       <PanelOffset />
