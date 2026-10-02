@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { ChevronDown, ChevronUp, Orbit, PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react'
+import { ChevronDown, ChevronUp, LayoutGrid, Orbit, PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -24,6 +24,9 @@ import { flybyWindow, type Solution } from '@/lib/mga'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { Tour } from '@/components/tour/Tour'
 import { useT } from '@/lib/i18n'
+import { modeTabs } from '@/lib/modes'
+import { FEATURE_PANELS } from '@/features'
+import { StartScreen } from '@/components/StartScreen'
 import { MobileApp } from '@/components/Mobile'
 import { SettingsSheet } from '@/components/SettingsSheet'
 import { UpdateBanner } from '@/components/UpdateBanner'
@@ -139,10 +142,11 @@ export default function App() {
   const openSettings = () => ui.set({ settingsOpen: true })
   const land = useMedia('(max-height: 500px)') // phone held sideways: drawer becomes a side panel
   const wide = useMedia('(min-width: 1000px) and (min-height: 501px)') // below: panel at the bottom, cards on top (see max-[999px] classes)
-  useEffect(() => {
-    if (view === 'galaxy') setTab('galaxy')
-    else if (view === 'system') setTab('system')
-  }, [view])
+  const mode = useUi((s) => s.mode)
+  useEffect(() => { // follow the view chips, but only to tabs the open world has
+    if (view === 'galaxy' && modeTabs(mode).includes('galaxy')) setTab('galaxy')
+    else if (view === 'system' && modeTabs(mode).includes('system')) setTab('system')
+  }, [view, mode])
   const onTab = (v: string) => {
     setTab(v as Tab)
     if (v === 'view' || v === 'more') return // phone-only tabs: never touch the 3D view
@@ -170,6 +174,7 @@ export default function App() {
       <TabsContent value="lagrange"><LagrangePanel /></TabsContent>
       <TabsContent value="galaxy"><GalaxyPanel /></TabsContent>
       <TabsContent value="formulas"><FormulasPanel /></TabsContent>
+      {Object.entries(FEATURE_PANELS).map(([id, Panel]) => <TabsContent key={id} value={id}><Panel /></TabsContent>)}
       <TabsContent value="view">
         <div className="grid gap-4 [&_[data-slot=card]]:w-full">
           <TimeBar datesOnly />
@@ -187,6 +192,7 @@ export default function App() {
           scene={<><Scene view={view} plan={plan} lat={site.lat} lon={site.lon} siteName={site.name} /><LabelLayer /></>}
           views={<ViewSwitcher scroll />}
           extras={<>{view === 'flyby' && <FlybyBar />}{view === 'earthmoon' && <EarthMoonBar />}</>} />
+        <StartScreen />
         <Tour />
         <SettingsSheet wide={false} />
         <UpdateBanner />
@@ -216,13 +222,14 @@ export default function App() {
               <div className="text-sm font-semibold leading-none">Periapsis</div>
               <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
             </div>
-            <Button size="icon" variant="ghost" className="ml-auto max-[999px]:size-10" data-tour="settings" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openSettings}><Settings /></Button>
+            <Button size="icon" variant="ghost" className="ml-auto" aria-label={t('home.back')} title={t('home.back')} onClick={() => ui.set({ home: true })}><LayoutGrid /></Button>
+            <Button size="icon" variant="ghost" className="max-[999px]:size-10" data-tour="settings" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openSettings}><Settings /></Button>
             <Button size="icon" variant="ghost" className="max-[999px]:size-10" aria-label={t('nav.hidePanel')} title={t('nav.hidePanel')} onClick={() => setPanel(false)}><PanelLeftClose /></Button>
           </div>
           <Tabs value={tab} onValueChange={onTab} className="flex min-h-0 flex-1 flex-col gap-0">
             {/* one rounded muted pill around both rows (the stock TabsList is a fixed single row of h-8) */}
             <TabsList className="mx-3 mt-3 grid w-auto grid-cols-4 gap-0.5 group-data-horizontal/tabs:h-auto">
-              {['mission', 'earth', 'system', 'calc', 'lagrange', 'galaxy', 'formulas'].map((v) => (
+              {modeTabs(mode).map((v) => (
                 <TabsTrigger key={v} value={v} className="h-7 text-xs">{t(`tab.${v}` as never)}</TabsTrigger>
               ))}
             </TabsList>
@@ -259,6 +266,7 @@ export default function App() {
         <div data-tour="dock" className={`absolute right-3 bottom-3 z-10 max-[999px]:right-2 max-[999px]:left-2 ${panel ? 'left-[416px] max-[999px]:bottom-[calc(46dvh+16px)]' : 'left-3 max-[999px]:bottom-12'}`}>
           <TimeBar />
         </div>
+        <StartScreen />
         <Tour />
         <SettingsSheet wide={wide} />
         <UpdateBanner />

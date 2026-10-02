@@ -2,6 +2,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Line, OrbitControls } from '@react-three/drei'
 import { useMemo, useRef, useState } from 'react'
 import { hideSplash } from '@/native'
+import { FEATURE_SCENE_LAYERS } from '@/features'
 import * as THREE from 'three'
 import {
   AU, BODIES, BODY_IDS, DAY, MASS_RATIO_EM, MASS_RATIO_SE, MU_EARTH, R_MOON, R_SUN, RE,
@@ -496,6 +497,7 @@ export function Scene({ view, plan, lat, lon, siteName }: {
         {view === 'system' && <SystemScene />}
         {view === 'galaxy' && <GalaxyScene />}
       </group>
+      {FEATURE_SCENE_LAYERS.map((Layer, i) => <Layer key={i} view={view} />)}
       <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={1e-4} maxDistance={2e4} zoomSpeed={2.5} />
     </Canvas>
   )

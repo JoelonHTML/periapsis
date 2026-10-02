@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Calculator, Ellipsis, FastForward, Orbit, Pause, Play, Rewind, Rocket, Settings, SkipBack, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, Calculator, CalendarDays, Earth, Ellipsis, FastForward, LayoutGrid, Orbit, Pause, Play, Radar, Rewind, Rocket, Route, Satellite, Settings, SkipBack, SlidersHorizontal, Sparkles, Sun, Telescope } from 'lucide-react'
+import { MODES } from '@/lib/modes'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs } from '@/components/ui/tabs'
@@ -10,17 +11,12 @@ import { snap, tap } from '@/lib/haptics'
 import { useT } from '@/lib/i18n'
 import { useClockTick } from '@/components/FlybyBar'
 
-const NAV: { tab: Tab; Icon: typeof Rocket }[] = [
-  { tab: 'mission', Icon: Rocket },
-  { tab: 'earth', Icon: Orbit },
-  { tab: 'calc', Icon: Calculator },
-  { tab: 'view', Icon: SlidersHorizontal },
-  { tab: 'more', Icon: Ellipsis },
-]
-export const MORE_TABS: { tab: 'system' | 'lagrange' | 'galaxy' | 'formulas' }[] = [
-  { tab: 'system' }, { tab: 'lagrange' }, { tab: 'galaxy' }, { tab: 'formulas' },
-]
-const isMore = (t: Tab) => MORE_TABS.some((m) => m.tab === t)
+/** Icon per tab (the tab list itself comes from the open world, see lib/modes.ts). */
+const ICONS: Partial<Record<Tab, typeof Rocket>> = {
+  mission: Rocket, earth: Orbit, calc: Calculator, view: SlidersHorizontal, more: Ellipsis,
+  sats: Satellite, passes: Radar, tonight: Telescope, events: CalendarDays, bodies: Earth, missions: Route, system: Sun, galaxy: Sparkles,
+}
+const isMore = (t: Tab) => MODES[ui.get().mode].more.includes(t)
 
 const DOCK = 64 // px: drag handle + time row, always visible above the tab bar
 const EASE = 'cubic-bezier(0.32, 0.72, 0, 1)'
@@ -133,7 +129,7 @@ function MorePanel({ onTab }: { onTab: (t: Tab) => void }) {
   const t = useT()
   return (
     <div className="grid grid-cols-2 gap-3">
-      {MORE_TABS.map((m) => (
+      {MODES[ui.get().mode].more.map((tab) => ({ tab })).map((m) => (
         <button key={m.tab} type="button" onClick={() => onTab(m.tab)} className="flex min-h-24 flex-col items-start justify-center gap-1 rounded-2xl border bg-muted/40 p-4 text-left active:bg-muted">
           <span className="text-base font-semibold">{t(`tab.${m.tab}` as never)}</span>
           <span className="text-xs text-muted-foreground">{t(`more.${m.tab}` as never)}</span>
@@ -149,6 +145,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
 }) {
   const t = useT()
   const sheet = useUi((s) => s.sheet)
+  const mode = useUi((s) => s.mode)
   const nav = (t: Tab) => {
     tap()
     if (t === tab && sheet !== 'closed') ui.set({ sheet: 'closed' })
@@ -164,6 +161,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-[env(safe-area-inset-top)]">
         <div className="flex h-12 items-center gap-1 pl-2">
+          <Button size="icon" variant="outline" className="pointer-events-auto size-11 shrink-0 bg-background/80 backdrop-blur" aria-label={t('home.back')} onClick={() => { tap(); ui.set({ home: true }) }}><LayoutGrid /></Button>
           <div data-tour="views" className="pointer-events-auto min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views}</div>
           <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label={t('nav.settings')} data-tour="settings" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
         </div>
@@ -183,7 +181,8 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
       </Drawer>
 
       <nav data-main-nav className="absolute inset-x-0 bottom-0 z-30 flex border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" aria-label={t('nav.main')}>
-        {NAV.map(({ tab: id, Icon }) => {
+        {MODES[mode].tabs.map((id) => {
+          const Icon = ICONS[id] ?? Ellipsis
           const on = active === id && sheet !== 'closed'
           return (
             <button key={id} type="button" data-tour={`nav-${id}`} onClick={() => nav(id)} aria-current={on ? 'page' : undefined}

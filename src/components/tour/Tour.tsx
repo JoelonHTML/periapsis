@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Orbit, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TOUR, clampStep } from '@/lib/tour-steps'
 import { endTour, startTour, tour, useTour } from '@/lib/tour-store'
-import { ui } from '@/lib/ui-store'
+import { openMode, ui } from '@/lib/ui-store'
 import { LANGS, useT } from '@/lib/i18n'
 import { setSetting, useSettings } from '@/lib/settings'
 
@@ -31,6 +31,7 @@ export function Tour() {
   // show what the step talks about (tab / drawer) before measuring it
   useEffect(() => {
     if (phase !== 'running') return
+    if (ui.get().mode !== 'design' || ui.get().home) openMode('design', ui.get().tab) // the tour shows the mission-design world
     const wide = matchMedia('(min-width: 1000px) and (min-height: 501px)').matches // desktop has no drawer and no Beeld/Meer tabs
     if (st.tab && !(wide && (st.tab === 'more' || st.tab === 'view'))) ui.set({ tab: st.tab })
     if (st.sheet) ui.set({ sheet: st.sheet })

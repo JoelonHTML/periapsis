@@ -17,7 +17,7 @@ if (Capacitor.isNativePlatform()) {
   void StatusBar.setStyle({ style: Style.Dark }).catch(() => {})
   void StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
   setTimeout(hideSplash, 4000) // safety: never leave the splash up if WebGL is slow or fails
-  // Back closes the innermost thing first: settings → tour → flyby close-up → full drawer → half drawer → (then leaves the app)
+  // Back closes the innermost thing first: settings → tour → flyby close-up → full drawer → half drawer → start screen → (then leaves the app)
   void App.addListener('backButton', () => {
     const u = ui.get()
     if (u.settingsOpen) ui.set({ settingsOpen: false })
@@ -25,6 +25,7 @@ if (Capacitor.isNativePlatform()) {
     else if (store.get().view === 'flyby') store.set({ view: 'solar' })
     else if (u.sheet === 'full') ui.set({ sheet: 'half' })
     else if (u.sheet === 'half') ui.set({ sheet: 'closed' })
+    else if (!u.home) ui.set({ home: true }) // back to the start screen before leaving the app
     else void App.minimizeApp()
   })
 }

@@ -41,4 +41,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- In-app update: lets the app hand the downloaded APK to the system installer (the user still confirms) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Satellites / Tonight: observer position for passes and the sky (coarse is enough) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Tonight: local reminders for passes and sky events -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

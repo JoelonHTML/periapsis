@@ -44,6 +44,9 @@ const nl = {
   'tour.4.t': 'Aardbaan', 'tour.4.x': 'Plan een baan om de Aarde: kies een lanceerbasis en hoogte en zie direct de Δv, de inclinatie en hoe lang de satelliet blijft hangen.',
   'tour.5.t': 'Rekenen en meer', 'tour.5.x': 'Bij Rekenen vind je losse calculators. Onder Meer staan planeetstelsels, Lagrangepunten, de Melkweg en alle formules met bronnen.',
   'tour.6.t': 'Instellingen en updates', 'tour.6.x': 'Hier zet je labels, schaal, tempo en taal naar wens en haal je met één tik de nieuwste versie van de app.',
+  'mode.design': 'Missies ontwerpen', 'mode.design.h': 'Routes, aardbanen, berekeningen', 'mode.sats': 'Satellieten', 'mode.sats.h': 'ISS en satellieten volgen, overkomsten', 'mode.sky': 'Vanavond', 'mode.sky.h': 'Wat je aan de hemel ziet, gebeurtenissen', 'mode.explore': 'Verkennen', 'mode.explore.h': 'Planeten, echte missies, de Melkweg',
+  'home.title': 'Waar wil je heen?', 'home.back': 'Startscherm',
+  'tab.sats': 'Volgen', 'tab.passes': 'Overkomsten', 'tab.tonight': 'Hemel', 'tab.events': 'Agenda', 'tab.bodies': 'Hemellichamen', 'tab.missions': 'Missies',
   'sm.title': 'Opgeslagen missies', 'sm.save': 'Opslaan', 'sm.share': 'Delen', 'sm.saved': 'Missie opgeslagen', 'sm.copied': 'Gekopieerd naar het klembord', 'sm.empty': 'Nog niets opgeslagen. Sla een set-up op om hem later met één tik terug te zetten.', 'sm.load': 'tik om te laden', 'sm.del': 'Verwijder {n}',
 } as const
 
@@ -85,6 +88,9 @@ const en: Dict = {
   'tour.4.t': 'Earth orbit', 'tour.4.x': 'Plan an orbit around the Earth: pick a launch site and altitude and see the Δv, the inclination and how long the satellite stays up.',
   'tour.5.t': 'Calculate and more', 'tour.5.x': 'Calculate has stand-alone calculators. More holds planet systems, Lagrange points, the Milky Way and all formulas with sources.',
   'tour.6.t': 'Settings and updates', 'tour.6.x': 'Set labels, scale, speed and language here, and get the newest version of the app with one tap.',
+  'mode.design': 'Design missions', 'mode.design.h': 'Routes, Earth orbits, calculators', 'mode.sats': 'Satellites', 'mode.sats.h': 'Track the ISS and satellites, passes', 'mode.sky': 'Tonight', 'mode.sky.h': 'What you can see in the sky, events', 'mode.explore': 'Explore', 'mode.explore.h': 'Planets, real missions, the Milky Way',
+  'home.title': 'Where do you want to go?', 'home.back': 'Start screen',
+  'tab.sats': 'Track', 'tab.passes': 'Passes', 'tab.tonight': 'Sky', 'tab.events': 'Calendar', 'tab.bodies': 'Bodies', 'tab.missions': 'Missions',
   'sm.title': 'Saved missions', 'sm.save': 'Save', 'sm.share': 'Share', 'sm.saved': 'Mission saved', 'sm.copied': 'Copied to the clipboard', 'sm.empty': 'Nothing saved yet. Save a set-up to restore it later with one tap.', 'sm.load': 'tap to load', 'sm.del': 'Delete {n}',
 }
 
@@ -123,21 +129,32 @@ const el: Dict = {
   'tour.4.t': 'Τροχιά Γης', 'tour.4.x': 'Σχεδίασε μια τροχιά γύρω από τη Γη: διάλεξε βάση εκτόξευσης και ύψος και δες το Δv, την κλίση και πόσο μένει ο δορυφόρος ψηλά.',
   'tour.5.t': 'Υπολογισμοί και άλλα', 'tour.5.x': 'Στους Υπολογισμούς υπάρχουν αυτόνομες αριθμομηχανές. Στα Περισσότερα βρίσκεις πλανητικά συστήματα, σημεία Λαγκράνζ, τον Γαλαξία και όλους τους τύπους με πηγές.',
   'tour.6.t': 'Ρυθμίσεις και ενημερώσεις', 'tour.6.x': 'Εδώ ρυθμίζεις ετικέτες, κλίμακα, ταχύτητα και γλώσσα, και παίρνεις τη νεότερη έκδοση με ένα πάτημα.',
+  'mode.design': 'Σχεδιασμός αποστολών', 'mode.design.h': 'Διαδρομές, τροχιές Γης, υπολογισμοί', 'mode.sats': 'Δορυφόροι', 'mode.sats.h': 'Παρακολούθηση ISS και δορυφόρων, διελεύσεις', 'mode.sky': 'Απόψε', 'mode.sky.h': 'Τι φαίνεται στον ουρανό, γεγονότα', 'mode.explore': 'Εξερεύνηση', 'mode.explore.h': 'Πλανήτες, πραγματικές αποστολές, ο Γαλαξίας',
+  'home.title': 'Πού θέλεις να πας;', 'home.back': 'Αρχική οθόνη',
+  'tab.sats': 'Παρακολούθηση', 'tab.passes': 'Διελεύσεις', 'tab.tonight': 'Ουρανός', 'tab.events': 'Ημερολόγιο', 'tab.bodies': 'Ουράνια σώματα', 'tab.missions': 'Αποστολές',
   'sm.title': 'Αποθηκευμένες αποστολές', 'sm.save': 'Αποθήκευση', 'sm.share': 'Κοινοποίηση', 'sm.saved': 'Η αποστολή αποθηκεύτηκε', 'sm.copied': 'Αντιγράφηκε στο πρόχειρο', 'sm.empty': 'Δεν έχει αποθηκευτεί τίποτα ακόμα. Αποθήκευσε μια ρύθμιση για να την επαναφέρεις με ένα πάτημα.', 'sm.load': 'πάτησε για φόρτωση', 'sm.del': 'Διαγραφή {n}',
 }
 
 const DICTS: Record<Lang, Dict> = { nl, en, el }
 
+/** Features add their own texts (src/features/<x>/i18n.ts) without touching this file. Keys should be prefixed with the feature name. */
+const EXTRA: Record<Lang, Record<string, string>> = { nl: {}, en: {}, el: {} }
+export function registerDict(d: Record<Lang, Record<string, string>>) {
+  for (const l of ['nl', 'en', 'el'] as const) Object.assign(EXTRA[l], d[l])
+}
+/** Any registered key, including feature keys (loosely typed on purpose). */
+export type AnyKey = Key | (string & {})
+
 /** Translate one key (variables like {v} are replaced). Falls back to Dutch, then to the key itself. */
-export function translate(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
-  let s = DICTS[lang]?.[key] ?? nl[key] ?? key
+export function translate(lang: Lang, key: AnyKey, vars?: Record<string, string | number>): string {
+  let s = (DICTS[lang] as Record<string, string>)[key] ?? EXTRA[lang][key] ?? (nl as Record<string, string>)[key] ?? EXTRA.nl[key] ?? key
   if (vars) for (const k in vars) s = s.replaceAll(`{${k}}`, String(vars[k]))
   return s
 }
-export const t = (key: Key, vars?: Record<string, string | number>) => translate(settings.get().lang, key, vars)
+export const t = (key: AnyKey, vars?: Record<string, string | number>) => translate(settings.get().lang, key, vars)
 /** React hook: returns a translate function and re-renders when the language changes. */
 export function useT() {
   const lang = useSettings((s) => s.lang)
-  return (key: Key, vars?: Record<string, string | number>) => translate(lang, key, vars)
+  return (key: AnyKey, vars?: Record<string, string | number>) => translate(lang, key, vars)
 }
 export const dictionaries = DICTS
