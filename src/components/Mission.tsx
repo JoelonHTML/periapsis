@@ -23,6 +23,7 @@ import { SPEEDS, clock, closeupKey, fitRoute, jumpTo, openCloseup, patchActiveCr
 import { massPlan, propForDry, wetMassFor } from '@/lib/telemetry'
 import { CraftFields } from './Controls'
 import { FleetBar } from './Fleet'
+import { PorkchopSection } from '@/features/porkchop/PorkchopSection'
 import { MissionChart } from './MissionChart'
 import { KV, NumField, Section, Tex, f } from './bits'
 
@@ -241,6 +242,8 @@ export function MissionPanel() {
         set(m.params as Partial<typeof S>)
         setRunTick((n) => n + 1)
       }} />
+
+      <PorkchopSection mode={S.mode} date={S.date} parkAlt={S.parkAlt} arrival={S.arrival} capAlt={S.capAlt} capEcc={S.capEcc} onUseDate={(date, windowDays) => set({ mode: 'departure', date, windowDays })} />
 
       {moon && isMoon && <MoonResult />}
 
