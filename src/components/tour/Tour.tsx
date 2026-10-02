@@ -65,7 +65,7 @@ export function Tour() {
         <div className="tour-ring pointer-events-none fixed rounded-2xl ring-2 ring-cyan-300 shadow-[0_0_0_100vmax_rgba(0,0,0,0.6)]"
           style={{ left: box.x - pad, top: box.y - pad, width: box.w + pad * 2, height: box.h + pad * 2 }} />
       ) : <div className="fixed inset-0 bg-black/55" />}
-      <div className={`pointer-events-none fixed inset-x-3 flex justify-center ${!box ? 'inset-y-0 items-center' : top ? 'top-[max(1rem,env(safe-area-inset-top))]' : 'bottom-[calc(env(safe-area-inset-bottom)+5rem)]'}`}>
+      <div className={`pointer-events-none fixed inset-x-3 flex justify-center ${!box ? 'inset-y-0 items-center' : top ? 'top-[max(1rem,env(safe-area-inset-top))]' : 'bottom-[calc(env(safe-area-inset-bottom)+9rem)]'}`}>
       <div key={step} className="tour-pop pointer-events-auto w-full max-w-sm rounded-2xl border bg-card p-4 shadow-2xl">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">

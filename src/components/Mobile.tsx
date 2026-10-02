@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs } from '@/components/ui/tabs'
 import { fmtDateTime } from '@/lib/astro'
-import { SPEEDS, clock, store } from '@/lib/store'
+import { SPEEDS, clock, store, useApp } from '@/lib/store'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { snap, tap } from '@/lib/haptics'
 import { useClockTick } from '@/components/FlybyBar'
@@ -37,7 +37,7 @@ function Dock({ onDate }: { onDate: () => void }) {
     clock.target = d * (Math.sign(clock.target) === d && !clock.paused ? SPEEDS[Math.min(SPEEDS.length - 1, i + 1)].s : SPEEDS[i].s)
     clock.paused = false
   }
-  const b = 'size-11 shrink-0'
+  const b = 'size-11 shrink-0 max-[380px]:size-10'
   return (
     <div className="flex h-12 items-center gap-0.5 px-1.5">
       <Button size="icon" variant="ghost" className={b} aria-label="Terug naar startdatum" onClick={() => { clock.t = store.get().startT }}><SkipBack /></Button>
@@ -45,10 +45,10 @@ function Dock({ onDate }: { onDate: () => void }) {
       <Button size="icon" className={b} aria-label={clock.paused ? 'Afspelen' : 'Pauzeren'} onClick={() => { tap(); clock.paused = !clock.paused }}>{clock.paused ? <Play /> : <Pause />}</Button>
       <Button size="icon" variant={dir > 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label="Vooruitspoelen" onClick={() => setDir(1)}><FastForward /></Button>
       <Select value={idx >= 0 ? String(idx) : ''} onValueChange={(v) => { clock.target = dir * SPEEDS[+v].s; clock.paused = false }}>
-        <SelectTrigger className="h-11 w-[5.6rem] shrink-0 px-2 text-xs" aria-label="Tempo"><SelectValue placeholder="tempo" /></SelectTrigger>
+        <SelectTrigger className="data-[size=default]:h-11 w-[5.4rem] shrink-0 px-2 text-xs" aria-label="Tempo"><SelectValue placeholder="tempo" /></SelectTrigger>
         <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{s.label}</SelectItem>)}</SelectContent>
       </Select>
-      <button type="button" onClick={onDate} className="ml-auto min-w-0 truncate px-1.5 text-right font-mono text-[11px] leading-tight tabular-nums" aria-label="Datum en tijd instellen">
+      <button type="button" onClick={onDate} className="ml-auto flex min-h-11 shrink-0 items-center whitespace-nowrap px-1 text-right font-mono text-[11px] leading-tight tabular-nums" aria-label="Datum en tijd instellen">
         {fmtDateTime(clock.t).slice(0, 10)}<br />{fmtDateTime(clock.t).slice(11)} UTC
       </button>
     </div>
@@ -125,7 +125,7 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
         <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-muted-foreground/40" />
         {dock}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t px-4 pt-3 pb-6" inert={closed || undefined}>{children}</div>
+      <div className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain border-t px-4 pt-3" style={{ paddingBottom: y + 24 }} inert={closed || undefined}>{children}</div>
     </div>
   )
 }
@@ -154,9 +154,11 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
     else { onTab(t); if (sheet === 'closed') ui.set({ sheet: 'half' }) }
   }
   useEffect(() => { document.documentElement.style.overscrollBehavior = 'none' }, [])
+  const view = useApp((s) => s.view)
+  useEffect(() => { document.querySelector('[data-tour=views] [data-state=on]')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }) }, [view])
   const active = isMore(tab) ? 'more' : tab
   return (
-    <div className="relative h-dvh w-screen overflow-hidden bg-background text-foreground">
+    <div className="relative h-dvh w-screen overflow-clip bg-background text-foreground">
       <div className="absolute inset-0">{scene}</div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-[env(safe-area-inset-top)]">
@@ -164,8 +166,8 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
           <div data-tour="views" className="pointer-events-auto min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{views}</div>
           <Button size="icon" variant="outline" className="pointer-events-auto mr-2 size-11 shrink-0 bg-background/80 backdrop-blur" aria-label="Instellingen" data-tour="settings" onClick={() => ui.set({ settingsOpen: true })}><Settings /></Button>
         </div>
-        <div className="flex justify-center px-2">{extras}</div>
       </div>
+      <div className="pointer-events-none absolute inset-x-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10 flex max-h-[40dvh] justify-center overflow-y-auto px-2">{extras}</div>
 
       <Drawer land={land} dock={<Dock onDate={() => { onTab('view'); ui.set({ sheet: 'half' }) }} />}>
         {isMore(tab) && (

@@ -123,7 +123,7 @@ export const selectedSolution = (s: State) => (s.selected >= 0 ? s.solutions[s.s
 
 // ---------- Simulation clock (mutable, read every frame; never triggers React renders) ----------
 export const SPEEDS = [
-  { s: 1, label: 'Realtime' },
+  { s: 1, label: 'Realtijd' },
   { s: 60, label: '1 min/s' },
   { s: 3600, label: '1 uur/s' },
   { s: 86400, label: '1 dag/s' },

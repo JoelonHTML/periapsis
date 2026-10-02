@@ -80,13 +80,13 @@ function Body() {
         <Toggle k="showLabels" label="Labels tonen" hint="Namen bij planeten, manen en ruimtevaartuigen." />
         <Row label="Planeetgrootte" hint={trueScale ? 'Op ware schaal: planeten zijn piepklein.' : 'Vergroot, zodat ze goed te zien zijn.'}>
           <Select value={trueScale ? 'true' : 'mag'} onValueChange={(v) => setSetting('trueScale', v === 'true')}>
-            <SelectTrigger className="h-10 w-36" aria-label="Planeetgrootte"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36 data-[size=default]:h-11" aria-label="Planeetgrootte"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="true">Ware schaal</SelectItem><SelectItem value="mag">Vergroot</SelectItem></SelectContent>
           </Select>
         </Row>
         <Row label="Standaard tempo" hint="Waarmee de tijd start.">
           <Select value={String(speedIdx)} onValueChange={(v) => setSetting('speedIdx', +v)}>
-            <SelectTrigger className="h-10 w-36" aria-label="Standaard tempo"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36 data-[size=default]:h-11" aria-label="Standaard tempo"><SelectValue /></SelectTrigger>
             <SelectContent>{SPEEDS.map((s, i) => <SelectItem key={s.s} value={String(i)}>{s.label}</SelectItem>)}</SelectContent>
           </Select>
         </Row>

@@ -74,7 +74,7 @@ export function TimeBar({ datesOnly = false }: { datesOnly?: boolean }) {
           <div className="grid gap-1">
             <Label className="text-[11px] text-muted-foreground">Startdatum (UTC)</Label>
             <div className="flex gap-1">
-              <Input type="datetime-local" className="h-8 w-[190px]" value={toLocalInput(startT)}
+              <Input type="datetime-local" className="h-8 w-full min-w-[11rem]" value={toLocalInput(startT)}
                 onChange={(e) => {
                   const ms = new Date(e.target.value).getTime()
                   if (Number.isFinite(ms)) { const t = toJ2000(ms); store.set({ startT: t }); clock.t = t }

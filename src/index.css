@@ -158,3 +158,16 @@
 html { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 body { -webkit-user-select: none; user-select: none; }
 input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+/* Panels: grid items must be allowed to shrink, or one wide table/row makes the whole panel wider than the screen. */
+[data-slot=tabs-content], [data-slot=tabs-content] .grid > * { min-width: 0; }
+/* Wide formulas scroll sideways instead of being cut off. */
+.katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: 0.25rem; }
+/* Touch screens: every control at least 44 px tall (Android accessibility guideline); the checkbox/switch get a larger invisible hit area. */
+@media (pointer: coarse) {
+  [data-slot=input], [data-slot=select-trigger] { min-height: 2.75rem; }
+  [data-slot=select-item] { min-height: 2.75rem; }
+  [data-slot=button]:not([class*='size-']) { min-height: 2.5rem; }
+  [data-slot=toggle-group-item] { min-height: 2.5rem; }
+  [data-slot=checkbox] { position: relative; }
+  [data-slot=checkbox]::after { content: ''; position: absolute; inset: -14px; }
+}
