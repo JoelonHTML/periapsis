@@ -18,16 +18,33 @@ export function isNewer(latest: string, current: string) {
 
 export interface Update { version: string; apkUrl: string; notes: string }
 
-/** Latest release if it is newer than this build and has an APK attached, else null. Network errors → null (stay quiet offline). */
-export async function checkForUpdate(current = APP_VERSION): Promise<Update | null> {
+/** Result of asking GitHub for the newest release. `latest` = newest version and its APK, `newer` = it beats `current`. */
+export type UpdateStatus =
+  | { kind: 'ok'; latest: Update; newer: boolean }
+  | { kind: 'offline' } // fetch threw: no connection
+  | { kind: 'error' } // GitHub answered, but not with a usable release (rate limit, no APK attached, ...)
+
+export async function getUpdateStatus(current = APP_VERSION): Promise<UpdateStatus> {
+  let res: Response
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
-    if (!res.ok) return null
+    res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
+  } catch {
+    return { kind: 'offline' }
+  }
+  try {
+    if (!res.ok) return { kind: 'error' }
     const rel = (await res.json()) as { tag_name: string; body?: string; assets?: { name: string; browser_download_url: string }[] }
     const apk = rel.assets?.find((a) => a.name.endsWith('.apk'))
-    if (!apk || !isNewer(rel.tag_name, current)) return null
-    return { version: rel.tag_name.replace(/^v/, ''), apkUrl: apk.browser_download_url, notes: rel.body ?? '' }
+    if (!apk) return { kind: 'error' }
+    const latest = { version: rel.tag_name.replace(/^v/, ''), apkUrl: apk.browser_download_url, notes: rel.body ?? '' }
+    return { kind: 'ok', latest, newer: isNewer(rel.tag_name, current) }
   } catch {
-    return null
+    return { kind: 'error' }
   }
+}
+
+/** Latest release if it is newer than this build and has an APK attached, else null. Network errors → null (stay quiet offline). */
+export async function checkForUpdate(current = APP_VERSION): Promise<Update | null> {
+  const st = await getUpdateStatus(current)
+  return st.kind === 'ok' && st.newer ? st.latest : null
 }

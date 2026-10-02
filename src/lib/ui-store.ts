@@ -7,5 +7,7 @@ export const ui = createStore({
   tab: (new URLSearchParams(globalThis.location?.hash.slice(1) ?? '').get('tab') ?? 'mission') as Tab,
   /** Side panel (desktop) / bottom sheet (phone) visible. */
   panelOpen: true,
+  /** Settings sheet (gear button). */
+  settingsOpen: false,
 })
 export const useUi = ui.useStore

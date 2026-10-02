@@ -138,3 +138,9 @@
 @media (prefers-reduced-motion: reduce) {
   .update-banner { transition: opacity 200ms ease; }
 }
+/* "Minder animaties" (Instellingen) and the OS setting both switch off transitions and keyframes. */
+:root[data-reduce-motion] *, :root[data-reduce-motion] *::before, :root[data-reduce-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}

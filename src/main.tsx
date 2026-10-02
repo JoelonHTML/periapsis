@@ -3,10 +3,13 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import './native'
+import { initSettings } from '@/lib/settings-apply'
 import { toJ2000 } from '@/lib/astro'
 import { runMga, type MgaInput } from '@/lib/mga'
 import { flybyWindow } from '@/lib/mga'
 import { addShip, clock, fitRoute, jumpTo, openCloseup, removeShip, renameShip, selectShip, selectedSolution, setSpeedNow, store, type View } from '@/lib/store'
+
+initSettings() // saved settings first, so deep-link params below still win
 
 // Deep links: #view=galaxy&tab=galaxy&speed=3600&t=2038-11-03   (speed in s/s, t = UTC date)
 const hash = new URLSearchParams(location.hash.slice(1))
