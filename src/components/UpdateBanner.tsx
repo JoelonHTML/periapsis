@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useT } from '@/lib/i18n'
+import { canInstallInApp } from '@/lib/apk-install'
 import { applyUpdate, updates, refreshUpdates, useUpdates } from '@/lib/update-store'
 
 const SKIP_KEY = 'periapsis.update.skip' // version the user answered "Later" to: don't ask again for that one
@@ -10,7 +11,7 @@ const SKIP_KEY = 'periapsis.update.skip' // version the user answered "Later" to
 /** Leaving the app's origin makes Capacitor hand the URL to the system browser, which downloads the APK
  *  (a native download+install plugin would save the user one tap). */
 /** Only the Android app can swap its own web build, and only if the release carries one. */
-export const canLiveUpdate = (u: { htmlUrl?: string }) => Capacitor.isNativePlatform() && !!u.htmlUrl
+export const canLiveUpdate = (u: { htmlUrl?: string }) => Capacitor.isNativePlatform() && (!!u.htmlUrl || canInstallInApp())
 
 export function downloadApk(url: string) { window.location.href = url }
 

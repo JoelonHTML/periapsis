@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { checkForUpdate, getUpdateStatus, isNewer } from './update.ts'
-import { refreshUpdates, updates } from './update-store.ts'
+import { applyUpdate, refreshUpdates, updates } from './update-store.ts'
 
 test('isNewer compares x.y.z numerically', () => {
   assert.equal(isNewer('v0.2.0', '0.1.1'), true)
@@ -71,4 +71,12 @@ test('refreshUpdates publishes the state and shares one in-flight request', asyn
   } finally {
     globalThis.fetch = real
   }
+})
+
+test('applyUpdate outside the Android app ends in "applyfail / needs-apk" so the UI offers the browser APK', async () => {
+  const latest = { version: '0.9.0', apkUrl: 'https://x/Periapsis.apk', htmlUrl: 'https://x/Periapsis.html', notes: '' }
+  assert.equal(await applyUpdate(latest), false)
+  const s = updates.get().s
+  assert.equal(s.phase, 'applyfail')
+  assert.equal((s as { why: string }).why, 'needs-apk')
 })

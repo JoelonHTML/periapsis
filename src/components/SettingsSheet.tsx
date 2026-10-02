@@ -21,22 +21,24 @@ function UpdateCard() {
   const latest = 'latest' in st ? st.latest : null
   const live = !!latest && canLiveUpdate(latest)
   const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
-  const available = (st.phase === 'available' || st.phase === 'applyfail') && latest
+  const available = (st.phase === 'available' || st.phase === 'applyfail' || st.phase === 'needperm' || st.phase === 'installprompt') && latest
   const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t('upd.fail.bad'), storage: t('upd.fail.storage') }[st.why] : ''
   const msg = {
     idle: t('upd.idle'),
     checking: t('upd.checking'),
     latest: t('upd.latest'),
     available: latest ? t('upd.available', { v: latest.version }) : '',
-    downloading: t('upd.downloading'),
+    downloading: st.phase === 'downloading' && st.pct !== undefined ? t('upd.downloadingPct', { p: st.pct }) : t('upd.downloading'),
+    installprompt: t('upd.prompt'),
+    needperm: t('upd.perm'),
     restarting: t('upd.restarting'),
     applyfail: failMsg,
     offline: t('upd.offline'),
     error: t('upd.error'),
   }[st.phase]
-  const tone = available ? (st.phase === 'applyfail' ? 'text-amber-400' : 'text-cyan-300') : st.phase === 'latest' ? 'text-emerald-400' : st.phase === 'offline' || st.phase === 'error' ? 'text-amber-400' : 'text-muted-foreground'
+  const tone = available ? (st.phase === 'applyfail' || st.phase === 'needperm' ? 'text-amber-400' : 'text-cyan-300') : st.phase === 'latest' ? 'text-emerald-400' : st.phase === 'offline' || st.phase === 'error' ? 'text-amber-400' : 'text-muted-foreground'
   const Icon = busy ? Loader2 : available ? Download : st.phase === 'latest' ? CheckCircle2 : st.phase === 'offline' ? WifiOff : RefreshCw
-  const retryLive = st.phase === 'applyfail' && st.why !== 'needs-apk' && st.why !== 'storage'
+  const retryLive = st.phase === 'needperm' || (st.phase === 'applyfail' && st.why !== 'needs-apk' && st.why !== 'storage')
   return (
     <section className="grid gap-3 rounded-2xl border bg-card p-4" aria-live="polite">
       <div className="grid grid-cols-2 gap-3 text-center">
@@ -55,11 +57,11 @@ function UpdateCard() {
       <Button size="lg" className="h-14 w-full text-base" disabled={busy} variant={available ? 'default' : 'secondary'}
         onClick={() => {
           if (!available) void refreshUpdates()
-          else if (live && (st.phase === 'available' || retryLive)) void applyUpdate(latest)
+          else if (live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive)) void applyUpdate(latest)
           else downloadApk(latest.apkUrl)
         }}>
         {available
-          ? <><Download className="size-5" /> {live && (st.phase === 'available' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
+          ? <><Download className="size-5" /> {live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
           : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? t('upd.check') : t('upd.recheck')}</>}
       </Button>
       {available && live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}
