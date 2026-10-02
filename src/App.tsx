@@ -169,7 +169,7 @@ export default function App() {
       <TabsContent value="formulas"><FormulasPanel /></TabsContent>
       <TabsContent value="view">
         <div className="grid gap-4 [&_[data-slot=card]]:w-full">
-          <TimeBar />
+          <TimeBar datesOnly />
           <ViewCard />
           {view === 'flyby' && <FlybyCard />}
           <TelemetryHud />

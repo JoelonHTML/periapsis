@@ -33,3 +33,7 @@ node --test src/lib/*.test.ts   # natuurkunde-tests
 
 Handig tijdens ontwikkelen: `scripts/shot.sh <naam> "view=galaxy"` maakt een headless screenshot (Edge) van de draaiende dev-server;
 deep links `#view=… &tab=… &speed=… &t=…`, en alleen in dev `#js=__orbitlab.demo()`.
+
+## Licentie
+
+© 2026 Joël Nieuwkoop. Alle rechten voorbehouden; zie [LICENSE](LICENSE). Niets uit dit project mag zonder schriftelijke toestemming worden nagemaakt of verspreid.

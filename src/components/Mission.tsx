@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import MgaWorker from '@/lib/mga.worker.ts?worker&inline'
-import { Crosshair, Play, Rocket, ScanSearch, TriangleAlert } from 'lucide-react'
+import { Crosshair, Play, Rocket, ScanSearch, Share2, Bookmark, Trash2, TriangleAlert } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { Share } from '@capacitor/share'
+import { deleteMission, loadMissions, saveMission, type SavedMission } from '@/lib/missions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -65,6 +68,8 @@ export function MissionPanel() {
   const [noRoute, setNoRoute] = useState(false)
   const worker = useRef<Worker | null>(null)
   useEffect(() => () => worker.current?.terminate(), [])
+  const [runTick, setRunTick] = useState(0) // a loaded mission re-runs the optimizer once its settings have landed in state
+  useEffect(() => { if (runTick) run() }, [runTick]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const budget = dvBudget(craft.dry, craft.prop, craft.isp)
   const isMoon = target === 'moon'
@@ -228,6 +233,13 @@ export function MissionPanel() {
           </p>
         )}
       </Section>
+
+      <SavedMissions params={S as unknown as Record<string, unknown>} onLoad={(m) => {
+        store.set({ target: m.target as BodyId | 'moon' })
+        patchActiveCraft(m.craft)
+        set(m.params as Partial<typeof S>)
+        setRunTick((n) => n + 1)
+      }} />
 
       {moon && isMoon && <MoonResult />}
 
@@ -428,6 +440,54 @@ function MoonResult() {
       <Tex block tex={`\\Delta v_{TLI} = \\sqrt{\\mu_\\oplus\\left(\\tfrac{2}{r_p}-\\tfrac{1}{a}\\right)} - \\sqrt{\\tfrac{\\mu_\\oplus}{r_p}},\\ a = \\tfrac{${(m.rPark).toFixed(0)} + ${m.rMoon.toFixed(0)}}{2}`} />
       <Tex block tex={`\\Delta v_{LOI} = \\sqrt{v_\\infty^2 + \\tfrac{2\\mu_{Maan}}{r}} - \\sqrt{\\tfrac{\\mu_{Maan}}{r}}`} />
       <p className="text-[10.5px] text-muted-foreground">μ⊕ = {MU_EARTH} km³/s², R⊕ = {RE} km. Bekijk de transfer in de Aarde–Maan weergave.</p>
+    </Section>
+  )
+}
+
+/** What the share sheet sends: a plain-text summary of the selected route (or of the Moon plan's target). */
+function shareText(sol: Solution | null, target: string) {
+  if (!sol) return `Periapsis · missie naar ${target === 'moon' ? 'de Maan' : BODIES[target as BodyId].name}`
+  const route = sol.seq.map((b) => BODIES[b].name).join(' → ')
+  return `Periapsis · ${route}\nVertrek ${fmtDate(sol.tDep)} · aankomst ${fmtDate(sol.tArr)} · ${fmtDuration(sol.tof)}\nΔv ${sol.dv.toFixed(2)} km/s${sol.feasible ? '' : ' (boven het Δv-budget)'}`
+}
+
+/** Save the current mission set-up, load an earlier one (re-runs the optimizer), or share the selected route as text. */
+function SavedMissions({ params, onLoad }: { params: Record<string, unknown>; onLoad: (m: SavedMission) => void }) {
+  const [list, setList] = useState(loadMissions)
+  const target = useApp((s) => s.target)
+  const craft = useApp((s) => s.craft)
+  const sol = useApp(selectedSolution)
+  const [note, setNote] = useState('')
+  const flash = (t: string) => { setNote(t); setTimeout(() => setNote(''), 2500) }
+  const label = `${target === 'moon' ? 'Maan' : BODIES[target as BodyId].name} · ${String(params.date)}`
+  const share = async () => {
+    const text = shareText(sol, target)
+    try {
+      if (Capacitor.isNativePlatform()) await Share.share({ title: 'Periapsis missie', text })
+      else if (navigator.share) await navigator.share({ title: 'Periapsis missie', text })
+      else { await navigator.clipboard.writeText(text); flash('Gekopieerd naar het klembord') }
+    } catch { /* the user closed the share sheet */ }
+  }
+  return (
+    <Section title="Opgeslagen missies">
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" className="h-11" onClick={() => { setList(saveMission({ name: label, target, craft, params })); flash('Missie opgeslagen') }}><Bookmark /> Opslaan</Button>
+        <Button variant="outline" className="h-11" onClick={share}><Share2 /> Delen</Button>
+      </div>
+      {note && <p role="status" className="text-xs text-emerald-400">{note}</p>}
+      {list.length === 0 ? <p className="text-xs text-muted-foreground">Nog niets opgeslagen. Sla een set-up op om hem later met één tik terug te zetten.</p> : (
+        <ul className="grid gap-1.5">
+          {list.map((m) => (
+            <li key={m.id} className="flex items-center gap-1 rounded-lg border bg-muted/30 pl-3">
+              <button type="button" className="min-h-11 min-w-0 flex-1 text-left" onClick={() => onLoad(m)}>
+                <div className="truncate text-sm font-medium">{m.name}</div>
+                <div className="text-[11px] text-muted-foreground">{new Date(m.savedAt).toLocaleDateString('nl-NL')} · tik om te laden</div>
+              </button>
+              <Button size="icon" variant="ghost" className="size-11 shrink-0" aria-label={`Verwijder ${m.name}`} onClick={() => setList(deleteMission(m.id))}><Trash2 /></Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </Section>
   )
 }

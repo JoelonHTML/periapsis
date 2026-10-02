@@ -6,6 +6,7 @@ import { Tabs } from '@/components/ui/tabs'
 import { fmtDateTime } from '@/lib/astro'
 import { SPEEDS, clock, store } from '@/lib/store'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
+import { snap, tap } from '@/lib/haptics'
 import { useClockTick } from '@/components/FlybyBar'
 
 const NAV: { tab: Tab; label: string; Icon: typeof Rocket }[] = [
@@ -41,7 +42,7 @@ function Dock({ onDate }: { onDate: () => void }) {
     <div className="flex h-12 items-center gap-0.5 px-1.5">
       <Button size="icon" variant="ghost" className={b} aria-label="Terug naar startdatum" onClick={() => { clock.t = store.get().startT }}><SkipBack /></Button>
       <Button size="icon" variant={dir < 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label="Terugspoelen" onClick={() => setDir(-1)}><Rewind /></Button>
-      <Button size="icon" className={b} aria-label={clock.paused ? 'Afspelen' : 'Pauzeren'} onClick={() => { clock.paused = !clock.paused }}>{clock.paused ? <Play /> : <Pause />}</Button>
+      <Button size="icon" className={b} aria-label={clock.paused ? 'Afspelen' : 'Pauzeren'} onClick={() => { tap(); clock.paused = !clock.paused }}>{clock.paused ? <Play /> : <Pause />}</Button>
       <Button size="icon" variant={dir > 0 && !clock.paused ? 'secondary' : 'ghost'} className={b} aria-label="Vooruitspoelen" onClick={() => setDir(1)}><FastForward /></Button>
       <Select value={idx >= 0 ? String(idx) : ''} onValueChange={(v) => { clock.target = dir * SPEEDS[+v].s; clock.paused = false }}>
         <SelectTrigger className="h-11 w-[5.6rem] shrink-0 px-2 text-xs" aria-label="Tempo"><SelectValue placeholder="tempo" /></SelectTrigger>
@@ -71,7 +72,7 @@ function Drawer({ land, children, dock }: { land: boolean; children: ReactNode; 
     return () => ro.disconnect()
   }, [land])
   const offsets = { full: 0, half: Math.max(0, h - window.innerHeight * 0.5), closed: Math.max(0, h - DOCK) }
-  const set = (sheet: 'closed' | 'half' | 'full') => ui.set({ sheet })
+  const set = (next: 'closed' | 'half' | 'full') => { if (next !== sheet) snap(); ui.set({ sheet: next }) }
   const down = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button,[role=combobox],select')) return
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -148,6 +149,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
 }) {
   const sheet = useUi((s) => s.sheet)
   const nav = (t: Tab) => {
+    tap()
     if (t === tab && sheet !== 'closed') ui.set({ sheet: 'closed' })
     else { onTab(t); if (sheet === 'closed') ui.set({ sheet: 'half' }) }
   }

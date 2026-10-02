@@ -10,6 +10,7 @@ export interface Settings {
   speedIdx: number
   reduceMotion: boolean
   keepAwake: boolean
+  haptics: boolean
 }
 
 export const SPEED_COUNT = 6 // = SPEEDS.length in store.ts (kept as a number so this module stays store-free and testable)
@@ -20,14 +21,15 @@ export const defaultSettings = (): Settings => ({
   speedIdx: 0,
   reduceMotion: !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   keepAwake: false,
+  haptics: true,
 })
 
 /** Merge untrusted stored JSON over the defaults, dropping anything of the wrong type or out of range. */
 export function normalize(raw: unknown): Settings {
   const d = defaultSettings(), r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const bool = (k: 'showLabels' | 'trueScale' | 'reduceMotion' | 'keepAwake') => (typeof r[k] === 'boolean' ? (r[k] as boolean) : d[k])
+  const bool = (k: 'showLabels' | 'trueScale' | 'reduceMotion' | 'keepAwake' | 'haptics') => (typeof r[k] === 'boolean' ? (r[k] as boolean) : d[k])
   const idx = Number.isInteger(r.speedIdx) && (r.speedIdx as number) >= 0 && (r.speedIdx as number) < SPEED_COUNT ? (r.speedIdx as number) : d.speedIdx
-  return { showLabels: bool('showLabels'), trueScale: bool('trueScale'), speedIdx: idx, reduceMotion: bool('reduceMotion'), keepAwake: bool('keepAwake') }
+  return { showLabels: bool('showLabels'), trueScale: bool('trueScale'), speedIdx: idx, reduceMotion: bool('reduceMotion'), keepAwake: bool('keepAwake'), haptics: bool('haptics') }
 }
 
 function read(): Settings {

@@ -27,7 +27,8 @@ const toLocalInput = (t: number) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 
-export function TimeBar() {
+/** `datesOnly`: just the clock readout and the start date (the phone drawer has its own play/speed dock). */
+export function TimeBar({ datesOnly = false }: { datesOnly?: boolean }) {
   const [, tick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => tick((x) => x + 1), 100)
@@ -45,6 +46,7 @@ export function TimeBar() {
   return (
     <Card className="gap-0 py-2.5">
       <CardContent className="flex flex-wrap items-center gap-3 px-3">
+        {!datesOnly && (<>
         <div className="flex items-center gap-1">
           <Tip label="Terug naar startdatum">
             <Button size="icon" variant="ghost" onClick={() => { clock.t = startT }}><SkipBack /></Button>
@@ -63,7 +65,8 @@ export function TimeBar() {
           onValueChange={(v) => { if (v !== '') { clock.target = dir * SPEEDS[+v].s; clock.paused = false } }}>
           {SPEEDS.map((s, i) => <ToggleGroupItem key={s.s} value={String(i)} className="px-2.5 text-xs">{s.label}</ToggleGroupItem>)}
         </ToggleGroup>
-        <div className="ml-auto flex items-center gap-4">
+        </>)}
+        <div className={`flex items-center gap-4 ${datesOnly ? 'flex-wrap' : 'ml-auto'}`}>
           <div className="text-right">
             <div className="font-mono text-sm font-semibold tabular-nums">{fmtDateTime(clock.t)} UTC</div>
             <div className="text-[11px] text-muted-foreground tabular-nums">tempo {fmtSpeed(clock.paused && Math.abs(currentSpeed()) < 0.05 ? 0 : currentSpeed())}</div>

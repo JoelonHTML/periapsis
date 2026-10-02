@@ -91,6 +91,7 @@ function Body() {
           </Select>
         </Row>
         <Toggle k="reduceMotion" label="Minder animaties" hint="Geen schuif- en zweefeffecten in de menu's." />
+        <Toggle k="haptics" label="Trillingen" hint="Een lichte tik bij knoppen en als de lade vastklikt." />
         <Toggle k="keepAwake" label="Scherm aan houden" hint="Het scherm gaat niet uit zolang de app open is." />
       </section>
       <section className="grid gap-2">
@@ -101,6 +102,7 @@ function Body() {
           <RotateCcw className="size-5" /> Instellingen herstellen
         </Button>
       </section>
+      <p className="text-center text-[11px] leading-relaxed text-muted-foreground">Periapsis werkt volledig zonder internet. Alleen de update-controle heeft een verbinding nodig.</p>
       <Credits />
     </div>
   )

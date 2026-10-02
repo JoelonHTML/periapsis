@@ -1,0 +1,9 @@
+Copyright (c) 2026 Joël Nieuwkoop. All rights reserved.
+
+Periapsis, including its source code, design, texts and graphics, is the work of
+Joël Nieuwkoop. The source is visible for transparency only. No part of it may be
+copied, modified, redistributed, sublicensed, sold or used to build a derivative
+or competing product without the prior written permission of the author.
+
+Third-party components (React, three.js, Capacitor, Tailwind CSS, shadcn/ui,
+KaTeX and others) remain under their own licences.
