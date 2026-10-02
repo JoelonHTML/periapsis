@@ -16,7 +16,7 @@ export function isNewer(latest: string, current: string) {
   return false
 }
 
-export interface Update { version: string; apkUrl: string; notes: string }
+export interface Update { version: string; apkUrl: string; /** the release's single-file web build, for the in-app live update */ htmlUrl?: string; notes: string }
 
 /** Result of asking GitHub for the newest release. `latest` = newest version and its APK, `newer` = it beats `current`. */
 export type UpdateStatus =
@@ -36,7 +36,9 @@ export async function getUpdateStatus(current = APP_VERSION): Promise<UpdateStat
     const rel = (await res.json()) as { tag_name: string; body?: string; assets?: { name: string; browser_download_url: string }[] }
     const apk = rel.assets?.find((a) => a.name.endsWith('.apk'))
     if (!apk) return { kind: 'error' }
-    const latest = { version: rel.tag_name.replace(/^v/, ''), apkUrl: apk.browser_download_url, notes: rel.body ?? '' }
+    const html = rel.assets?.find((a) => a.name.endsWith('.html'))
+    const latest: Update = { version: rel.tag_name.replace(/^v/, ''), apkUrl: apk.browser_download_url, notes: rel.body ?? '' }
+    if (html) latest.htmlUrl = html.browser_download_url
     return { kind: 'ok', latest, newer: isNewer(rel.tag_name, current) }
   } catch {
     return { kind: 'error' }

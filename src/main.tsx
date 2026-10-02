@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import './native'
+import { markReady } from '@/lib/ota'
 import { initSettings } from '@/lib/settings-apply'
 import { toJ2000 } from '@/lib/astro'
 import { runMga, type MgaInput } from '@/lib/mga'
@@ -58,3 +59,5 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+markReady() // this start rendered: a live-updated build that got this far is good (see the bootstrap in index.html)

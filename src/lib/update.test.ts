@@ -23,7 +23,7 @@ test('checkForUpdate picks the APK of a newer release and stays quiet otherwise'
   const release = { tag_name: 'v0.3.0', body: 'notes', assets: [{ name: 'Periapsis.html', browser_download_url: 'h' }, { name: 'Periapsis.apk', browser_download_url: 'https://x/Periapsis.apk' }] }
   try {
     globalThis.fetch = (async () => new Response(JSON.stringify(release))) as typeof fetch
-    assert.deepEqual(await checkForUpdate('0.2.0'), { version: '0.3.0', apkUrl: 'https://x/Periapsis.apk', notes: 'notes' })
+    assert.deepEqual(await checkForUpdate('0.2.0'), { version: '0.3.0', apkUrl: 'https://x/Periapsis.apk', htmlUrl: 'h', notes: 'notes' })
     assert.equal(await checkForUpdate('0.3.0'), null)
     globalThis.fetch = (async () => new Response(JSON.stringify({ ...release, assets: [] }))) as typeof fetch
     assert.equal(await checkForUpdate('0.2.0'), null)

@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { downloadApk } from '@/components/UpdateBanner'
+import { canLiveUpdate, downloadApk } from '@/components/UpdateBanner'
 import { resetSettings, setSetting, useSettings, type Settings } from '@/lib/settings'
 import { SPEEDS } from '@/lib/store'
 import { startTour } from '@/lib/tour-store'
 import { ui, useUi } from '@/lib/ui-store'
-import { refreshUpdates, useUpdates } from '@/lib/update-store'
+import { applyUpdate, refreshUpdates, useUpdates } from '@/lib/update-store'
 import { APP_VERSION } from '@/lib/update'
 
 const ver = (v: string) => (v === 'dev' ? 'dev' : `v${v}`)
@@ -17,18 +17,24 @@ const ver = (v: string) => (v === 'dev' ? 'dev' : `v${v}`)
 function UpdateCard() {
   const st = useUpdates((s) => s.s)
   const latest = 'latest' in st ? st.latest : null
-  const busy = st.phase === 'checking'
-  const available = st.phase === 'available' && latest
+  const live = !!latest && canLiveUpdate(latest)
+  const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
+  const available = (st.phase === 'available' || st.phase === 'applyfail') && latest
+  const failMsg = st.phase === 'applyfail' ? { offline: 'Geen verbinding', 'needs-apk': 'Deze update past niet in de huidige app: download de APK.', 'bad-file': 'Downloaden mislukt. Probeer opnieuw of download de APK.', storage: 'Geen opslagruimte voor de update. Download de APK.' }[st.why] : ''
   const msg = {
     idle: 'Tik om te controleren op een nieuwe versie.',
     checking: 'Bezig met zoeken…',
     latest: 'Je hebt de nieuwste versie',
     available: latest ? `Versie ${latest.version} beschikbaar` : '',
+    downloading: 'Update downladen…',
+    restarting: 'Klaar: de app herstart…',
+    applyfail: failMsg,
     offline: 'Geen verbinding',
     error: 'Kon de nieuwste versie niet ophalen. Probeer het later opnieuw.',
   }[st.phase]
-  const tone = available ? 'text-cyan-300' : st.phase === 'latest' ? 'text-emerald-400' : st.phase === 'offline' || st.phase === 'error' ? 'text-amber-400' : 'text-muted-foreground'
+  const tone = available ? (st.phase === 'applyfail' ? 'text-amber-400' : 'text-cyan-300') : st.phase === 'latest' ? 'text-emerald-400' : st.phase === 'offline' || st.phase === 'error' ? 'text-amber-400' : 'text-muted-foreground'
   const Icon = busy ? Loader2 : available ? Download : st.phase === 'latest' ? CheckCircle2 : st.phase === 'offline' ? WifiOff : RefreshCw
+  const retryLive = st.phase === 'applyfail' && st.why !== 'needs-apk' && st.why !== 'storage'
   return (
     <section className="grid gap-3 rounded-2xl border bg-card p-4" aria-live="polite">
       <div className="grid grid-cols-2 gap-3 text-center">
@@ -41,14 +47,22 @@ function UpdateCard() {
           <div className="text-lg font-semibold tabular-nums">{latest ? ver(latest.version) : '–'}</div>
         </div>
       </div>
-      <div className={`flex items-center justify-center gap-2 text-sm font-medium ${tone}`}>
-        <Icon className={`size-4 ${busy ? 'animate-spin' : ''}`} /> {msg}
+      <div className={`flex items-center justify-center gap-2 text-center text-sm font-medium ${tone}`}>
+        <Icon className={`size-4 shrink-0 ${busy ? 'animate-spin' : ''}`} /> {msg}
       </div>
       <Button size="lg" className="h-14 w-full text-base" disabled={busy} variant={available ? 'default' : 'secondary'}
-        onClick={() => (available ? downloadApk(latest.apkUrl) : void refreshUpdates())}>
-        {available ? <><Download className="size-5" /> Download versie {latest.version}</> : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? 'Controleer op updates' : 'Opnieuw controleren'}</>}
+        onClick={() => {
+          if (!available) void refreshUpdates()
+          else if (live && (st.phase === 'available' || retryLive)) void applyUpdate(latest)
+          else downloadApk(latest.apkUrl)
+        }}>
+        {available
+          ? <><Download className="size-5" /> {live && (st.phase === 'available' || retryLive) ? `Nu bijwerken naar ${latest.version}` : `Download APK ${latest.version}`}</>
+          : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? 'Controleer op updates' : 'Opnieuw controleren'}</>}
       </Button>
-      {available && <p className="text-center text-[11px] text-muted-foreground">Open daarna de gedownloade APK om te installeren.</p>}
+      {available && live && <p className="text-center text-[11px] text-muted-foreground">De app herstart zichzelf. Geen installatie nodig.{' '}
+        <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>Liever de APK?</button></p>}
+      {available && !live && <p className="text-center text-[11px] text-muted-foreground">Open daarna de gedownloade APK om te installeren.</p>}
     </section>
   )
 }
