@@ -4,7 +4,7 @@
 import {
   BODIES, DAY, MU_SUN, RE, bodyState, flybyDv, norm, propagate, sub, toJ2000, type BodyId, type Vec,
 } from '../../lib/astro.ts'
-import { lambertLeg } from './lambert-rev.ts'
+import { lambertLeg } from '../../lib/lambert-rev.ts'
 import { evMs, isNode, type Mission, type MissionEvent } from './data.ts'
 
 export interface Node { evIdx: number; ev: MissionEvent; body: BodyId; t: number; r: Vec; v: Vec }

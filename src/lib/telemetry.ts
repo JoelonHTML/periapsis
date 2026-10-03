@@ -1,7 +1,7 @@
 // Pure mission bookkeeping: propellant / mass after every burn (Tsiolkovsky), live state at a given time, chart series.
 // No React, no store: everything takes a Solution and a craft ({dry, prop, isp}) so it can be unit-tested.
-import { G0, MU_SUN, bodyState, norm, propagate, sub, type BodyId, type Vec } from './astro.ts'
-import { craftState, type FlightEvent, type Solution } from './mga.ts'
+import { G0, bodyState, norm, sub, type BodyId, type Vec } from './astro.ts'
+import { craftState, legState, type FlightEvent, type Solution } from './mga.ts'
 
 export interface CraftMass { dry: number; prop: number; isp: number }
 
@@ -102,7 +102,7 @@ export function legSamples(sol: Solution, total = 280): ChartSample[] {
   for (const l of sol.legs)
     for (let i = 0; i <= per; i++) {
       const dt = ((l.t2 - l.t1) * i) / per
-      const s = i === 0 ? { r: l.r1, v: l.v1 } : propagate(l.r1, l.v1, dt, MU_SUN)
+      const s = i === 0 ? { r: l.r1, v: l.v1 } : legState(l, l.t1 + dt)
       out.push({ t: l.t1 + dt, speed: norm(s.v), rSun: norm(s.r) })
     }
   return out

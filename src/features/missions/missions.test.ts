@@ -3,7 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { AU, DAY, MU_SUN, bodyState, norm, propagate, sub } from '../../lib/astro.ts'
 import { MISSIONS, evMs, isNode, missionById } from './data.ts'
-import { lambertRev } from './lambert-rev.ts'
+import { lambertRev } from '../../lib/lambert-rev.ts'
 import { eventPosition, reconstruct, samplePath, stateAt } from './recon.ts'
 
 const mission = (id: string) => missionById(id)!

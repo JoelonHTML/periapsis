@@ -1,0 +1,43 @@
+import { registerDict } from '@/lib/i18n'
+
+registerDict({
+  nl: {
+    'opt.title': 'Geavanceerd',
+    'opt.intro': 'Extra zoekopties voor routes zoals Galileo (VEEGA), Cassini of Juno. Standaard staat alles uit en verandert er niets aan de berekening.',
+    'opt.revs': 'Banen met meerdere omlopen', 'opt.revs.0': 'Uit (1 omloop)', 'opt.revs.1': 'Tot 1 extra omloop', 'opt.revs.2': 'Tot 2 extra omlopen',
+    'opt.revs.h': 'Laat de sonde tussen twee punten een of twee keer extra rond de Zon gaan; beide Lambert-oplossingen worden geprobeerd en de goedkoopste blijft.',
+    'opt.resonant': 'Zelfde lichaam twee keer achter elkaar',
+    'opt.resonant.h': 'Bijvoorbeeld Aarde → Aarde in 1–3 jaar (resonante baan, zoals Galileo). Heeft meerdere omlopen of een manoeuvre in de ruimte nodig; staat tot 3 gravity assists toe.',
+    'opt.dsm': 'Manoeuvre in de ruimte (DSM)',
+    'opt.dsm.h': 'Eén impuls per baan tussen twee punten (MGA-1DSM): de baan wordt gesplitst, de motor brandt eenmaal midden in de ruimte. Het resultaat is nooit slechter dan zonder.',
+    'opt.warn': 'Geavanceerd zoeken duurt langer: de berekening kan op een telefoon enkele minuten duren. Met een manoeuvre in de ruimte worden alleen de {n} beste routes verfijnd.',
+    'opt.ev.dsm': 'Manoeuvre in de ruimte',
+    'opt.revsOn': '{n} extra omloop(en)',
+  },
+  en: {
+    'opt.title': 'Advanced',
+    'opt.intro': 'Extra search options for routes like Galileo (VEEGA), Cassini or Juno. Everything is off by default and the calculation is unchanged.',
+    'opt.revs': 'Multi-revolution arcs', 'opt.revs.0': 'Off (single revolution)', 'opt.revs.1': 'Up to 1 extra revolution', 'opt.revs.2': 'Up to 2 extra revolutions',
+    'opt.revs.h': 'Lets the craft loop around the Sun once or twice more between two points; both Lambert branches are tried and the cheapest is kept.',
+    'opt.resonant': 'Same body twice in a row',
+    'opt.resonant.h': 'For example Earth → Earth in 1–3 years (resonant orbit, as Galileo flew). Needs multiple revolutions or a deep-space manoeuvre; allows up to 3 gravity assists.',
+    'opt.dsm': 'Deep-space manoeuvre (DSM)',
+    'opt.dsm.h': 'One impulse per arc between two points (MGA-1DSM): the arc is split and the engine fires once mid-flight. The result is never worse than without.',
+    'opt.warn': 'Advanced search takes longer: the calculation can take several minutes on a phone. With a deep-space manoeuvre only the {n} best routes are refined.',
+    'opt.ev.dsm': 'Deep-space manoeuvre',
+    'opt.revsOn': '{n} extra revolution(s)',
+  },
+  el: {
+    'opt.title': 'Για προχωρημένους',
+    'opt.intro': 'Πρόσθετες επιλογές αναζήτησης για διαδρομές όπως ο Galileo (VEEGA), ο Cassini ή ο Juno. Όλα είναι απενεργοποιημένα από προεπιλογή και ο υπολογισμός δεν αλλάζει.',
+    'opt.revs': 'Τόξα με πολλαπλές περιστροφές', 'opt.revs.0': 'Ανενεργό (μία περιστροφή)', 'opt.revs.1': 'Έως 1 επιπλέον περιστροφή', 'opt.revs.2': 'Έως 2 επιπλέον περιστροφές',
+    'opt.revs.h': 'Αφήνει το σκάφος να κάνει μία ή δύο ακόμη στροφές γύρω από τον Ήλιο ανάμεσα σε δύο σημεία· δοκιμάζονται και οι δύο λύσεις Lambert και κρατιέται η φθηνότερη.',
+    'opt.resonant': 'Το ίδιο σώμα δύο φορές στη σειρά',
+    'opt.resonant.h': 'Για παράδειγμα Γη → Γη σε 1–3 χρόνια (συντονισμένη τροχιά, όπως ο Galileo). Χρειάζεται πολλαπλές περιστροφές ή ελιγμό στο βαθύ διάστημα· επιτρέπει έως 3 βαρυτικές υποβοηθήσεις.',
+    'opt.dsm': 'Ελιγμός στο βαθύ διάστημα (DSM)',
+    'opt.dsm.h': 'Μία ώθηση ανά τόξο ανάμεσα σε δύο σημεία (MGA-1DSM): το τόξο χωρίζεται και ο κινητήρας ανάβει μία φορά στη μέση της διαδρομής. Το αποτέλεσμα δεν είναι ποτέ χειρότερο από χωρίς αυτόν.',
+    'opt.warn': 'Η προχωρημένη αναζήτηση διαρκεί περισσότερο: ο υπολογισμός μπορεί να πάρει αρκετά λεπτά σε τηλέφωνο. Με ελιγμό στο βαθύ διάστημα βελτιώνονται μόνο οι {n} καλύτερες διαδρομές.',
+    'opt.ev.dsm': 'Ελιγμός στο βαθύ διάστημα',
+    'opt.revsOn': '{n} επιπλέον περιστροφή(ές)',
+  },
+})

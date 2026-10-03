@@ -24,6 +24,7 @@ import { massPlan, propForDry, wetMassFor } from '@/lib/telemetry'
 import { CraftFields } from './Controls'
 import { FleetBar } from './Fleet'
 import { PorkchopSection } from '@/features/porkchop/PorkchopSection'
+import { AdvancedBlock, ADVANCED_OFF } from '@/features/optimiser/AdvancedBlock'
 import { MissionChart } from './MissionChart'
 import { KV, NumField, Section, Tex, f } from './bits'
 
@@ -44,6 +45,7 @@ const settings = createStore({
   mustVisit: 'none' as BodyId | 'none',
   maxVinfDep: 0,
   maxVinfArr: 0,
+  ...ADVANCED_OFF,
   parkAlt: 200,
   arrival: 'ellipse' as ArrivalKind,
   capAlt: 500,
@@ -80,6 +82,7 @@ export function MissionPanel() {
     objective: S.objective, dvBudget: budget, parkAlt: S.parkAlt, arrival: S.arrival, capAlt: S.capAlt, capEcc: S.capEcc,
     maxVinfDep: S.maxVinfDep > 0 ? S.maxVinfDep : undefined, maxVinfArr: S.maxVinfArr > 0 ? S.maxVinfArr : undefined,
     mustVisit: S.mustVisit === 'none' ? undefined : S.mustVisit,
+    ...(S.maxRevs > 0 ? { maxRevs: S.maxRevs } : {}), ...(S.allowResonant ? { allowResonant: true } : {}), ...(S.dsm ? { dsm: true } : {}),
   })
 
   const run = () => {
@@ -159,7 +162,7 @@ export function MissionPanel() {
               <Field label="Max. gravity assists">
                 <Select value={String(S.maxFlybys)} onValueChange={(v) => set({ maxFlybys: +v })}>
                   <SelectTrigger className="h-8 w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>{[0, 1, 2].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
+                  <SelectContent>{(S.allowResonant ? [0, 1, 2, 3] : [0, 1, 2]).map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
             </div>
@@ -190,6 +193,7 @@ export function MissionPanel() {
                 </div>
               </div>
             )}
+            <AdvancedBlock value={S} onChange={(p) => set(p.allowResonant === false && S.maxFlybys > 2 ? { ...p, maxFlybys: 2 } : p)} />
             <div className="grid grid-cols-2 gap-2">
               <NumField label="Max. v∞ vertrek" unit="km/s" step={0.5} min={0} value={S.maxVinfDep} onChange={(v) => set({ maxVinfDep: Math.max(0, v) })} />
               <NumField label="Max. v∞ aankomst" unit="km/s" step={0.5} min={0} value={S.maxVinfArr} onChange={(v) => set({ maxVinfArr: Math.max(0, v) })} />
@@ -279,7 +283,7 @@ export function MissionPanel() {
             {solutions.some((x) => x.tof / (365.25 * DAY) > 30) && (
               <p className="flex items-start gap-1.5 text-xs text-amber-400"><TriangleAlert className="mt-0.5 size-3.5 shrink-0" />Een of meer routes duren langer dan 30 jaar: wiskundig zuinig, maar niet realistisch voor een missie.</p>
             )}
-            <p className="text-[10.5px] leading-snug text-muted-foreground">Model: gepatchte kegelsneden met gravity assists, zonder deep-space-manoeuvres of resonante banen. Echte missies als Galileo of Cassini zijn hiermee niet exact na te bouwen; de Δv is een schatting voor het ontwerp, niet voor navigatie.</p>
+            <p className="text-[10.5px] leading-snug text-muted-foreground">Model: gepatchte kegelsneden met gravity assists{S.maxRevs > 0 || S.allowResonant || S.dsm ? ' en de gekozen geavanceerde opties (meerdere omlopen, resonante banen, één manoeuvre per baan)' : ', zonder deep-space-manoeuvres of resonante banen'}. Echte missies als Galileo of Cassini zijn hiermee niet exact na te bouwen; de Δv is een schatting voor het ontwerp, niet voor navigatie.</p>
             <p className="text-[10.5px] text-muted-foreground">Groen = past binnen je Δv-budget ({f(budget)} km/s) en de v∞-limieten, oranje = te duur voor dit ruimtevaartuig of limiet overschreden.</p>
           </Section>
           <SolutionDetails />
@@ -304,7 +308,7 @@ function SolutionDetails() {
     clock.paused = false
   }
   const title = (e: Solution['events'][number]) =>
-    e.kind === 'launch' ? `Lancering vanaf ${BODIES[e.body].name}` : e.kind === 'flyby' ? `Gravity assist ${BODIES[e.body].name}` : `Aankomst ${BODIES[e.body].name}`
+    e.kind === 'launch' ? `Lancering vanaf ${BODIES[e.body].name}` : e.kind === 'flyby' ? `Gravity assist ${BODIES[e.body].name}` : e.kind === 'dsm' ? 'Manoeuvre in de ruimte (DSM)' : `Aankomst ${BODIES[e.body].name}`
   const over = (v: number, lim?: number) => !!lim && v > lim + 1e-9
   const lastK = sol.events.length - 1
   return (
@@ -322,7 +326,8 @@ function SolutionDetails() {
                   <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">{fmtDate(e.t)}</span>
                 </div>
                 <KV k="Δv van de motor" v={`${f(e.dv, 3)} km/s`} strong />
-                <KV k="v∞ · C3 = v∞²" v={<span className={over(e.vinf, limit) ? 'text-amber-400' : ''}>{f(e.vinf)} km/s · {f(e.vinf ** 2, 1)} km²/s²</span>} />
+                {e.kind !== 'dsm' && <KV k="v∞ · C3 = v∞²" v={<span className={over(e.vinf, limit) ? 'text-amber-400' : ''}>{f(e.vinf)} km/s · {f(e.vinf ** 2, 1)} km²/s²</span>} />}
+                {e.kind === 'dsm' && <KV k="Zonsnelheid vóór → na" v={`${f(e.vHelioIn!)} → ${f(e.vHelioOut!)} km/s`} />}
                 <KV k="Brandstof dit manoeuvre" v={`${f(st.prop, st.prop < 10 ? 1 : 0)} kg`} />
                 <KV k="Massa erna" v={`${st.mAfter.toFixed(0)} kg`} />
                 {e.kind === 'launch' && (

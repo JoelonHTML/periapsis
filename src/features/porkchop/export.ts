@@ -1,6 +1,6 @@
 // Export of a route as CSV (heliocentric ecliptic J2000) and CCSDS OEM 2.0 (heliocentric, EME2000). Pure text, no DOM.
-import { BODIES, DAY, MU_SUN, ecl2eq, fmtDateTime, propagate, toMs, type Vec } from '../../lib/astro.ts'
-import type { Solution } from '../../lib/mga.ts'
+import { BODIES, DAY, ecl2eq, fmtDateTime, toMs, type Vec } from '../../lib/astro.ts'
+import { legState, type Solution } from '../../lib/mga.ts'
 
 export interface Sample { t: number; r: Vec; v: Vec; leg: number }
 
@@ -14,7 +14,7 @@ export function sampleRoute(sol: Solution, stepDays = 2): Sample[][] {
     for (let i = 0; i <= n; i++) {
       if (i === 0) out.push({ t: l.t1, r: l.r1, v: l.v1, leg: k })
       else if (i === n) out.push({ t: l.t2, r: l.r2, v: l.v2, leg: k })
-      else { const dt = (tof * i) / n, s = propagate(l.r1, l.v1, dt, MU_SUN); out.push({ t: l.t1 + dt, r: s.r, v: s.v, leg: k }) }
+      else { const dt = (tof * i) / n, s = legState(l, l.t1 + dt); out.push({ t: l.t1 + dt, r: s.r, v: s.v, leg: k }) }
     }
     return out
   })

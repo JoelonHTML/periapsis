@@ -10,7 +10,7 @@ import {
   lagrangePoints, moonGeo, moonGeoVel, mul, norm, perifocalBasis, sunGeo, unit,
   type BodyId, type EarthPlan, type MoonPlan, type Vec,
 } from '@/lib/astro'
-import { craftPosition, samplePath, type Solution } from '@/lib/mga'
+import { craftPosition, eventPosition, samplePath, type Solution } from '@/lib/mga'
 import { labels } from '@/lib/labels'
 import { clock, selectedSolution, shipSolution, useApp, type View } from '@/lib/store'
 import { ExtraObjects } from './ExtraObjects'
@@ -164,7 +164,7 @@ function Trajectory({ sol, label, name, color, active }: { sol: Solution; label:
     traveled.geometry.setDrawRange(0, lo)
     v3(craftPosition(sol, clock.t), S_SOL, craft.current!.position)
   }, EARLY)
-  const eventPos = (k: number): Vec => (k === 0 ? sol.legs[0].r1 : sol.legs[k - 1].r2)
+  const eventPos = (k: number): Vec => eventPosition(sol, k)
   return (
     <>
       {legPts.map((pts, k) => (
@@ -173,12 +173,12 @@ function Trajectory({ sol, label, name, color, active }: { sol: Solution; label:
       <primitive object={traveled} />
       {active && sol.events.map((e, k) => (
         <group key={k} position={v3(eventPos(k), S_SOL)}>
-          <Dot color={e.kind === 'flyby' ? '#c084fc' : '#f8fafc'} size={8} />
+          <Dot color={e.kind === 'flyby' ? '#c084fc' : e.kind === 'dsm' ? '#fbbf24' : '#f8fafc'} size={e.kind === 'dsm' ? 6 : 8} />
           {label && (
             // above the dot, so the craft label (below it) never covers it; cl-ev = hidden when it would overlap another event label
             <Label className="cl-ev -mt-12 border border-white/10">
-              <b>{e.kind === 'launch' ? 'Lancering' : e.kind === 'flyby' ? `Gravity assist ${BODIES[e.body].name}` : `Aankomst ${BODIES[e.body].name}`}</b>
-              <br />Δv {e.dv.toFixed(2)} km/s · v∞ {e.vinf.toFixed(2)} km/s
+              <b>{e.kind === 'launch' ? 'Lancering' : e.kind === 'flyby' ? `Gravity assist ${BODIES[e.body].name}` : e.kind === 'dsm' ? 'Manoeuvre in de ruimte' : `Aankomst ${BODIES[e.body].name}`}</b>
+              <br />Δv {e.dv.toFixed(2)} km/s{e.kind === 'dsm' ? '' : ` · v∞ ${e.vinf.toFixed(2)} km/s`}
               <br />{fmtEventDate(e.t)}
             </Label>
           )}
