@@ -4,6 +4,7 @@ import { Crosshair, Play, Rocket, ScanSearch, Share2, Bookmark, Trash2, Triangle
 import { Capacitor } from '@capacitor/core'
 import { Share } from '@capacitor/share'
 import { useT } from '@/lib/i18n'
+import { Fold, JumpBar } from './Fold'
 import { deleteMission, loadMissions, saveMission, type SavedMission } from '@/lib/missions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 )
 
 export function MissionPanel() {
+  const t = useT()
   const target = useApp((s) => s.target)
   const solutions = useApp((s) => s.solutions)
   const selected = useApp((s) => s.selected)
@@ -122,9 +124,18 @@ export function MissionPanel() {
 
   return (
     <div className="grid gap-4">
-      <FleetBar />
-      <CraftFields />
-      <Separator />
+      <JumpBar items={[
+        { id: 'settings', label: t('ms.settings') },
+        ...(solutions.length ? [{ id: 'routes', label: t('ms.routes') }] : []),
+        { id: 'craft', label: t('ms.craft') },
+        { id: 'porkchop', label: t('ms.porkchop') },
+        { id: 'saved', label: t('ms.saved') },
+      ]} />
+      <Fold id="craft" title={t('ms.craft')} summary={`${f(craft.dry + craft.prop, 0)} kg · Isp ${craft.isp} s · Δv ${f(budget)} km/s`}>
+        <FleetBar />
+        <CraftFields />
+      </Fold>
+      <section id="sec-settings" className="scroll-mt-14">
       <Section title="Missie-instellingen">
         <div className="grid grid-cols-2 gap-2">
           <Field label="Bestemming">
@@ -239,21 +250,14 @@ export function MissionPanel() {
           </p>
         )}
       </Section>
-
-      <SavedMissions params={S as unknown as Record<string, unknown>} onLoad={(m) => {
-        store.set({ target: m.target as BodyId | 'moon' })
-        patchActiveCraft(m.craft)
-        set(m.params as Partial<typeof S>)
-        setRunTick((n) => n + 1)
-      }} />
-
-      <PorkchopSection mode={S.mode} date={S.date} parkAlt={S.parkAlt} arrival={S.arrival} capAlt={S.capAlt} capEcc={S.capEcc} onUseDate={(date, windowDays) => set({ mode: 'departure', date, windowDays })} />
+      </section>
 
       {moon && isMoon && <MoonResult />}
 
       {solutions.length > 0 && (
         <>
           <Separator />
+          <section id="sec-routes" className="scroll-mt-14" />
           <Section title={`Routes (${solutions.length}) — klik om te tonen`}>
             <Table className="text-xs">
               <TableHeader>
@@ -289,6 +293,18 @@ export function MissionPanel() {
           <SolutionDetails />
         </>
       )}
+
+      <Fold id="porkchop" title={t('ms.porkchop')} summary={t('ms.porkchop.h')}>
+      <PorkchopSection mode={S.mode} date={S.date} parkAlt={S.parkAlt} arrival={S.arrival} capAlt={S.capAlt} capEcc={S.capEcc} onUseDate={(date, windowDays) => set({ mode: 'departure', date, windowDays })} />
+      </Fold>
+      <Fold id="saved" title={t('ms.saved')} summary={t('ms.saved.h')}>
+      <SavedMissions params={S as unknown as Record<string, unknown>} onLoad={(m) => {
+        store.set({ target: m.target as BodyId | 'moon' })
+        patchActiveCraft(m.craft)
+        set(m.params as Partial<typeof S>)
+        setRunTick((n) => n + 1)
+      }} />
+      </Fold>
     </div>
   )
 }
