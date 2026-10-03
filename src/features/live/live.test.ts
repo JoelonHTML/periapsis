@@ -1,0 +1,128 @@
+// Run: node --test src/features/live/*.test.ts
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { parseKpForecast, currentKp, dailyMaxKp, gScale, parseOvation, auroraAt, ovalEdge, parsePlasma, parseMag, parseFlare } from './spaceweather.ts'
+import { parseApod } from './apod.ts'
+import { parseLaunches } from './launches.ts'
+import { parseApproaches, parseCd, diameterKm, sizeRangeM, LD_KM } from './asteroids.ts'
+import { formatCountdown, ageParts, parseUtc, safeUrl } from './util.ts'
+import { kpFixture, ovationFixture, plasmaFixture, magFixture, flareFixture, apodFixture, launchesFixture, cadFixture } from './fixtures.ts'
+
+const NOW = Date.parse('2026-10-03T19:00:00Z')
+const junk: unknown[] = [null, undefined, 42, 'x', {}, [], [[]], [1, 2], { results: 'no' }, [['a'], ['b']], { fields: 1, data: 2 }]
+const mustThrow = (p: (b: unknown) => unknown) => { for (const j of junk) assert.throws(() => p(j), undefined, JSON.stringify(j)) }
+
+test('Kp forecast: table form, current value, daily maxima, G-scale', () => {
+  const rows = parseKpForecast(kpFixture(NOW))
+  assert.ok(rows.length > 20)
+  const cur = currentKp(rows, NOW)!
+  assert.notEqual(cur.kind, 'predicted')
+  assert.ok(cur.t <= NOW)
+  const days = dailyMaxKp(rows, NOW, 3)
+  assert.equal(days.length, 3)
+  assert.ok(days[0].max >= 5)
+  assert.equal(gScale(4.67), 0); assert.equal(gScale(5), 1); assert.equal(gScale(7.33), 3); assert.equal(gScale(9), 5)
+})
+test('Kp forecast: object rows and bad rows are skipped', () => {
+  const rows = parseKpForecast([{ time_tag: '2026-10-03T00:00:00', kp: 3, observed: 'observed' }, { time_tag: 'nope', kp: 1 }, { time_tag: '2026-10-03T03:00:00', kp: 12 }, null])
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].t, Date.parse('2026-10-03T00:00:00Z'))
+  mustThrow(parseKpForecast)
+  assert.throws(() => parseKpForecast([['time_tag', 'kp'], ['bad', 'bad']]))
+})
+test('OVATION: nearest cell, wrap of negative longitudes, oval edge', () => {
+  const o = parseOvation(ovationFixture())
+  assert.ok(o.forecast !== null && o.cells.length > 300 && o.cells.length % 3 === 0)
+  // Utrecht 52.09 N 5.12 E -> cell lon 5 lat 52
+  const direct = auroraAt({ forecast: null, cells: [5, 52, 33, 6, 52, 99] }, 52.09, 5.12)
+  assert.equal(direct, 33)
+  assert.equal(auroraAt({ forecast: null, cells: [355, 40, 7] }, 40.2, -5), 7) // -5° = 355°
+  assert.equal(auroraAt({ forecast: null, cells: [355, 40, 7] }, 41, -5), 0)
+  assert.equal(auroraAt(o, 0, 0), 0)
+  const e = ovalEdge(o, 52.09, 5.12)!
+  assert.ok(e.lat > 52 && e.lat < 66)
+  assert.ok(Math.abs(e.kmFromObserver - (e.lat - 52.09) * 111.2) < 1)
+  assert.equal(ovalEdge({ forecast: null, cells: [5, 70, 5] }, 52, 5), null) // below the 10 % threshold
+  const south = ovalEdge({ forecast: null, cells: [5, -60, 40, 5, -70, 40] }, -45, 5)!
+  assert.equal(south.lat, -60)
+  assert.equal(ovalEdge({ forecast: null, cells: [100, 60, 50] }, 52, 5), null) // other longitude
+})
+test('OVATION: raw array accepted, malformed rejected', () => {
+  assert.equal(parseOvation([[1, 2, 30], [3, 4, 0], 'bad', [1]]).cells.length, 3)
+  mustThrow(parseOvation)
+  assert.throws(() => parseOvation({ coordinates: [['a', 'b', 'c']] }))
+})
+test('solar wind plasma / mag use the latest row with a value', () => {
+  assert.deepEqual(parsePlasma(plasmaFixture), { t: Date.parse('2026-10-03T18:51:00Z'), speed: 462.7, density: 5.4 })
+  const m = parseMag(magFixture)
+  assert.equal(m.bz, -5.6); assert.equal(m.bt, 6.6)
+  mustThrow(parsePlasma); mustThrow(parseMag)
+  assert.throws(() => parsePlasma([['time_tag', 'speed'], ['2026-10-03 00:00:00', null]]))
+})
+test('X-ray flares: class of the latest, empty list ok, junk rejected', () => {
+  assert.deepEqual(parseFlare(flareFixture), { cls: 'M1.4', maxT: Date.parse('2026-10-03T14:10:00Z') })
+  assert.equal(parseFlare([]), null)
+  assert.equal(parseFlare([{ max_class: 'zzz' }, 5]), null)
+  assert.throws(() => parseFlare({}))
+  assert.throws(() => parseFlare(null))
+})
+test('APOD: image, video, hostile urls, rate-limit error', () => {
+  const a = parseApod(apodFixture)
+  assert.equal(a.video, false); assert.equal(a.copyright, 'Some Astro Photographer'); assert.ok(a.hdurl)
+  const v = parseApod({ title: 'V', url: 'https://www.youtube.com/embed/x?rel=0', media_type: 'video', thumbnail_url: 'https://img.youtube.com/a.jpg', date: '2026-10-01' })
+  assert.equal(v.video, true); assert.equal(v.thumb, 'https://img.youtube.com/a.jpg'); assert.equal(v.copyright, null)
+  assert.throws(() => parseApod({ title: 'X', url: 'javascript:alert(1)', media_type: 'image' }))
+  assert.throws(() => parseApod({ error: { code: 'OVER_RATE_LIMIT', message: 'x' } }))
+  assert.equal(parseApod({ title: 'X', url: 'https://a.b/c.jpg', hdurl: 'javascript:1', media_type: 'image' }).hdurl, null)
+  mustThrow(parseApod)
+})
+test('launches: documented shape, missing fields, string info_urls', () => {
+  const l = parseLaunches(launchesFixture(NOW))
+  assert.equal(l.length, 3)
+  assert.equal(l[0].provider, 'SpaceX'); assert.equal(l[0].pad, 'Space Launch Complex 40, Florida, USA')
+  assert.equal(l[1].webcast, null); assert.equal(l[0].webcast, 'https://www.youtube.com/watch?v=abc')
+  assert.equal(l[0].net, NOW + 5.5 * 3600000)
+  const sparse = parseLaunches({ results: [{ name: 'Bare', info_urls: ['https://x.org/a'], net: 'garbage' }, { nothing: true }] })
+  assert.equal(sparse.length, 1); assert.equal(sparse[0].net, null); assert.equal(sparse[0].info, 'https://x.org/a'); assert.equal(sparse[0].provider, '')
+  assert.deepEqual(parseLaunches({ results: [] }), [])
+  assert.throws(() => parseLaunches({ results: [{ id: 1 }] }))
+  mustThrow(parseLaunches)
+})
+test('close approaches: fields/data by name, missing H, bad rows', () => {
+  const a = parseApproaches(cadFixture)
+  assert.equal(a.length, 3); assert.equal(a[0].des, '2026 TX3')
+  assert.equal(a[0].t, Date.UTC(2026, 9, 8, 14, 56))
+  assert.ok(Math.abs(a[0].distLd - 0.0123456 * 149597870.7 / LD_KM) < 1e-9)
+  assert.ok(Math.abs(a[0].distLd - 4.80) < 0.01)
+  assert.equal(a[0].vRel, 9.87); assert.equal(a[2].h, null)
+  assert.equal(parseApproaches({ fields: ['des', 'jd', 'dist'], data: [['A', '2440587.5', '0.01'], ['B'], 'x'] }).length, 1)
+  assert.deepEqual(parseApproaches({ fields: ['des', 'cd', 'dist'], data: [] }), [])
+  assert.throws(() => parseApproaches({ fields: ['x'], data: [] }))
+  assert.throws(() => parseApproaches({ fields: ['des', 'cd', 'dist'], data: [['A', 'garbage', 'x']] }))
+  assert.equal(parseCd('2026-Dec-31 23:59'), Date.UTC(2026, 11, 31, 23, 59)); assert.equal(parseCd('2026-Foo-01'), null)
+  mustThrow(parseApproaches)
+})
+test('H to diameter: D = 1329 km / sqrt(albedo) * 10^(-H/5)', () => {
+  assert.ok(Math.abs(diameterKm(22, 0.14) - 0.1415) < 0.0005) // the classic "H=22 ~ 140 m"
+  assert.ok(Math.abs(diameterKm(0, 1) - 1329) < 1e-9)
+  assert.ok(Math.abs(diameterKm(5, 1) / diameterKm(10, 1) - 10) < 1e-9) // 5 mag = factor 10
+  const r = sizeRangeM(24.1)
+  assert.ok(r.min < r.max); assert.ok(Math.abs(r.max / r.min - Math.sqrt(5)) < 1e-9)
+  assert.ok(r.min > 20 && r.max < 120)
+})
+test('countdown and age formatting', () => {
+  assert.equal(formatCountdown(2 * 86400000 + 3 * 3600000 + 14 * 60000 + 5999), 'T−2d 03:14:05')
+  assert.equal(formatCountdown(65000), 'T−00:01:05')
+  assert.equal(formatCountdown(0), 'T−00:00:00')
+  assert.equal(formatCountdown(-750000), 'T+00:12:30')
+  assert.equal(formatCountdown(86400000, { d: 'dg' }), 'T−1dg 00:00:00')
+  assert.equal(formatCountdown(NaN), '—')
+  assert.deepEqual(ageParts(30_000), { n: 0, unit: 'min' }); assert.deepEqual(ageParts(5 * 60000), { n: 5, unit: 'min' })
+  assert.deepEqual(ageParts(3 * 3600000), { n: 3, unit: 'h' }); assert.deepEqual(ageParts(5 * 86400000), { n: 5, unit: 'd' })
+  assert.deepEqual(ageParts(-5), { n: 0, unit: 'min' })
+})
+test('utc parsing and url filter', () => {
+  assert.equal(parseUtc('2026-10-03 00:00:00'), Date.UTC(2026, 9, 3)); assert.equal(parseUtc('2026-10-03T00:00:00Z'), Date.UTC(2026, 9, 3))
+  assert.equal(parseUtc('2026-10-03 00:00:00.000'), Date.UTC(2026, 9, 3)); assert.equal(parseUtc(5), null)
+  assert.equal(safeUrl('https://a.b'), 'https://a.b'); assert.equal(safeUrl('javascript:alert(1)'), null); assert.equal(safeUrl('https://a b'), null)
+})
