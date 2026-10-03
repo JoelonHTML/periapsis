@@ -10,11 +10,12 @@ import { cn } from '@/lib/utils'
 import { KV, Tex } from './bits'
 import { ORBIT_CALCS } from './calc/defs-orbit'
 import { SYS_CALCS } from './calc/defs-sys'
+import { AERO_CALCS } from './calc/defs-aero'
 import { CATS, type Calc, type Input as Spec, type V } from './calc/core'
 
 // Order: as listed in the brief — the user's own requests first.
 const ORDER = ['transfer', 'vinf', 'tsiolkovsky', 'slew', 'magfield', 'ballistic']
-const ALL: Calc[] = [...ORBIT_CALCS, ...SYS_CALCS].sort((a, b) => {
+const ALL: Calc[] = [...ORBIT_CALCS, ...SYS_CALCS, ...AERO_CALCS].sort((a, b) => {
   const ia = ORDER.indexOf(a.id), ib = ORDER.indexOf(b.id)
   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
 })

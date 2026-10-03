@@ -10,6 +10,7 @@ import { store, useApp } from '@/lib/store'
 import { CraftFields } from './Controls'
 import { KV, NumField, Section, Tex, f } from './bits'
 import { Eclipse } from '@/features/satellites/Eclipse'
+import { PerturbSection } from '@/features/perturb/PerturbSection'
 
 type Preset = { label: string; rpAlt: number; raAlt: number; inc: number | 'site' | 'sso'; wDeg: number | null }
 const PRESETS: Record<string, Preset> = {
@@ -117,6 +118,7 @@ export function EarthPanel({ plan }: { plan: EarthPlan }) {
       </Section>
 
       <Eclipse plan={plan} />
+      <PerturbSection plan={plan} />
       <Section title="5 · Luchtweerstand (massa, Cd, frontaal oppervlak)">
         <KV k="Ballistische parameter B = Cd·A/m" v={`${f(plan.B, 5)} m²/kg`} />
         <KV k="Dichtheid in perigeum" v={`${density(o.rpAlt).toExponential(2)} kg/m³`} />
