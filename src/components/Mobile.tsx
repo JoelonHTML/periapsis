@@ -169,6 +169,7 @@ export function MobileApp({ scene, views, extras, content, tab, onTab, land }: {
       <div className="pointer-events-none absolute inset-x-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-10 flex max-h-[40dvh] justify-center overflow-y-auto px-2">{extras}</div>
 
       <Drawer land={land} dock={<Dock onDate={() => { onTab('view'); ui.set({ sheet: 'half' }) }} />}>
+        <div className="mb-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t(`mode.${mode}`)} › {t(`tab.${tab}`)}</div>
         {isMore(tab) && (
           <button type="button" onClick={() => onTab('more')} className="mb-3 flex h-11 items-center gap-2 rounded-lg px-2 text-sm font-medium text-muted-foreground active:bg-muted">
             <ArrowLeft className="size-4" /> {t('tab.more')}

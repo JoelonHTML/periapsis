@@ -171,3 +171,5 @@ input, textarea, [contenteditable] { -webkit-user-select: text; user-select: tex
   [data-slot=checkbox] { position: relative; }
   [data-slot=checkbox]::after { content: ''; position: absolute; inset: -14px; }
 }
+/* Start-screen search has its own clear button. */
+input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }

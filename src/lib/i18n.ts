@@ -45,7 +45,7 @@ const nl = {
   'tour.5.t': 'Rekenen en meer', 'tour.5.x': 'Bij Rekenen vind je losse calculators. Onder Meer staan planeetstelsels, Lagrangepunten, de Melkweg en alle formules met bronnen.',
   'tour.6.t': 'Instellingen en updates', 'tour.6.x': 'Hier zet je labels, schaal, tempo en taal naar wens en haal je met één tik de nieuwste versie van de app.',
   'mode.design': 'Missies ontwerpen', 'mode.design.h': 'Routes, aardbanen, berekeningen', 'mode.sats': 'Satellieten', 'mode.sats.h': 'ISS en satellieten volgen, overkomsten', 'mode.sky': 'Vanavond', 'mode.sky.h': 'Wat je aan de hemel ziet, gebeurtenissen', 'mode.explore': 'Verkennen', 'mode.explore.h': 'Planeten, echte missies, de Melkweg',
-  'home.title': 'Waar wil je heen?', 'home.back': 'Startscherm',
+  'home.title': 'Waar wil je heen?', 'home.back': 'Startscherm', 'home.search': 'Zoek een functie…', 'home.noHits': 'Niets gevonden. Probeer een ander woord, bijvoorbeeld ISS, eclips of Mars.',
   'tab.sats': 'Volgen', 'tab.passes': 'Overkomsten', 'tab.tonight': 'Hemel', 'tab.events': 'Agenda', 'tab.bodies': 'Hemellichamen', 'tab.missions': 'Missies', 'tab.live': 'Live', 'tab.burns': 'Manoeuvres', 'tab.catalog': 'Catalogus', 'more.burns': 'Burns op een tijdlijn met brandstof', 'more.catalog': 'Exoplaneten, kometen, planetoïden',
   'sm.title': 'Opgeslagen missies', 'sm.save': 'Opslaan', 'sm.share': 'Delen', 'sm.saved': 'Missie opgeslagen', 'sm.copied': 'Gekopieerd naar het klembord', 'sm.empty': 'Nog niets opgeslagen. Sla een set-up op om hem later met één tik terug te zetten.', 'sm.load': 'tik om te laden', 'sm.del': 'Verwijder {n}',
 } as const
@@ -89,7 +89,7 @@ const en: Dict = {
   'tour.5.t': 'Calculate and more', 'tour.5.x': 'Calculate has stand-alone calculators. More holds planet systems, Lagrange points, the Milky Way and all formulas with sources.',
   'tour.6.t': 'Settings and updates', 'tour.6.x': 'Set labels, scale, speed and language here, and get the newest version of the app with one tap.',
   'mode.design': 'Design missions', 'mode.design.h': 'Routes, Earth orbits, calculators', 'mode.sats': 'Satellites', 'mode.sats.h': 'Track the ISS and satellites, passes', 'mode.sky': 'Tonight', 'mode.sky.h': 'What you can see in the sky, events', 'mode.explore': 'Explore', 'mode.explore.h': 'Planets, real missions, the Milky Way',
-  'home.title': 'Where do you want to go?', 'home.back': 'Start screen',
+  'home.title': 'Where do you want to go?', 'home.back': 'Start screen', 'home.search': 'Search a function…', 'home.noHits': 'Nothing found. Try another word, e.g. ISS, eclipse or Mars.',
   'tab.sats': 'Track', 'tab.passes': 'Passes', 'tab.tonight': 'Sky', 'tab.events': 'Calendar', 'tab.bodies': 'Bodies', 'tab.missions': 'Missions', 'tab.live': 'Live', 'tab.burns': 'Manoeuvres', 'tab.catalog': 'Catalogue', 'more.burns': 'Burns on a timeline with propellant', 'more.catalog': 'Exoplanets, comets, asteroids',
   'sm.title': 'Saved missions', 'sm.save': 'Save', 'sm.share': 'Share', 'sm.saved': 'Mission saved', 'sm.copied': 'Copied to the clipboard', 'sm.empty': 'Nothing saved yet. Save a set-up to restore it later with one tap.', 'sm.load': 'tap to load', 'sm.del': 'Delete {n}',
 }
@@ -130,7 +130,7 @@ const el: Dict = {
   'tour.5.t': 'Υπολογισμοί και άλλα', 'tour.5.x': 'Στους Υπολογισμούς υπάρχουν αυτόνομες αριθμομηχανές. Στα Περισσότερα βρίσκεις πλανητικά συστήματα, σημεία Λαγκράνζ, τον Γαλαξία και όλους τους τύπους με πηγές.',
   'tour.6.t': 'Ρυθμίσεις και ενημερώσεις', 'tour.6.x': 'Εδώ ρυθμίζεις ετικέτες, κλίμακα, ταχύτητα και γλώσσα, και παίρνεις τη νεότερη έκδοση με ένα πάτημα.',
   'mode.design': 'Σχεδιασμός αποστολών', 'mode.design.h': 'Διαδρομές, τροχιές Γης, υπολογισμοί', 'mode.sats': 'Δορυφόροι', 'mode.sats.h': 'Παρακολούθηση ISS και δορυφόρων, διελεύσεις', 'mode.sky': 'Απόψε', 'mode.sky.h': 'Τι φαίνεται στον ουρανό, γεγονότα', 'mode.explore': 'Εξερεύνηση', 'mode.explore.h': 'Πλανήτες, πραγματικές αποστολές, ο Γαλαξίας',
-  'home.title': 'Πού θέλεις να πας;', 'home.back': 'Αρχική οθόνη',
+  'home.title': 'Πού θέλεις να πας;', 'home.back': 'Αρχική οθόνη', 'home.search': 'Αναζήτηση λειτουργίας…', 'home.noHits': 'Δεν βρέθηκε τίποτα. Δοκίμασε άλλη λέξη, π.χ. ISS, έκλειψη ή Άρης.',
   'tab.sats': 'Παρακολούθηση', 'tab.passes': 'Διελεύσεις', 'tab.tonight': 'Ουρανός', 'tab.events': 'Ημερολόγιο', 'tab.bodies': 'Ουράνια σώματα', 'tab.missions': 'Αποστολές', 'tab.live': 'Ζωντανά', 'tab.burns': 'Ελιγμοί', 'tab.catalog': 'Κατάλογος', 'more.burns': 'Καύσεις σε χρονολόγιο με καύσιμα', 'more.catalog': 'Εξωπλανήτες, κομήτες, αστεροειδείς',
   'sm.title': 'Αποθηκευμένες αποστολές', 'sm.save': 'Αποθήκευση', 'sm.share': 'Κοινοποίηση', 'sm.saved': 'Η αποστολή αποθηκεύτηκε', 'sm.copied': 'Αντιγράφηκε στο πρόχειρο', 'sm.empty': 'Δεν έχει αποθηκευτεί τίποτα ακόμα. Αποθήκευσε μια ρύθμιση για να την επαναφέρεις με ένα πάτημα.', 'sm.load': 'πάτησε για φόρτωση', 'sm.del': 'Διαγραφή {n}',
 }

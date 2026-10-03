@@ -220,7 +220,7 @@ export default function App() {
             <Orbit className="size-5 text-cyan-400" />
             <div>
               <div className="text-sm font-semibold leading-none">Periapsis</div>
-              <div className="text-[11px] text-muted-foreground">Missieontwerp · GMAT/EMTG-stijl · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
+              <div className="text-[11px] text-muted-foreground">{t(`mode.${mode}`)} · {APP_VERSION === 'dev' ? 'dev' : `v${APP_VERSION}`}</div>
             </div>
             <Button size="icon" variant="ghost" className="ml-auto" aria-label={t('home.back')} title={t('home.back')} onClick={() => ui.set({ home: true })}><LayoutGrid /></Button>
             <Button size="icon" variant="ghost" className="max-[999px]:size-10" data-tour="settings" aria-label={t('nav.settings')} title={t('nav.settings')} onClick={openSettings}><Settings /></Button>
