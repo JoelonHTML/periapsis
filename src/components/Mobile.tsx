@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Calculator, CalendarDays, Earth, Ellipsis, FastForward, LayoutGrid, Orbit, Pause, Play, Radar, Rewind, Rocket, Route, Satellite, Settings, SkipBack, SlidersHorizontal, Sparkles, Sun, Telescope } from 'lucide-react'
+import { Activity, ArrowLeft, Calculator, Flame, Library, CalendarDays, Earth, Ellipsis, FastForward, LayoutGrid, Orbit, Pause, Play, Radar, Rewind, Rocket, Route, Satellite, Settings, SkipBack, SlidersHorizontal, Sparkles, Sun, Telescope } from 'lucide-react'
 import { MODES } from '@/lib/modes'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -14,7 +14,7 @@ import { useClockTick } from '@/components/FlybyBar'
 /** Icon per tab (the tab list itself comes from the open world, see lib/modes.ts). */
 const ICONS: Partial<Record<Tab, typeof Rocket>> = {
   mission: Rocket, earth: Orbit, calc: Calculator, view: SlidersHorizontal, more: Ellipsis,
-  sats: Satellite, passes: Radar, tonight: Telescope, events: CalendarDays, bodies: Earth, missions: Route, system: Sun, galaxy: Sparkles,
+  sats: Satellite, passes: Radar, live: Activity, burns: Flame, catalog: Library, tonight: Telescope, events: CalendarDays, bodies: Earth, missions: Route, system: Sun, galaxy: Sparkles,
 }
 const isMore = (t: Tab) => MODES[ui.get().mode].more.includes(t)
 
