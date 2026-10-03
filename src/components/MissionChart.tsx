@@ -87,7 +87,7 @@ export function MissionChart({ sol, craft }: { sol: Solution; craft: CraftMass }
     if (on.includes('dv')) return yL(s.cumDv)
     if (rightId === 'mass') return yR(s.mAfter)
     if (on.includes('speed')) return yL(e.vHelioOut ?? e.vHelioIn ?? 0)
-    if (rightId === 'dist') return yR(norm(bodyState(e.body, e.t).r) / AU)
+    if (rightId === 'dist') return yR(norm(e.pos ?? bodyState(e.body, e.t).r) / AU)
     return M.t + ph
   }
 
@@ -116,7 +116,7 @@ export function MissionChart({ sol, craft }: { sol: Solution; craft: CraftMass }
   const flybyOn = useApp((s) => (active !== null && sol.events[active]?.kind === 'flyby' ? closeupEnabled(s, sol, active) : false))
   const ev = active !== null ? sol.events[active] : null
   const evName = (k: number) => BODIES[sol.events[k].body].name
-  const short = (k: number) => (sol.events[k].kind === 'launch' ? 'Start' : evName(k))
+  const short = (k: number) => (sol.events[k].kind === 'launch' ? 'Start' : sol.events[k].kind === 'dsm' ? 'DSM' : evName(k))
 
   return (
     <div className="grid gap-2">
@@ -223,7 +223,7 @@ export function MissionChart({ sol, craft }: { sol: Solution; craft: CraftMass }
       {ev && active !== null ? (
         <div className="grid gap-1.5 rounded-lg border bg-muted/30 p-2 text-xs">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-medium">{ev.kind === 'launch' ? 'Lancering' : ev.kind === 'flyby' ? 'Gravity assist' : 'Aankomst'} — {evName(active)}</span>
+            <span className="font-medium">{ev.kind === 'dsm' ? 'Manoeuvre in de ruimte' : `${ev.kind === 'launch' ? 'Lancering' : ev.kind === 'flyby' ? 'Gravity assist' : 'Aankomst'} — ${evName(active)}`}</span>
             <span className="tabular-nums text-muted-foreground">{fmtDate(ev.t)} · Δv {f(ev.dv, 3)} km/s</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
