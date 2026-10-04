@@ -9,7 +9,7 @@ import {
 import { store, useApp } from '@/lib/store'
 import { CraftFields } from './Controls'
 import { KV, NumField, Section, Tex, f } from './bits'
-import { Eclipse } from '@/features/satellites/Eclipse'
+import { Eclipse } from '@/features/satellites/EclipseSection'
 import { PerturbSection } from '@/features/perturb/PerturbSection'
 
 type Preset = { label: string; rpAlt: number; raAlt: number; inc: number | 'site' | 'sso'; wDeg: number | null }

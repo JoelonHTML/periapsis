@@ -8,7 +8,7 @@ import './i18n.ts'
 import { BODY_LIST, BODY_MAP, MOONS_ASOF, SOURCE, bodyName, type Body, type Kind } from './data.ts'
 import { fmtDistance, fmtGas, fmtGravity, fmtMass, fmtNum, fmtOrbitPeriod, fmtRadius, fmtRho, fmtRotation, fmtTemp, fmtVesc } from './format.ts'
 import { BodyDisc } from './BodyDisc'
-import { QuizPanel } from './Quiz'
+import { QuizPanel } from './QuizView'
 import { ScalePanel } from './Scale'
 import { view3D } from './go3d'
 

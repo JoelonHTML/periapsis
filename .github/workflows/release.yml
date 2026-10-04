@@ -94,4 +94,8 @@ jobs:
           ls -la dist
       - name: Attach to the release
         working-directory: desktop/dist
-        run: gh release upload "$APP_VERSION" Periapsis-Setup-*.exe Periapsis-Setup-*.exe.blockmap Periapsis-Portable-*.exe latest.yml --clobber
+        run: |
+          files=()
+          for f in Periapsis-Setup-*.exe Periapsis-Setup-*.exe.blockmap Periapsis-Portable-*.exe latest.yml; do [ -f "$f" ] && files+=("$f"); done
+          ls Periapsis-Setup-*.exe >/dev/null   # the installer must exist, else fail here
+          gh release upload "$APP_VERSION" "${files[@]}" --clobber
