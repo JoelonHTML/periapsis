@@ -17,11 +17,12 @@ import { ExtraObjects } from './ExtraObjects'
 import { FlybyScene } from './Flyby3D'
 import { GalaxyScene } from './Galaxy'
 import { SystemScene } from './PlanetSystem'
+import { EarthBody, useEarthConfig } from '@/features/earth/EarthBody'
+import { EarthOverlays } from '@/features/earth/EarthOverlays'
 import { CameraInit, Dot, EARLY, Follow, Label, Occluder, PanelOffset, Starfield, dotTex, useTexture, v3 } from './kit'
 
 const S_SOL = 1e-6 // scene units per km (solar view: 1 unit = 1 million km)
 const S_EAR = 1e-3 // earth views: 1 unit = 1000 km
-import TEX_EARTH from '@/assets/earth.jpg'
 import TEX_MOON from '@/assets/moon.jpg'
 const LEG_COLORS = ['#22d3ee', '#c084fc', '#f472b6']
 
@@ -277,9 +278,12 @@ function LabelProjector() {
 const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3()
 
 // ======================================================================= Earth / Earth–Moon
+/** World-space unit vector towards the Sun (same direction as SunLight). */
+const sunWorld = (out: THREE.Vector3) => v3(unit(sunGeo(clock.t)), 1, out)
+
 function Globe({ lat, lon, siteName, label }: { lat: number; lon: number; siteName: string; label: boolean }) {
-  const tex = useTexture(TEX_EARTH)
   const ref = useRef<THREE.Group>(null)
+  const { layers } = useEarthConfig()
   useFrame(() => { ref.current!.rotation.y = gmst(clock.t) }, EARLY)
   const R = RE * S_EAR
   const site = new THREE.Vector3(Math.cos(lat * DEG_) * Math.cos(lon * DEG_), Math.sin(lat * DEG_), -Math.cos(lat * DEG_) * Math.sin(lon * DEG_)).multiplyScalar(R * 1.003)
@@ -287,19 +291,13 @@ function Globe({ lat, lon, siteName, label }: { lat: number; lon: number; siteNa
   return (
     <>
       <group ref={ref}>
-        <mesh scale={R}>
-          <sphereGeometry args={[1, 96, 48]} />
-          <meshStandardMaterial key={tex ? 'tex' : 'plain'} map={tex} color={tex ? '#ffffff' : '#2b5fb3'} roughness={1} metalness={0} />
-        </mesh>
+        <EarthBody radius={R} sunDir={sunWorld} />
+        <EarthOverlays radius={R} layers={layers} />
         <group position={site}>
           <Dot color="#ef4444" size={9} />
           {label && <Label className="cl-lo bg-red-600/80">{siteName}</Label>}
         </group>
       </group>
-      <mesh scale={R * 1.025}>
-        <sphereGeometry args={[1, 64, 32]} />
-        <meshBasicMaterial color="#60a5fa" transparent opacity={0.08} side={THREE.BackSide} depthWrite={false} />
-      </mesh>
       <Line points={eq} color="#94a3b8" lineWidth={0.8} transparent opacity={0.35} />
       <Line points={[[0, -R * 1.35, 0], [0, R * 1.35, 0]]} color="#94a3b8" lineWidth={1} transparent opacity={0.5} />
     </>
