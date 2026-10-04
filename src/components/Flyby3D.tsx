@@ -7,9 +7,9 @@ import * as THREE from 'three'
 import { AU, BODIES, BODY_IDS, DEG, OBLIQUITY, bodyState, cross, fmtDuration, gmst, norm, sub, unit, type BodyId, type Vec } from '@/lib/astro'
 import { flybyWindow, type Solution } from '@/lib/mga'
 import { clock, useApp } from '@/lib/store'
-import { CameraInit, Dot, EARLY, Label, Occluder, useTexture, v3 } from './kit'
+import { CameraInit, Dot, EARLY, Label, Occluder, v3 } from './kit'
 import { haloTexture, planetTexture, ringTexture } from './planetTex'
-import TEX_EARTH from '@/assets/earth.jpg'
+import { EarthBody } from '@/features/earth/EarthBody'
 
 /** North pole (RA, Dec in degrees, J2000 equatorial; IAU WGCCRE). */
 const POLES: Record<BodyId, [number, number]> = {
@@ -18,16 +18,17 @@ const POLES: Record<BodyId, [number, number]> = {
 }
 /** Atmosphere halo colour and strength (0 = none). */
 const HALO: Record<BodyId, [string, number]> = {
-  mercury: ['#000000', 0], venus: ['#ffe6b0', 0.55], earth: ['#5aa2ff', 0.75], mars: ['#e8a070', 0.18], ceres: ['#000000', 0],
+  mercury: ['#000000', 0], venus: ['#ffe6b0', 0.55], earth: ['#5aa2ff', 0], mars: ['#e8a070', 0.18], ceres: ['#000000', 0],
   jupiter: ['#f0d6b0', 0.28], saturn: ['#f0e0b0', 0.25], uranus: ['#8fe6ee', 0.4], neptune: ['#6f8fff', 0.4], pluto: ['#000000', 0],
 }
 const HALO_R = 1.3 // halo sprite radius in planet radii
 
 function Planet({ id, sunDir }: { id: BodyId; sunDir: THREE.Vector3 }) {
-  const photo = useTexture(TEX_EARTH)
   const procedural = useMemo(() => planetTexture(id), [id])
-  const map = id === 'earth' ? photo : procedural
-  const spin = useRef<THREE.Mesh>(null)
+  const map = procedural
+  const spin = useRef<THREE.Group>(null)
+  const sunVec = useMemo(() => sunDir.clone().normalize(), [sunDir])
+  const earthSun = useMemo(() => (out: THREE.Vector3) => out.copy(sunVec), [sunVec])
   const quat = useMemo(() => {
     const [ra, dec] = POLES[id]
     return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(Math.cos(dec * DEG) * Math.cos(ra * DEG), Math.sin(dec * DEG), -Math.cos(dec * DEG) * Math.sin(ra * DEG)))
@@ -47,10 +48,14 @@ function Planet({ id, sunDir }: { id: BodyId; sunDir: THREE.Vector3 }) {
       <directionalLight position={sunDir.clone().multiplyScalar(50)} intensity={3.2} />
       <group rotation={[-OBLIQUITY, 0, 0]}>
       <group quaternion={quat}>
-        <mesh ref={spin}>
-          <sphereGeometry args={[1, 128, 64]} />
-          <meshStandardMaterial key={map ? 'tex' : 'plain'} map={map} color={map ? '#ffffff' : b.color} roughness={id === 'earth' ? 0.85 : 1} metalness={0} />
-        </mesh>
+        {id === 'earth' ? (
+          <group ref={spin}><EarthBody radius={1} sunDir={earthSun} /></group>
+        ) : (
+          <mesh>
+            <sphereGeometry args={[1, 128, 64]} />
+            <meshStandardMaterial key={map ? 'tex' : 'plain'} map={map} color={map ? '#ffffff' : b.color} roughness={1} metalness={0} />
+          </mesh>
+        )}
         {ring && (
           <mesh rotation={[-Math.PI / 2, 0, 0]} geometry={ring.geo}>
             <meshStandardMaterial map={ring.tex} transparent side={THREE.DoubleSide} roughness={1} depthWrite={false} />

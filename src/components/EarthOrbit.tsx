@@ -11,6 +11,7 @@ import { CraftFields } from './Controls'
 import { KV, NumField, Section, Tex, f } from './bits'
 import { Eclipse } from '@/features/satellites/EclipseSection'
 import { PerturbSection } from '@/features/perturb/PerturbSection'
+import { EarthLayersPanel } from '@/features/earth/EarthLayersPanel'
 
 type Preset = { label: string; rpAlt: number; raAlt: number; inc: number | 'site' | 'sso'; wDeg: number | null }
 const PRESETS: Record<string, Preset> = {
@@ -77,6 +78,7 @@ export function EarthPanel({ plan }: { plan: EarthPlan }) {
         <Button variant="outline" onClick={() => store.set({ view: 'earth' })}><Globe2 /> Toon baan in 3D</Button>
       </Section>
       <CraftFields />
+      <EarthLayersPanel />
       <Separator />
 
       <Section title="1 · Lancering naar parkeerbaan">
