@@ -235,13 +235,7 @@ export default function App() {
             </TabsList>
             <ScrollArea className="min-h-0 flex-1">
               <div className="p-4">
-                <TabsContent value="mission"><MissionPanel /></TabsContent>
-                <TabsContent value="earth"><EarthPanel plan={plan} /></TabsContent>
-                <TabsContent value="system"><SystemPanel /></TabsContent>
-                <TabsContent value="calc"><CalcPanel /></TabsContent>
-                <TabsContent value="lagrange"><LagrangePanel /></TabsContent>
-                <TabsContent value="galaxy"><GalaxyPanel /></TabsContent>
-                <TabsContent value="formulas"><FormulasPanel /></TabsContent>
+                {panelTabs /* same panels as on the phone: every tab of every world, incl. the feature tabs */}
               </div>
             </ScrollArea>
           </Tabs>
