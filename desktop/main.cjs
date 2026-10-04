@@ -23,13 +23,16 @@ function createWindow() {
 }
 
 // ---- HTTP for the renderer (main process has no CORS rules)
+// Dev/test only (never in the packaged app): PERIAPSIS_MOCK_API=http://127.0.0.1:PORT sends every API call to a local mock server.
+const MOCK = !app.isPackaged && process.env.PERIAPSIS_MOCK_API ? process.env.PERIAPSIS_MOCK_API : ''
 ipcMain.handle('periapsis:fetch', async (_e, url, headers) => {
-  if (typeof url !== 'string' || !/^https:\/\//.test(url)) return { status: 0, body: '' }
+  if (typeof url !== 'string' || !/^https:\/\//.test(url)) return { status: 0, body: '', error: 'bad url' }
   try {
-    const r = await net.fetch(url, { headers: headers && typeof headers === 'object' ? headers : {} })
+    const target = MOCK ? MOCK + new URL(url).pathname + new URL(url).search : url
+    const r = await net.fetch(target, { headers: headers && typeof headers === 'object' ? headers : {} })
     return { status: r.status, body: await r.text() }
-  } catch {
-    return { status: 0, body: '' }
+  } catch (e) {
+    return { status: 0, body: '', error: String((e && e.message) || e).slice(0, 160) } // e.g. net::ERR_NAME_NOT_RESOLVED, ERR_CERT_*, ERR_PROXY_*
   }
 })
 ipcMain.handle('periapsis:openExternal', (_e, url) => { if (typeof url === 'string' && /^https:\/\//.test(url)) return shell.openExternal(url) })

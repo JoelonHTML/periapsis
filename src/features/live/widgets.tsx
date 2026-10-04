@@ -34,11 +34,11 @@ export function useNow(ms: number): number {
 }
 
 export interface FeedSpec<T> { key: string; url: string; fallbackUrl?: string; maxAgeMs: number; minRetryMs: number; parse: (b: unknown) => T; headers?: Record<string, string> }
-export interface Feed<T> { data: T | null; fetchedAt: number | null; error: Fetched<T>['error']; loading: boolean; note: boolean; refresh: () => void }
+export interface Feed<T> { data: T | null; fetchedAt: number | null; error: Fetched<T>['error']; detail?: string; loading: boolean; note: boolean; refresh: () => void }
 
 /** One cached request: loads on mount (and when the url changes), `refresh` forces a reload (still obeying the retry throttle). */
 export function useFeed<T>(spec: FeedSpec<T>): Feed<T> {
-  const [st, setSt] = useState<{ data: T | null; fetchedAt: number | null; error: Fetched<T>['error']; loading: boolean; note: boolean }>({ data: null, fetchedAt: null, error: null, loading: true, note: false })
+  const [st, setSt] = useState<{ data: T | null; fetchedAt: number | null; error: Fetched<T>['error']; detail?: string; loading: boolean; note: boolean }>({ data: null, fetchedAt: null, error: null, loading: true, note: false })
   const specRef = useRef(spec); specRef.current = spec
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -52,7 +52,7 @@ export function useFeed<T>(spec: FeedSpec<T>): Feed<T> {
       if (!r.data && r.error && r.error !== 'offline' && s.fallbackUrl) r = await getCached(s.key, s.fallbackUrl, opts)
     } catch { r = { data: null, fetchedAt: null, fromCache: false, error: 'offline' } }
     if (!alive.current) return
-    setSt((p) => ({ data: r.data, fetchedAt: r.fetchedAt, error: r.error, loading: false, note: force && r.fromCache && !r.error && r.fetchedAt === p.fetchedAt }))
+    setSt((p) => ({ data: r.data, fetchedAt: r.fetchedAt, error: r.error, detail: r.detail, loading: false, note: force && r.fromCache && !r.error && r.fetchedAt === p.fetchedAt }))
   }, [])
   useEffect(() => { void run(false) }, [run, spec.url, spec.key])
   const refresh = useCallback(() => { void run(true) }, [run])
@@ -71,6 +71,7 @@ export function FeedCard({ title, credit, feeds, onRefresh, children, defaultOpe
   const oldest = stamps.length ? Math.min(...stamps) : null
   const anyData = feeds.some((f) => f.data !== null)
   const err = feeds.find((f) => f.error)?.error ?? null
+  const detail = feeds.find((f) => f.error)?.detail
   const note = feeds.some((f) => f.note) && !err
   const age = oldest === null ? null : ageParts(now - oldest)
   const ageText = age ? t('live.updated', { age: t(age.unit === 'min' ? 'live.ageMin' : age.unit === 'h' ? 'live.ageH' : 'live.ageD', { n: age.n }) }) : t('live.never')
@@ -90,9 +91,9 @@ export function FeedCard({ title, credit, feeds, onRefresh, children, defaultOpe
       {open && (
         <div className="grid gap-2 px-3 pb-3">
           {!anyData && loading ? <p className="text-xs text-muted-foreground">{t('live.loading')}</p>
-            : !anyData && err ? <p role="alert" className="rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-300">{t(err === 'offline' ? 'live.failOffline' : err === 'http' ? 'live.failHttp' : 'live.failParse')}</p>
+            : !anyData && err ? <p role="alert" className="rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-300">{t(err === 'offline' ? 'live.failOffline' : err === 'http' ? 'live.failHttp' : 'live.failParse')}{detail && <span className="mt-1 block break-all font-mono text-[10px] opacity-80">{detail}</span>}</p>
             : empty ? null : children}
-          {anyData && err && <p className="text-[11px] text-amber-300">{t('live.fail')}. {t('live.showingOld')}</p>}
+          {anyData && err && <p className="text-[11px] text-amber-300">{t('live.fail')}. {t('live.showingOld')}{detail && <span className="block break-all font-mono text-[10px] opacity-80">{detail}</span>}</p>}
           {note && <p className="text-[11px] text-muted-foreground">{t('live.fresh')}</p>}
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 border-t border-border/60 pt-1.5 text-[10px] text-muted-foreground">
             <span>{credit}</span><span className="tabular-nums">{ageText}</span>

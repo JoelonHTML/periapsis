@@ -3,7 +3,11 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { desktop } from './desktop.ts'
 
-export interface Fetched<T> { data: T | null; fetchedAt: number | null; fromCache: boolean; error: 'offline' | 'http' | 'parse' | null }
+export interface Fetched<T> {
+  data: T | null; fetchedAt: number | null; fromCache: boolean; error: 'offline' | 'http' | 'parse' | null
+  /** Technical reason for `error` ("HTTP 429", "net::ERR_NAME_NOT_RESOLVED", what the server sent instead of JSON …), for the diagnostics line in the UI. */
+  detail?: string
+}
 interface Entry { t: number; v: unknown }
 const PREFIX = 'periapsis.net.'
 const lastTry = new Map<string, number>() // per cache key, this session
@@ -19,7 +23,7 @@ async function raw(url: string, headers: Record<string, string>): Promise<{ stat
   const d = desktop()
   if (d) { // Windows app: the main process fetches (no CORS rules there)
     const r = await d.fetch(url, headers)
-    if (r.status === 0) throw new Error('offline')
+    if (r.status === 0) throw new Error(r.error || 'offline')
     let body: unknown = r.body
     try { body = JSON.parse(r.body) } catch { /* not JSON */ }
     return { status: r.status, body }
@@ -41,18 +45,24 @@ async function raw(url: string, headers: Record<string, string>): Promise<{ stat
 export async function getCached<T>(key: string, url: string, opts: { maxAgeMs: number; minRetryMs?: number; parse: (body: unknown) => T; headers?: Record<string, string>; force?: boolean; now?: number }): Promise<Fetched<T>> {
   const now = opts.now ?? Date.now()
   const cached = read(key)
-  const fromCache = (error: Fetched<T>['error']): Fetched<T> => ({ data: (cached?.v as T) ?? null, fetchedAt: cached?.t ?? null, fromCache: true, error })
+  const fromCache = (error: Fetched<T>['error'], detail?: string): Fetched<T> => ({ data: (cached?.v as T) ?? null, fetchedAt: cached?.t ?? null, fromCache: true, error, detail })
   if (cached && !opts.force && now - cached.t < opts.maxAgeMs) return fromCache(null)
   const tried = lastTry.get(key)
   if (tried !== undefined && now - tried < (opts.minRetryMs ?? 10 * 60_000) && cached) return fromCache(null)
   lastTry.set(key, now)
   let res: { status: number; body: unknown }
-  try { res = await raw(url, opts.headers ?? { Accept: 'application/json' }) } catch { return fromCache('offline') }
-  if (res.status < 200 || res.status >= 300) return fromCache('http')
+  try { res = await raw(url, opts.headers ?? { Accept: 'application/json' }) } catch (e) { return fromCache('offline', String((e as Error)?.message ?? e).slice(0, 160)) }
+  if (res.status < 200 || res.status >= 300) return fromCache('http', `HTTP ${res.status}${snippet(res.body) ? ' · ' + snippet(res.body) : ''}`)
   let v: T
-  try { v = opts.parse(res.body) } catch { return fromCache('parse') }
+  try { v = opts.parse(res.body) } catch (e) { return fromCache('parse', `${String((e as Error)?.message ?? e).slice(0, 80)} · ${snippet(res.body)}`) }
   write(key, v, now)
   return { data: v, fetchedAt: now, fromCache: false, error: null }
+}
+
+/** First characters of whatever the server sent, flattened, for the diagnostics line. */
+function snippet(body: unknown): string {
+  const s = typeof body === 'string' ? body : (() => { try { return JSON.stringify(body) } catch { return '' } })()
+  return (s ?? '').replace(/\s+/g, ' ').slice(0, 90)
 }
 
 /** For tests: forget the in-memory retry timestamps. */

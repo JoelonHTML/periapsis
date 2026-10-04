@@ -3,7 +3,7 @@
 import { updates } from './update-store.ts'
 
 export interface DesktopBridge {
-  fetch(url: string, headers?: Record<string, string>): Promise<{ status: number; body: string }>
+  fetch(url: string, headers?: Record<string, string>): Promise<{ status: number; body: string; error?: string }>
   openExternal(url: string): Promise<void>
   info(): Promise<{ portable: boolean; version: string; packaged: boolean }>
   checkUpdate(): Promise<boolean>
