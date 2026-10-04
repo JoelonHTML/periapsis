@@ -31,3 +31,8 @@ Periapsis.html
 
 # agent worktrees (temporary)
 .claude/worktrees/
+
+# Windows app build
+desktop/node_modules/
+desktop/dist/
+desktop/app/

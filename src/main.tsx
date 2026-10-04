@@ -5,11 +5,13 @@ import App from './App.tsx'
 import './native'
 import { markReady } from '@/lib/ota'
 import { initSettings } from '@/lib/settings-apply'
+import { initDesktop } from '@/lib/desktop'
 import { toJ2000 } from '@/lib/astro'
 import { runMga, type MgaInput } from '@/lib/mga'
 import { flybyWindow } from '@/lib/mga'
 import { addShip, clock, fitRoute, jumpTo, openCloseup, removeShip, renameShip, selectShip, selectedSolution, setSpeedNow, store, type View } from '@/lib/store'
 
+initDesktop() // Windows app only: automatic updates
 initSettings() // saved settings first, so deep-link params below still win
 
 // Deep links: #view=galaxy&tab=galaxy&speed=3600&t=2038-11-03   (speed in s/s, t = UTC date)

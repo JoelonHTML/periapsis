@@ -9,7 +9,8 @@ import { SPEEDS } from '@/lib/store'
 import { LANGS, useT } from '@/lib/i18n'
 import { startTour } from '@/lib/tour-store'
 import { ui, useUi } from '@/lib/ui-store'
-import { applyUpdate, refreshUpdates, useUpdates } from '@/lib/update-store'
+import { applyUpdate, refreshUpdates, restartForUpdate, useUpdates } from '@/lib/update-store'
+import { isDesktop } from '@/lib/desktop'
 import { APP_VERSION } from '@/lib/update'
 
 const ver = (v: string) => (v === 'dev' ? 'dev' : `v${v}`)
@@ -19,9 +20,9 @@ function UpdateCard() {
   const t = useT()
   const st = useUpdates((s) => s.s)
   const latest = 'latest' in st ? st.latest : null
-  const live = !!latest && canLiveUpdate(latest)
+  const live = !!latest && (canLiveUpdate(latest) || isDesktop())
   const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
-  const available = (st.phase === 'available' || st.phase === 'applyfail' || st.phase === 'needperm' || st.phase === 'installprompt') && latest
+  const available = (st.phase === 'available' || st.phase === 'applyfail' || st.phase === 'needperm' || st.phase === 'installprompt' || st.phase === 'readyrestart') && latest
   const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t('upd.fail.bad'), storage: t('upd.fail.storage') }[st.why] : ''
   const msg = {
     idle: t('upd.idle'),
@@ -31,6 +32,7 @@ function UpdateCard() {
     downloading: st.phase === 'downloading' && st.pct !== undefined ? t('upd.downloadingPct', { p: st.pct }) : t('upd.downloading'),
     installprompt: t('upd.prompt'),
     needperm: t('upd.perm'),
+    readyrestart: t('upd.ready'),
     restarting: t('upd.restarting'),
     applyfail: failMsg,
     offline: t('upd.offline'),
@@ -57,11 +59,12 @@ function UpdateCard() {
       <Button size="lg" className="h-14 w-full text-base" disabled={busy} variant={available ? 'default' : 'secondary'}
         onClick={() => {
           if (!available) void refreshUpdates()
+          else if (st.phase === 'readyrestart') restartForUpdate()
           else if (live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive)) void applyUpdate(latest)
           else downloadApk(latest.apkUrl)
         }}>
         {available
-          ? <><Download className="size-5" /> {live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
+          ? <><Download className="size-5" /> {st.phase === 'readyrestart' ? t('upd.restart') : live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
           : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? t('upd.check') : t('upd.recheck')}</>}
       </Button>
       {available && live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}

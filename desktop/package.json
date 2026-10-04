@@ -1,0 +1,23 @@
+{
+  "name": "periapsis-desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Periapsis voor Windows",
+  "author": "Joël Nieuwkoop",
+  "license": "UNLICENSED",
+  "main": "main.cjs",
+  "scripts": { "dist": "electron-builder --win nsis portable --publish never" },
+  "dependencies": { "electron-updater": "^6.6.2" },
+  "devDependencies": { "electron": "^44.5.1", "electron-builder": "^26.15.3" },
+  "build": {
+    "appId": "nl.periapsis.desktop",
+    "productName": "Periapsis",
+    "copyright": "© Joël Nieuwkoop",
+    "files": ["main.cjs", "preload.cjs", "app/**/*", "package.json"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "publish": [{ "provider": "github", "owner": "JoelonHTML", "repo": "periapsis" }],
+    "win": { "icon": "build/icon.png", "target": ["nsis", "portable"] },
+    "nsis": { "oneClick": true, "perMachine": false, "runAfterFinish": true, "deleteAppDataOnUninstall": false, "artifactName": "Periapsis-Setup-${version}.exe" },
+    "portable": { "artifactName": "Periapsis-Portable-${version}.exe" }
+  }
+}

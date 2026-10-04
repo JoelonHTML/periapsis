@@ -1,6 +1,7 @@
 // One way for features to read public web APIs: native HTTP on Android (no CORS problems), fetch in a browser, a localStorage cache
 // so screens work offline and we never hammer free services (most allow only a few requests per hour per device).
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
+import { desktop } from './desktop.ts'
 
 export interface Fetched<T> { data: T | null; fetchedAt: number | null; fromCache: boolean; error: 'offline' | 'http' | 'parse' | null }
 interface Entry { t: number; v: unknown }
@@ -15,6 +16,14 @@ function write(key: string, v: unknown, now: number) {
 }
 
 async function raw(url: string, headers: Record<string, string>): Promise<{ status: number; body: unknown }> {
+  const d = desktop()
+  if (d) { // Windows app: the main process fetches (no CORS rules there)
+    const r = await d.fetch(url, headers)
+    if (r.status === 0) throw new Error('offline')
+    let body: unknown = r.body
+    try { body = JSON.parse(r.body) } catch { /* not JSON */ }
+    return { status: r.status, body }
+  }
   if (Capacitor.isNativePlatform()) {
     const r = await CapacitorHttp.get({ url, headers, responseType: 'json' })
     return { status: r.status, body: r.data }

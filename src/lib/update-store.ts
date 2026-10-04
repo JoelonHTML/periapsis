@@ -1,12 +1,13 @@
 import { createStore } from './mini-store.ts'
 import { canInstallInApp, installApkInApp } from './apk-install.ts'
+import { desktop } from './desktop.ts'
 import { downloadBundle, type OtaFail } from './ota.ts'
 import { getUpdateStatus, type Update } from './update.ts'
 
 /** One update state shared by the top banner and the settings button, so they can never disagree. */
 export type UpdateState =
   | { phase: 'idle' | 'checking' | 'offline' | 'error' }
-  | { phase: 'latest' | 'available' | 'restarting' | 'installprompt' | 'needperm'; latest: Update }
+  | { phase: 'latest' | 'available' | 'restarting' | 'installprompt' | 'needperm' | 'readyrestart'; latest: Update }
   | { phase: 'downloading'; latest: Update; pct?: number }
   | { phase: 'applyfail'; latest: Update; why: OtaFail }
 
@@ -27,6 +28,8 @@ export function refreshUpdates(current?: string): Promise<void> {
 /** Update from inside the app. 1) swap the web build and restart (no prompt) when this APK can run it; 2) otherwise download the APK and
  *  open Android's installer (the user confirms). Resolves false (state 'applyfail' / 'needperm') when the caller should offer a fallback. */
 export async function applyUpdate(latest: Update): Promise<boolean> {
+  const d = desktop()
+  if (d) return applyDesktop(latest, d)
   updates.set({ s: { phase: 'downloading', latest } })
   if (latest.htmlUrl) {
     const r = await downloadBundle(latest.htmlUrl, latest.version)
@@ -53,3 +56,16 @@ export async function installApk(latest: Update): Promise<boolean> {
     return false
   }
 }
+
+/** Windows app. Installer build: download in the app and restart into the new version (electron-updater). Portable build: open the release page. */
+async function applyDesktop(latest: Update, d: NonNullable<ReturnType<typeof desktop>>): Promise<boolean> {
+  const info = await d.info()
+  if (info.portable || !info.packaged) { await d.openExternal(`https://github.com/JoelonHTML/periapsis/releases/tag/v${latest.version}`); return false }
+  if (updates.get().s.phase === 'readyrestart') { void d.installUpdate(); return true }
+  updates.set({ s: { phase: 'downloading', latest, pct: 0 } })
+  const ok = await d.checkUpdate() // progress / downloaded events arrive through initDesktop(); the last one flips the state to 'readyrestart'
+  if (!ok) { updates.set({ s: { phase: 'applyfail', latest, why: 'offline' } }); return false }
+  return true
+}
+/** Restart into the downloaded update (Windows app). */
+export function restartForUpdate() { void desktop()?.installUpdate() }
