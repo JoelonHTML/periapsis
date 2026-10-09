@@ -99,7 +99,7 @@ export function SkyStage() {
       lastSig = sig
       if (!data) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#04060b'; ctx.fillRect(0, 0, w, h); return }
       const ins = insetRef.current
-      const aw = w - ins.left, ah = h - ins.top - ins.bottom
+      const aw = Math.max(40, w - ins.left), ah = Math.max(40, h - ins.top - ins.bottom) // a fully open drawer can cover more than the screen
       const cam: Cam = { ...basis, cx: ins.left + aw / 2, cy: ins.top + ah / 2, k: camScale(aw, ah, v.fov) }
       const frame: Frame = { w, h, dpr, cam, M: horizonMatrix(ms, site.lat, site.lon), data, layers: L, lang: settings.get().lang, b: bodies, sats: satList, sel: v.sel, compass, fov: v.fov, names }
       hits = drawSky(ctx, frame)

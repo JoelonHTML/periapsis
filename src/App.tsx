@@ -85,6 +85,7 @@ function ViewSwitcher({ compact = false, scroll = false }: { compact?: boolean; 
   const view = useApp((s) => s.view)
   const sol = useApp(selectedSolution)
   const firstFlyby = sol?.events.findIndex((e) => e.kind === 'flyby') ?? -1
+  if (useUi((s) => s.tab) === 'skyview') return null // the planetarium replaces the 3D scene: view chips would do nothing there
   return (
     <ToggleGroup type="single" variant="outline" className={scroll ? 'pointer-events-auto flex w-max flex-nowrap bg-background/80 backdrop-blur' : compact ? 'pointer-events-auto grid w-64 grid-cols-2 bg-background/80 backdrop-blur' : 'pointer-events-auto flex-wrap justify-center bg-background/80 backdrop-blur'} value={view}
       onValueChange={(v) => {
