@@ -28,7 +28,7 @@ export { SATURN_RING }
 
 // Immutable commit that contains textures/ (the browser cache relies on it never changing). After merging a commit that adds files to
 // textures/, set this to that commit's hash (the files below only exist from that commit on; until then they 404 and the bundled map stays).
-export const HD_COMMIT = '05a159e703dd742cb317224d3fa75c9a153acd7e'
+export const HD_COMMIT = '22120a490927afa81d8ebee22add99f8e5b8fd3a'
 export const HD_BASE = `https://raw.githubusercontent.com/JoelonHTML/periapsis/${HD_COMMIT}/textures/`
 const HD: Record<string, { k4: string; k8?: string }> = {
   mercury: { k4: 'mercury-4k.jpg', k8: 'mercury-8k.jpg' }, mars: { k4: 'mars-4k.jpg', k8: 'mars-8k.jpg' }, moon: { k4: 'moon-4k.jpg', k8: 'moon-8k.jpg' },
