@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/widget_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_bg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/widget_sample_moon"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_accent"
+            android:textSize="10sp" />
+
+        <ImageView
+            android:id="@+id/moon_img"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:importantForAccessibility="no"
+            android:padding="2dp"
+            android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/tv_main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/widget_sample_pct"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tv_sub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_muted"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tv_updated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:visibility="gone"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_muted"
+            android:textSize="9sp" />
+    </LinearLayout>
+</FrameLayout>

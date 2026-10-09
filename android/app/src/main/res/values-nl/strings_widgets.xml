@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_open_app">Open Periapsis</string>
+    <string name="widget_open_app_hint">Open de app om de hemeldata te laden.</string>
+    <string name="widget_sample_title">Vanavond</string>
+    <string name="widget_sample_main">3 planeten · Venus</string>
+    <string name="widget_sample_moon">Maan</string>
+    <string name="widget_sample_pct">42% · Wassende maan</string>
+    <string name="widget_desc_planets">Planeten die vanavond zichtbaar zijn, met richting en beste tijdstip.</string>
+    <string name="widget_desc_moon">Huidige maanfase, verlichting en op- / ondergang.</string>
+    <string name="widget_desc_sun">Zonsondergang, zonsopkomst, schemering en dageraad.</string>
+    <string name="widget_desc_tonight">Vanavond in één oogopslag: zon, maan, planeten, volgende gebeurtenis en ISS-overvlucht.</string>
+    <string name="widget_name_planets_small">Planeten vanavond · 2×1</string>
+    <string name="widget_name_planets">Planeten vanavond · 2×2</string>
+    <string name="widget_name_planets_wide">Planeten vanavond · 4×2</string>
+    <string name="widget_name_planets_large">Planeten vanavond · 4×3</string>
+    <string name="widget_name_moon_small">Maan · 1×1</string>
+    <string name="widget_name_moon">Maan · 2×2</string>
+    <string name="widget_name_sun">Zon &amp; schemering · 2×1</string>
+    <string name="widget_name_tonight">Vanavond · 4×4</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_open_app">Άνοιγμα Periapsis</string>
+    <string name="widget_open_app_hint">Ανοίξτε την εφαρμογή μία φορά για να φορτωθούν τα δεδομένα του ουρανού.</string>
+    <string name="widget_sample_title">Απόψε</string>
+    <string name="widget_sample_main">3 πλανήτες · Αφροδίτη</string>
+    <string name="widget_sample_moon">Σελήνη</string>
+    <string name="widget_sample_pct">42% · Αύξουσα</string>
+    <string name="widget_desc_planets">Πλανήτες ορατοί απόψε, με κατεύθυνση και καλύτερη ώρα.</string>
+    <string name="widget_desc_moon">Τρέχουσα φάση της Σελήνης, φωτισμός και ανατολή / δύση.</string>
+    <string name="widget_desc_sun">Δύση, ανατολή, λυκόφως και χαραυγή.</string>
+    <string name="widget_desc_tonight">Απόψε με μια ματιά: Ήλιος, Σελήνη, πλανήτες, επόμενο γεγονός και πέρασμα του ISS.</string>
+    <string name="widget_name_planets_small">Πλανήτες απόψε · 2×1</string>
+    <string name="widget_name_planets">Πλανήτες απόψε · 2×2</string>
+    <string name="widget_name_planets_wide">Πλανήτες απόψε · 4×2</string>
+    <string name="widget_name_planets_large">Πλανήτες απόψε · 4×3</string>
+    <string name="widget_name_moon_small">Σελήνη · 1×1</string>
+    <string name="widget_name_moon">Σελήνη · 2×2</string>
+    <string name="widget_name_sun">Ήλιος &amp; λυκόφως · 2×1</string>
+    <string name="widget_name_tonight">Απόψε · 4×4</string>
+</resources>
