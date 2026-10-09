@@ -74,6 +74,7 @@ const nameOf = (key) => dn[key] ?? null
 const TYPES = ['g', 'oc', 'gc', 'pn', 'bn', 'en', 'rn', 'sfr', 'snr', 'dn', 'gg', 's', 's0', 'e', 'i', 'sd']
 const CATS = ['M', 'NGC', 'IC', 'Cr', 'LMC', 'SMC']
 const dim = (s) => { const m = String(s).match(/^([\d.]+)(?:x([\d.]+))?/); return m ? [+m[1], +(m[2] ?? m[1])] : [0, 0] }
+const KEEP_NAMES = new Set(['Large Magellanic Cloud', 'Small Magellanic Cloud', 'η Car Nebula', 'Pleiades', 'α Persei Cluster', 'Coma Star Cluster', 'Southern Pleiades', 'Praesepe', 'Andromeda Galaxy', "Elephant's Trunk Nebula", 'Coathanger', 'h Persei', 'χ Persei', 'Orion Nebula', 'North America Nebula', 'Blue Horsehead Nebula', 'Merope Nebula', 'Maia Nebula', '47 Tuc', 'Jewel Box', 'Butterfly Cluster', "Ptolemy's Cluster", 'Eagle Nebula', 'Lagoon Nebula', 'Rosette Nebula', 'Trifid Nebula', 'Omega Nebula', 'Great Star Cluster in Hercules', 'Wild Duck Cluster', 'Dumbbell Nebula', 'Ring Nebula', 'Crab Nebula', 'Owl Nebula', 'Triangulum Galaxy', 'Whirlpool Galaxy', 'Pinwheel Galaxy', 'Sombrero Galaxy', 'Cigar Galaxy', "Bode's Galaxy", 'Sunflower Galaxy', 'Black Eye Galaxy', 'Sculptor Galaxy', 'Centaurus A', 'ω Cen Cluster', 'Southern Pinwheel Galaxy', "Cat's Eye Nebula", 'Helix Nebula', 'Saturn Nebula', 'Blue Snowball', 'Eskimo Nebula', 'Ghost of Jupiter Nebula', 'Blinking Planetary Nebula', 'Little Dumbbell Nebula', 'Southern Ring Nebula', 'East Veil Nebula', 'Crescent Nebula', 'Bubble Nebula', 'Heart Nebula', 'Cocoon Nebula', 'Iris Nebula', 'Flaming Star Nebula', 'Tarantula Nebula', "Hubble's Variable Nebula", "Hind's Variable Nebula", 'Leo Triplet', 'Antennae', "Markarian's Chain", "Stephan's Quintet", 'Mice Galaxies', 'Spindle Galaxy', 'Whale Galaxy', "Seyfert's Sextet", 'Orion Belt Cluster', 'Summer Beehive Cluster', 'Starfish Cluster', 'Pinwheel Cluster', 'Small Sagittarius Star Cloud', 'Pearl Cluster', 'Wishing Well Cluster'])
 const recs = []
 const dsoNames = {}
 for (const f of J('dsos.14.json').features) {
@@ -91,7 +92,7 @@ const dsoList = recs.filter((x) => x.cat !== 3 || !real.some((y) => Math.abs(y.d
 dsoList.sort((a, b) => a.mag - b.mag)
 dsoList.forEach((x, i) => {
   const nm = nameOf(x.des.replace(' ', '')) ?? nameOf(x.key.replace(/^NGC /, '')) ?? nameOf(x.key.replace(' ', '')) ?? nameOf(x.key) ?? nameOf(x.des)
-  if (nm?.name) dsoNames[i] = [nm.name, nm.el || '']
+  if (nm?.name && KEEP_NAMES.has(nm.name)) dsoNames[i] = [nm.name, nm.el || ''] // (d3-celestial also carries many modern nicknames: only the classic names are kept)
 })
 {
   const N = dsoList.length, RS = 3 + 3 + 1 + 1 + 1 + 2 + 2 + 2 + 2
