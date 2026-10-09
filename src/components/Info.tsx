@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AU, MASS_RATIO_EM, MASS_RATIO_SE, MU_EARTH, RE, collinearGammas, hohmann } from '@/lib/astro'
 import { store } from '@/lib/store'
 import { Section, Tex, f } from './bits'
+import { SystemsSection } from '@/features/systems/SystemsSection'
 
 const D_EM = 384400
 const km = (x: number) => Math.round(x).toLocaleString('nl-NL')
@@ -113,6 +114,7 @@ export function FormulasPanel() {
           <p className="mt-1 text-[10px] italic text-muted-foreground/80">Bron: {x.src}</p>
         </div>
       ))}
+      <SystemsSection />
     </div>
   )
 }
