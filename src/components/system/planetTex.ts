@@ -19,7 +19,7 @@ export const PLANET_MAPS: Record<string, string> = { mercury: MERCURY, mars: MAR
 export { SATURN_RING }
 
 // Immutable tag: push it once with `git tag textures-v1 && git push origin textures-v1`; never move it (the browser cache relies on it).
-export const HD_BASE = 'https://raw.githubusercontent.com/JoelonHTML/periapsis/textures-v1/textures/'
+export const HD_BASE = 'https://raw.githubusercontent.com/JoelonHTML/periapsis/05a159e703dd742cb317224d3fa75c9a153acd7e/textures/'
 const HD: Record<string, { k4: string; k8?: string }> = {
   mercury: { k4: 'mercury-4k.jpg', k8: 'mercury-8k.jpg' }, mars: { k4: 'mars-4k.jpg', k8: 'mars-8k.jpg' }, moon: { k4: 'moon-4k.jpg', k8: 'moon-8k.jpg' },
   jupiter: { k4: 'jupiter-4k.jpg' }, saturn: { k4: 'saturn-4k.jpg' },
