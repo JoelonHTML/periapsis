@@ -13,7 +13,7 @@ import MOON from '@/assets/planets/moon.jpg'
 const MAPS: Record<string, [url: string, limbDarkening: number]> = {
   mercury: [MERCURY, 0], venus: [VENUS, 0.3], mars: [MARS, 0.25], jupiter: [JUPITER, 0.55], saturn: [SATURN, 0.5], uranus: [URANUS, 0.4], neptune: [NEPTUNE, 0.4], moon: [MOON, 0],
 }
-const SIZE = 192, MAP_W = 512, MAP_H = 256
+const SIZE = 256, MAP_W = 1024, MAP_H = 512
 const sprites = new Map<string, HTMLCanvasElement>(), pending = new Set<string>()
 /** Monotone counter that grows whenever a sprite became available (callers may use it to know a redraw is worthwhile). */
 export let spriteVersion = 0

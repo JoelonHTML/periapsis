@@ -17,6 +17,7 @@ import './i18n'
 import { basisAzAlt, basisFromOrientation, blendBasis, camScale, horizonMatrix, project, hzVec, hzAltAz, solarClock, yawBasis, type Basis, type Cam } from './geom.ts'
 import { computeBodies, computeSats, ensureSats, ensureSky, objKey, objectAltAz, skyCtx, skyState, type SatPos } from './scene.ts'
 import { drawEdgeArrow, drawSky, type Frame, type Hit } from './render.ts'
+import { spriteVersion } from './discs.ts'
 import { FOV_MAX, FOV_MIN, layers, saveYaw, view, useView } from './state.ts'
 import { coordText } from './places.ts'
 import { InfoCard } from './InfoCard.tsx'
@@ -94,7 +95,7 @@ export function SkyStage() {
       const bodies = computeBodies(ms, site)
       if (L.sats && skyCtx.sats.length && (real - lastSatReal > 700 || Math.abs(ms - lastSatMs) > 4000)) { satList = computeSats(skyCtx.sats, ms, site); lastSatReal = real; lastSatMs = ms }
       live.b = bodies; live.sats = satList; live.ms = ms
-      const sig = [v.az.toFixed(2), v.alt.toFixed(2), v.fov, w, h, Math.floor(ms / (clock.target > 5 ? 1 : 2000)), objKey(v.sel), JSON.stringify(L), lastSatReal | 0, v.ar, ready0(), v.arYaw, site.lat, site.lon, insetRef.current.left, insetRef.current.bottom].join('|')
+      const sig = [v.az.toFixed(2), v.alt.toFixed(2), v.fov, w, h, Math.floor(ms / (clock.target > 5 ? 1 : 2000)), objKey(v.sel), JSON.stringify(L), lastSatReal | 0, v.ar, ready0(), v.arYaw, spriteVersion, site.lat, site.lon, insetRef.current.left, insetRef.current.bottom].join('|')
       if (sig === lastSig && v.ar !== 'on') return
       lastSig = sig
       if (!data) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#04060b'; ctx.fillRect(0, 0, w, h); return }

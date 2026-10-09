@@ -313,21 +313,24 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
 
   // ---- deep sky: symbols at wide views, true size and shape when zoomed
   if (L.dso && night > 0.15) {
-    const dsoLim = lim + 2.2, sbLim = 17 + 0.85 * lim
+    const dsoLim = lim + 1.8, sbLim = 17 + 0.85 * lim, otherLim = lim + (f.fov > 40 ? -1.2 : f.fov > 15 ? -0.2 : 1.0)
     ctx.lineWidth = 1
     let drawnBig = 0
     const showNames = L.dsoNames
-    const lbLim = f.fov > 60 ? 6.2 : f.fov > 25 ? 8 : f.fov > 8 ? 10 : 14
+    const lbLim = f.fov > 60 ? 4.6 : f.fov > 25 ? 6.6 : f.fov > 8 ? 9 : 14
     for (let i = 0; i < d.dsos.length; i++) {
       const x: Dso = d.dsos[i]
       if (x.mag > dsoLim) break // sorted by magnitude
       if (x.mag < 90 && x.sb > sbLim && x.mag > 7) continue // too diffuse for this sky
+      const isM = x.id.charCodeAt(0) === 77 && x.id.charCodeAt(1) >= 48 && x.id.charCodeAt(1) <= 57
+      if (!isM && x.mag > otherLim) continue
       if (x.mag >= 90 && f.fov > 30) continue
+      if (x.id.charCodeAt(0) === 67 && x.id.charCodeAt(1) === 114 && x.mag > 4.5 && f.fov > 30) continue // sparse Collinder clusters only when zoomed
       const v = app(applyM(f.M, x.vec))
       if ((L.ground && v[2] < -0.01) || dotv(v, cam.f) < 0 || !project(cam, v, P)) continue
       const cx = P.x, cy = P.y
       if (cx < -60 || cx > w + 60 || cy < -60 || cy > h + 60) continue
-      const rgbc = DSO_RGB[x.type] ?? [150, 220, 255], a = night
+      const rgbc = x.id === 'M45' ? [160, 195, 255] : DSO_RGB[x.type] ?? [150, 220, 255], a = night
       const Rpx = kpxExact((x.maj / 60) / 2, v) // half the major axis in pixels
       const rMin = clamp(5.2 - x.mag * 0.28, 2.6, 5.6) * zoomF
       if (Rpx < 5) { // symbol
@@ -350,20 +353,20 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
         if (x.type !== 'oc' && x.type !== 'gc') {
           ctx.save(); ctx.scale(1, ry / rx)
           const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx)
-          g.addColorStop(0, rgba(rgbc, 0.32 * a)); g.addColorStop(0.55, rgba(rgbc, 0.14 * a)); g.addColorStop(1, rgba(rgbc, 0))
+          g.addColorStop(0, rgba(rgbc, 0.26 * a)); g.addColorStop(0.55, rgba(rgbc, 0.11 * a)); g.addColorStop(1, rgba(rgbc, 0))
           ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill()
           ctx.restore()
           ctx.strokeStyle = rgba(rgbc, 0.42 * a); ctx.setLineDash(x.type === 'snr' ? [4, 3] : []); ctx.beginPath(); ctx.ellipse(0, 0, rx * 0.97, ry * 0.97, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([])
           if (x.type === 'pn') { ctx.strokeStyle = rgba(rgbc, 0.8 * a); ctx.beginPath(); ctx.arc(0, 0, Math.max(2.5, rx * 0.35), 0, TAU); ctx.stroke() }
         } else { // star clusters: a dotted outline, globulars with a glow
           if (x.type === 'gc') { const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, rgba(rgbc, 0.55 * a)); g.addColorStop(1, rgba(rgbc, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill() }
-          ctx.strokeStyle = rgba(rgbc, 0.7 * a); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.stroke(); ctx.setLineDash([])
+          ctx.strokeStyle = rgba(rgbc, 0.7 * a * clamp(70 / rx, 0.3, 1)); ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.stroke(); ctx.setLineDash([])
         }
         ctx.restore()
       }
       const rHit = Math.max(Rpx, rMin)
       hits.push({ x: cx, y: cy, obj: { k: 'dso', i }, pri: 1 })
-      if (showNames && x.mag < lbLim) {
+      if (showNames && x.mag < lbLim + (isM ? 2 : 0)) {
         const nm = f.lang === 'el' && x.el ? x.el : x.name
         labels.push({ x: cx + rHit + 3, y: cy + 3, text: nm && f.fov < 45 ? nm : x.id, pri: 2 - x.mag * 0.1 + (nm ? 0.3 : 0), color: rgba([...rgbc].map((c) => c * 0.35 + 255 * 0.65), 0.9 * a), size: 10 })
       }
@@ -466,7 +469,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
       const r = kpx(b.moon.radius, 9, mv)
       const mx = P.x, my = P.y
       const sp = sunOk ? sunP : null
-      ctx.fillStyle = `rgba(255,255,240,${0.04 + 0.05 * night})`; ctx.beginPath(); ctx.arc(mx, my, r * 2.2, 0, TAU); ctx.fill()
+      { const hr = r + Math.min(r * 1.2, 46), hg = ctx.createRadialGradient(mx, my, r * 0.9, mx, my, hr); hg.addColorStop(0, `rgba(255,255,240,${0.1 + 0.08 * night})`); hg.addColorStop(1, 'rgba(255,255,240,0)'); ctx.fillStyle = hg; ctx.fillRect(mx - hr, my - hr, 2 * hr, 2 * hr) }
       const dir = axisDir(cam, mv, northHz), poleAng = dir ? Math.atan2(dir[0], -dir[1]) : 0
       project(cam, mv, P)
       drawMoon(ctx, mx, my, r, b, sp, night, skyMid, poleAng)
@@ -512,7 +515,8 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
       if (jup) drawMoons(false)
       if (showDisc) {
         ctx.globalAlpha = vis
-        ctx.drawImage(whiteGlow(), px - r * 2.2, py - r * 2.2, r * 4.4, r * 4.4)
+        const gr = Math.min(r * 2.2, r + 14)
+        ctx.drawImage(whiteGlow(), px - gr, py - gr, gr * 2, gr * 2)
         ctx.globalAlpha = 1
         const poleAng = Math.atan2(nx, -ny), ringB = p.id === 'saturn' ? p.ringB : 0
         drawPlanet(ctx, p.id, px, py, r, PLANET_COLOR[p.id], p.illum, sunAngle(px, py, sunDirPx), poleAng, ringB, skyMid, vis)

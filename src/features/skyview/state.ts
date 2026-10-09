@@ -45,8 +45,8 @@ export function setLayer<K extends keyof Layers>(k: K, v: Layers[K]) {
 }
 
 export type ArStatus = 'off' | 'asking' | 'on' | 'denied' | 'nosensor'
-/** Down to half a degree: Jupiter with its moons, the Orion nebula, a double star. */
-export const FOV_MIN = 0.5, FOV_MAX = 120
+/** Down to 0.02 degrees: Jupiter with its moons, Saturn with its rings, the Moon filling the screen. */
+export const FOV_MIN = 0.02, FOV_MAX = 120
 const coarse = !!globalThis.matchMedia?.('(pointer: coarse)').matches
 /** Camera (az/alt of the view centre, fov of the shorter screen side), selection and AR. Read every frame by the Stage. */
 export const view = createStore({
