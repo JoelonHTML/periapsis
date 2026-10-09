@@ -47,7 +47,7 @@ export const ORBIT_CALCS: Calc[] = [
       { k: 'c', label: 'Centrale massa', def: EARTH, options: cOpts },
       { k: 'mode', label: 'Gegeven', def: 0, options: [{ value: 0, label: 'a → T' }, { value: 1, label: 'T → a' }] },
       { k: 'a', label: 'Halve lange as a', unit: 'km', def: 42164, show: (v) => v.mode === 0 },
-      { k: 'T', label: 'Omlooptijd T', unit: 'uur', def: 23.934, step: 0.1, show: (v) => v.mode === 1 },
+      { k: 'T', label: 'Omlooptijd T', unit: 'uur', def: 23.934472, step: 0.1, show: (v) => v.mode === 1 },
     ],
     compute: (v) => {
       const c = CENTRALS[v.c]
@@ -62,7 +62,7 @@ export const ORBIT_CALCS: Calc[] = [
           v.mode === 0
             ? `T=2\\pi\\sqrt{\\frac{a^3}{\\mu}}=2\\pi\\sqrt{\\frac{(${N(a)})^3}{${N(c.mu)}}}=${tu(T, 's')}`
             : `a=\\left(\\frac{\\mu T^2}{4\\pi^2}\\right)^{1/3}=\\left(\\frac{${N(c.mu)}\\cdot(${N(v.T * 3600)})^2}{4\\pi^2}\\right)^{1/3}=${tu(a, 'km')}`],
-        note: 'Siderische dag 23,934 u geeft de geostationaire baan: a = 42 164 km.',
+        note: 'Siderische dag 23,9345 u (23 u 56 min 4,09 s) geeft de geostationaire baan: a = 42 164,2 km, v = 3,0747 km/s.',
       }
     },
     src: 'Kepler (1619), Harmonices Mundi; Curtis, hfst. 2 (periode van een ellips).',
@@ -94,7 +94,7 @@ export const ORBIT_CALCS: Calc[] = [
           `\\varepsilon=-\\frac{\\mu}{2a}=\\frac{v^2}{2}-\\frac{\\mu}{r}=${tu(-c.mu / (2 * v.a), 'km^2/s^2')}`],
       }
     },
-    src: 'Curtis, hfst. 2 (energievergelijking / vis-viva); Vallado, Fundamentals of Astrodynamics, §1.',
+    src: 'Curtis, hfst. 2 (energievergelijking / vis-viva); Vallado, Fundamentals of Astrodynamics.',
   },
   {
     id: 'ellipse', title: 'Ellips uit pericentrum en apocentrum', cat: 'Baanmechanica', kw: 'periapsis apoapsis eccentricity',
@@ -148,7 +148,7 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Impulsieve burns, coplanaire cirkelbanen. Voor LEO → GEO komt daar nog een inclinatiewijziging bij (zie Vlakverandering).',
       }
     },
-    src: 'Hohmann (1925); Curtis, §6.2.',
+    src: 'Hohmann (1925); Curtis, hfst. 6 (Hohmann-transfer); EPFL 3.4.2.',
   },
   {
     id: 'bielliptic', title: 'Bi-elliptisch versus Hohmann', cat: 'Baanmechanica', kw: 'bi-elliptic transfer',
@@ -180,7 +180,7 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Bi-elliptisch wint alleen als r₂/r₁ > 11,94, en bij r₂/r₁ > 15,58 altijd (met r_b ver genoeg); de reistijd is wel veel langer.',
       }
     },
-    src: 'Hoelker & Silber (1959); Curtis, §6.3.',
+    src: 'Hoelker & Silber (1959); Curtis, hfst. 6 (bi-elliptische Hohmann-transfer).',
   },
   {
     id: 'plane', title: 'Vlakverandering (inclinatie)', cat: 'Baanmechanica', kw: 'plane change inclination',
@@ -203,7 +203,7 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Doe vlakveranderingen waar de snelheid laag is (apocentrum), en combineer ze met een burn. Standaard: LEO-snelheid, 28,5° (Kaap Canaveral → equator).',
       }
     },
-    src: 'Curtis, §6.8 (plane change manoeuvres).',
+    src: 'Curtis, hfst. 6 (plane change manoeuvres); EPFL 3.3.1 (gecombineerde manoeuvre).',
   },
   {
     id: 'soi', title: 'Invloedssfeer en Hill-straal', cat: 'Baanmechanica', kw: 'sphere of influence hill laplace',
@@ -227,10 +227,10 @@ export const ORBIT_CALCS: Calc[] = [
         tex: [`\\frac{m}{M}=\\frac{${N(m)}}{${N(M)}}=${N(m / M)},\\quad a=${tu(a, 'km')}\\ (${name})`,
           `r_{SOI}=a\\left(\\frac{m}{M}\\right)^{2/5}=${N(a)}\\cdot(${N(m / M)})^{0.4}=${tu(soi, 'km')}`,
           `r_{H}=a\\left(\\frac{m}{3M}\\right)^{1/3}=${tu(hill, 'km')}`],
-        note: 'SOI voor patched conics (Laplace); Hill-straal is de grens voor stabiele satellietbanen (cirkelvormige baan, e = 0). Aarde: ≈ 925 000 km en ≈ 1,5 milj. km.',
+        note: 'SOI voor patched conics (Laplace); Hill-straal is de grens voor stabiele satellietbanen (cirkelvormige baan, e = 0). Aarde: ≈ 925 000 km en ≈ 1,5 milj. km. Collegetabel (Brown): Aarde 0,924, Venus 0,616, Mars 0,577, Jupiter 48,157, Maan 0,0662 (10⁶ km); bij Saturnus, Uranus en vooral Neptunus (80,2 i.p.v. 86,7) wijkt die tabel af van deze berekening met actuele μ.',
       }
     },
-    src: 'Laplace; Curtis, §8.4 (sphere of influence); Hill (1878) voor de Hill-straal.',
+    src: 'Laplace; Curtis, hfst. 8 (sphere of influence); EPFL 4.2.1; Hill (1878) voor de Hill-straal.',
   },
   {
     id: 'spiral', title: 'Lage-stuwkracht spiraal (Edelbaum)', cat: 'Baanmechanica', kw: 'low thrust ion electric spiral',
@@ -314,7 +314,7 @@ export const ORBIT_CALCS: Calc[] = [
       }
       return { rows, tex, note: 'Impulsieve burns in coplanaire cirkelbanen (Hohmann). In dit model is Δv₁ = v∞ vertrek: de boost tussen de cirkelbaan en de transferellips.' }
     },
-    src: 'Hohmann (1925); Curtis, §8.2–8.3; Wertz, SMAD ch. 6. Banen: gemiddelde halve lange assen (JPL Standish, J2000).',
+    src: 'Hohmann (1925); Curtis, hfst. 8 (interplanetaire Hohmann-transfers); EPFL 4.2; Wertz, SMAD ch. 6. Banen: gemiddelde halve lange assen (JPL Standish, J2000).',
   },
   {
     id: 'vinf', title: 'Excess-snelheid v∞ en C3', cat: 'Interplanetair', kw: 'excess velocity c3 characteristic energy escape hyperbolic departure',
@@ -353,7 +353,7 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Burn vanuit een cirkelbaan, in het pericentrum van de hyperbool. Aarde → Mars (Hohmann) heeft v∞ ≈ 2,94 km/s (C3 ≈ 8,7 km²/s²).',
       }
     },
-    src: 'Curtis, §8.6 (planetary departure); Wertz, SMAD ch. 6 (C3).',
+    src: 'Curtis, hfst. 8 (planetary departure); EPFL 4.2.2–4.2.3; Wertz, SMAD ch. 6 (C3).',
   },
   {
     id: 'synodic', title: 'Synodische periode', cat: 'Interplanetair', kw: 'synodic launch window opposition',
@@ -379,7 +379,7 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Aarde–Mars ≈ 780 d (2,13 jaar): dat is de kadans van marsvensters. Omlooptijden volgen uit Kepler III met de halve lange assen van de planeten.',
       }
     },
-    src: 'Curtis, §8.3 (rendezvous opportunities).',
+    src: 'Curtis, hfst. 8 (rendezvous opportunities).',
   },
   {
     id: 'flyby', title: 'Zwaartekrachtsslinger: max. afbuiging', cat: 'Interplanetair', kw: 'gravity assist flyby swing-by deflection',
@@ -404,6 +404,6 @@ export const ORBIT_CALCS: Calc[] = [
         note: 'Maximale afbuiging bij de laagste veilige hoogte. Dit is de heliocentrische Δv-winst die je gratis krijgt: de grootte van v∞ blijft gelijk, alleen de richting draait.',
       }
     },
-    src: 'Curtis, §8.9 (planetary flyby); Vallado, Fundamentals of Astrodynamics, §12.',
+    src: 'Curtis, hfst. 8 (planetary flyby); EPFL 4.3.2; Vallado, Fundamentals of Astrodynamics.',
   },
 ]

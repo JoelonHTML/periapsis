@@ -84,10 +84,10 @@ export const BODIES: Record<BodyId, Body> = {
   neptune: { id: 'neptune', name: 'Neptunus', mu: 6835099.5, radius: 24622, color: '#5b7cf0', safe: 1.05,
     el: [30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574],
     rate: [0.00026291, 0.00005105, 0.00035372, 218.45945325, -0.32241464, -0.00508664] },
-  // Pluto: Standish's table 2a (valid 1800-2050), heliocentric (not barycentric) — fine for a ~39.5 AU target.
+  // Pluto: Standish's table 1 (valid 1800-2050), heliocentric (not barycentric) — fine for a ~39.5 AU target.
   pluto: { id: 'pluto', name: 'Pluto', mu: 869.6, radius: 1188.3, color: '#c9b79c', safe: 1.05,
     el: [39.48211675, 0.2488273, 17.14001206, 238.92903833, 224.06891629, 110.30393684],
-    rate: [0.00051797, 0.00001663, 0.00004818, 145.20780515, -0.04062942, -0.01183482] },
+    rate: [-0.00031596, 0.0000517, 0.00004818, 145.20780515, -0.04062942, -0.01183482] },
 }
 export const BODY_IDS = Object.keys(BODIES) as BodyId[]
 

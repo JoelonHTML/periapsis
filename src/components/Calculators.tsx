@@ -5,17 +5,34 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { createStore } from '@/lib/mini-store'
+import { useSettings, type Lang } from '@/lib/settings'
 import { activeCraft, store } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { KV, Tex } from './bits'
 import { ORBIT_CALCS } from './calc/defs-orbit'
 import { SYS_CALCS } from './calc/defs-sys'
 import { AERO_CALCS } from './calc/defs-aero'
+import { COURSE_CALCS } from './calc/defs-course'
 import { CATS, type Calc, type Input as Spec, type V } from './calc/core'
+
+// Interface texts of this tab (the card contents are Dutch unless a card has a `loc`).
+const UI: Record<Lang, { search: string; allCats: string; count: (n: number, m: number) => string; none: (q: string) => string; withNumbers: string; src: string; craft: string }> = {
+  nl: { search: 'Zoek formule…', allCats: 'Alle categorieën', count: (n, m) => `${n} van ${m} rekenmachines · alles rekent live, met de formule en je eigen getallen.`, none: (q) => `Geen rekenmachine gevonden voor “${q}”.`, withNumbers: 'Formules met jouw getallen', src: 'Bron', craft: 'Gebruik mijn ruimtevaartuig' },
+  en: { search: 'Search formula…', allCats: 'All categories', count: (n, m) => `${n} of ${m} calculators · everything updates live, with the formula and your own numbers.`, none: (q) => `No calculator found for “${q}”.`, withNumbers: 'Formulas with your numbers', src: 'Source', craft: 'Use my spacecraft' },
+  el: { search: 'Αναζήτηση τύπου…', allCats: 'Όλες οι κατηγορίες', count: (n, m) => `${n} από ${m} αριθμομηχανές · όλα υπολογίζονται ζωντανά, με τον τύπο και τους δικούς σου αριθμούς.`, none: (q) => `Δεν βρέθηκε αριθμομηχανή για «${q}».`, withNumbers: 'Τύποι με τους δικούς σου αριθμούς', src: 'Πηγή', craft: 'Χρήση του διαστημοπλοίου μου' },
+}
+const CAT_L: Record<string, [string, string]> = {
+  'Baanmechanica': ['Orbital mechanics', 'Τροχιακή μηχανική'], 'Interplanetair': ['Interplanetary', 'Διαπλανητικά'], 'Aandrijving': ['Propulsion', 'Πρόωση'],
+  'Stand & rotatie': ['Attitude & rotation', 'Προσανατολισμός & περιστροφή'], 'Aardomgeving': ['Earth environment', 'Περιβάλλον της Γης'], 'Overig': ['Other', 'Άλλα'],
+}
+const catName = (c: string, lang: Lang) => (lang === 'nl' ? c : CAT_L[c]?.[lang === 'en' ? 0 : 1] ?? c)
+/** Card texts in the interface language; falls back to the Dutch originals. */
+const tr = (c: Calc, lang: Lang) => (lang === 'nl' ? undefined : c.loc?.[lang])
+
 
 // Order: as listed in the brief — the user's own requests first.
 const ORDER = ['transfer', 'vinf', 'tsiolkovsky', 'slew', 'magfield', 'ballistic']
-const ALL: Calc[] = [...ORBIT_CALCS, ...SYS_CALCS, ...AERO_CALCS].sort((a, b) => {
+const ALL: Calc[] = [...ORBIT_CALCS, ...SYS_CALCS, ...AERO_CALCS, ...COURSE_CALCS].sort((a, b) => {
   const ia = ORDER.indexOf(a.id), ib = ORDER.indexOf(b.id)
   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
 })
@@ -38,14 +55,15 @@ function NumberInput({ value, onChange }: { value: number; onChange: (x: number)
   )
 }
 
-function Field({ spec, v, set }: { spec: Spec; v: V; set: (k: string, x: number | string) => void }) {
+function Field({ spec, v, set, loc }: { spec: Spec; v: V; set: (k: string, x: number | string) => void; loc?: { labels?: Record<string, string>; options?: Record<string, string[]> } }) {
+  const label = loc?.labels?.[spec.k] ?? spec.label, optLabels = loc?.options?.[spec.k]
   return (
     <div className={cn('grid gap-1', spec.wide && 'col-span-2')}>
-      <Label className="block text-xs leading-tight text-muted-foreground">{spec.label}{spec.unit && <span className="opacity-60"> ({spec.unit})</span>}</Label>
+      <Label className="block text-xs leading-tight text-muted-foreground">{label}{spec.unit && <span className="opacity-60"> ({spec.unit})</span>}</Label>
       {spec.options ? (
         <Select value={String(v[spec.k])} onValueChange={(x) => set(spec.k, +x)}>
           <SelectTrigger className="h-8 w-full text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>{spec.options.map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}</SelectContent>
+          <SelectContent>{spec.options.map((o, oi) => <SelectItem key={o.value} value={String(o.value)}>{optLabels?.[oi] ?? o.label}</SelectItem>)}</SelectContent>
         </Select>
       ) : spec.text ? (
         <Input value={String(v[spec.k])} className="h-8" onChange={(e) => set(spec.k, e.target.value)} />
@@ -57,6 +75,7 @@ function Field({ spec, v, set }: { spec: Spec; v: V; set: (k: string, x: number 
 }
 
 function CalcBody({ c }: { c: Calc }) {
+  const lang = useSettings((s) => s.lang), loc = tr(c, lang), tx = UI[lang]
   const saved = ui.useStore((s) => s.vals[c.id])
   const v: V = { ...defaults(c), ...saved }
   const put = (patch: V) => ui.set((s) => ({ vals: { ...s.vals, [c.id]: { ...defaults(c), ...s.vals[c.id], ...patch } } }))
@@ -68,11 +87,11 @@ function CalcBody({ c }: { c: Calc }) {
   return (
     <div className="grid gap-3 border-t border-border/60 px-3 py-3">
       <div className="grid grid-cols-2 gap-2">
-        {c.inputs.filter((i) => !i.show || i.show(v)).map((i) => <Field key={i.k} spec={i} v={v} set={set} />)}
+        {c.inputs.filter((i) => !i.show || i.show(v)).map((i) => <Field key={i.k} spec={i} v={v} set={set} loc={loc} />)}
       </div>
       {c.craft && (
         <Button variant="outline" size="sm" className="h-7 justify-self-start text-xs" onClick={() => put(c.craft!(activeCraft(store.get())))}>
-          <Rocket className="size-3.5" /> Gebruik mijn ruimtevaartuig
+          <Rocket className="size-3.5" /> {tx.craft}
         </Button>
       )}
       {res.err ? (
@@ -88,19 +107,20 @@ function CalcBody({ c }: { c: Calc }) {
           </div>
           {res.tex && (
             <div className="grid select-text gap-0.5 [&_.katex-display]:!my-0.5">
-              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Formules met jouw getallen</div>
+              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{tx.withNumbers}</div>
               {res.tex.map((t, i) => <Tex key={i} tex={t} block />)}
             </div>
           )}
           {res.note && <p className="text-[11px] leading-snug text-muted-foreground">{res.note}</p>}
         </>
       )}
-      <p className="text-[11px] leading-snug text-muted-foreground">Bron: {c.src}</p>
+      <p className="text-[11px] leading-snug text-muted-foreground">{tx.src}: {loc?.src ?? c.src}</p>
     </div>
   )
 }
 
 function Card({ c }: { c: Calc }) {
+  const lang = useSettings((s) => s.lang), loc = tr(c, lang)
   const open = ui.useStore((s) => s.open === c.id)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { if (open) ref.current?.scrollIntoView({ block: 'nearest' }) }, [open])
@@ -109,8 +129,8 @@ function Card({ c }: { c: Calc }) {
       <button type="button" aria-expanded={open} onClick={() => ui.set({ open: open ? null : c.id })}
         className="flex w-full items-start gap-2 px-3 py-2 text-left">
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium leading-tight">{c.title}</div>
-          <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground"><span className="text-sky-400/80">{c.cat}</span> · {c.blurb}</div>
+          <div className="text-[13px] font-medium leading-tight">{loc?.title ?? c.title}</div>
+          <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground"><span className="text-sky-400/80">{catName(c.cat, lang)}</span> · {loc?.blurb ?? c.blurb}</div>
         </div>
         <ChevronDown className={cn('mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
@@ -120,30 +140,31 @@ function Card({ c }: { c: Calc }) {
 }
 
 export function CalcPanel() {
+  const lang = useSettings((s) => s.lang), tx = UI[lang]
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('all')
   const needle = q.trim().toLowerCase()
   const list = ALL.filter((c) => (cat === 'all' || c.cat === cat) &&
-    (!needle || `${c.title} ${c.blurb} ${c.cat} ${c.kw ?? ''}`.toLowerCase().includes(needle)))
+    (!needle || `${c.title} ${c.blurb} ${c.cat} ${c.kw ?? ''} ${c.loc?.en.title ?? ''} ${c.loc?.en.blurb ?? ''} ${c.loc?.el.title ?? ''}`.toLowerCase().includes(needle)))
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-2 size-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Zoek formule…" className="h-8 pl-8 text-xs" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx.search} className="h-8 pl-8 text-xs" />
         </div>
         <Select value={cat} onValueChange={setCat}>
           <SelectTrigger className="h-8 w-[9.5rem] text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle categorieën</SelectItem>
-            {CATS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+            <SelectItem value="all">{tx.allCats}</SelectItem>
+            {CATS.map((x) => <SelectItem key={x} value={x}>{catName(x, lang)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
-      <div className="text-[11px] text-muted-foreground">{list.length} van {ALL.length} rekenmachines · alles rekent live, met de formule en je eigen getallen.</div>
+      <div className="text-[11px] text-muted-foreground">{tx.count(list.length, ALL.length)}</div>
       <div className="grid gap-2">
         {list.map((c) => <Card key={c.id} c={c} />)}
-        {!list.length && <p className="py-6 text-center text-xs text-muted-foreground">Geen rekenmachine gevonden voor “{q}”.</p>}
+        {!list.length && <p className="py-6 text-center text-xs text-muted-foreground">{tx.none(q)}</p>}
       </div>
     </div>
   )

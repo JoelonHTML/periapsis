@@ -1,3 +1,4 @@
+import { settings } from '@/lib/settings'
 import type { Craft } from '@/lib/store'
 
 /** Input values of one calculator (numbers; the burn list is a string). */
@@ -23,8 +24,14 @@ export interface Res { err?: string; rows?: Row[]; tex?: string[]; note?: string
 export const CATS = ['Baanmechanica', 'Interplanetair', 'Aandrijving', 'Stand & rotatie', 'Aardomgeving', 'Overig'] as const
 export type Cat = (typeof CATS)[number]
 
+/** Pick the text for the current interface language (nl is the fallback). */
+export const L = (nl: string, en: string, el: string) => { const l = settings.get().lang; return l === 'en' ? en : l === 'el' ? el : nl }
+/** English / Greek texts of a card: title, blurb, source, input labels (by input key). Cards without `loc` stay Dutch. */
+export interface Loc { title: string; blurb: string; src?: string; labels?: Record<string, string>; options?: Record<string, string[]> }
+
 export interface Calc {
   id: string
+  loc?: { en: Loc; el: Loc }
   title: string
   cat: Cat
   blurb: string // one line, also searched
@@ -60,22 +67,23 @@ export function U(x: number, unit = '', sig = 4) {
   const s = e === null ? m : `${m}×10${String(e).split('').map((c) => SUP[c]).join('')}`
   return unit && m !== '—' ? `${s} ${unit}` : s
 }
+const unit = (nl: string) => (nl === 'u' ? L('u', 'h', 'ώ') : nl === 'jaar' ? L('jaar', 'yr', 'έτη') : nl === 'd' ? L('d', 'd', 'ημ') : nl)
 /** Human duration from seconds. */
 export function dur(s: number) {
   if (!Number.isFinite(s)) return '—'
   const a = Math.abs(s)
   if (a < 120) return U(s, 's')
   if (a < 7200) return U(s / 60, 'min')
-  if (a < 172800) return U(s / 3600, 'u')
+  if (a < 172800) return U(s / 3600, unit('u'))
   if (a < 2 * 365.25 * 86400) return U(s / 86400, 'd')
-  return U(s / (365.25 * 86400), 'jaar')
+  return U(s / (365.25 * 86400), unit('jaar'))
 }
 /** TeX duration with unit chosen like `dur`. */
 export function durTex(s: number) {
   const a = Math.abs(s)
   if (a < 120) return tu(s, 's')
   if (a < 7200) return tu(s / 60, 'min')
-  if (a < 172800) return tu(s / 3600, 'u')
+  if (a < 172800) return tu(s / 3600, unit('u'))
   if (a < 2 * 365.25 * 86400) return tu(s / 86400, 'd')
-  return tu(s / (365.25 * 86400), 'jaar')
+  return tu(s / (365.25 * 86400), unit('jaar'))
 }
