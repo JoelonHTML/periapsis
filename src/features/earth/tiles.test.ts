@@ -1,7 +1,7 @@
 // Run: node --test src/features/earth/*.test.ts
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { latOfY, lonOfX, Lru, MAX_LAT, selectTiles, tileAt, tileGrid, tileKey, TILE_SOURCES, texelPixels, xOfLon, yOfLat, detailEnabled, type TileId } from './tiles.ts'
+import { GEOGRAPHIC, latOfY, lonOfX, Lru, MAX_LAT, selectTiles, tileAt, tileGrid, tileKey, TILE_SOURCES, texelPixels, xOfLon, yOfLat, detailEnabled, type TileId } from './tiles.ts'
 import { TileStore } from './tileStore.ts'
 
 const near = (a: number, b: number, e = 1e-9) => assert.ok(Math.abs(a - b) < e, `${a} vs ${b}`)
@@ -164,4 +164,38 @@ test('detail setting: auto is off on low tier and data saver', () => {
   assert.equal(detailEnabled('auto', false, true), false)
   assert.equal(detailEnabled('on', true, true), true)
   assert.equal(detailEnabled('off', false, false), false)
+})
+
+test('geographic scheme: 2x1 tiles at level 0, linear in lat and lon, poles included', () => {
+  assert.equal(GEOGRAPHIC.cols(0), 2); assert.equal(GEOGRAPHIC.rows(0), 1); assert.equal(GEOGRAPHIC.cols(8), 512); assert.equal(GEOGRAPHIC.rows(8), 256)
+  assert.deepEqual(tileAt(0, 0, 0, GEOGRAPHIC), { z: 0, x: 1, y: 0 })
+  assert.deepEqual(tileAt(10, -100, 0, GEOGRAPHIC), { z: 0, x: 0, y: 0 })
+  assert.deepEqual(tileAt(45, 0, 1, GEOGRAPHIC), { z: 1, x: 2, y: 0 }) // NE of the prime meridian: column 2 of 4, top row of 2
+  assert.deepEqual(tileAt(-90, 180, 2, GEOGRAPHIC), { z: 2, x: 0, y: 3 }) // south pole, date line wraps
+  near(lonOfX(0, 3, GEOGRAPHIC), -180); near(lonOfX(16, 3, GEOGRAPHIC), 180); near(latOfY(0, 3, GEOGRAPHIC), 90); near(latOfY(8, 3, GEOGRAPHIC), -90)
+  for (const [la, lo, z] of [[52.37, 4.9, 6], [-89, 179, 3], [0.1, -179.9, 1]]) {
+    near(latOfY(yOfLat(la, z, GEOGRAPHIC), z, GEOGRAPHIC), la, 1e-9); near(lonOfX(xOfLon(lo, z, GEOGRAPHIC), z, GEOGRAPHIC), lo, 1e-9)
+  }
+  // a tile is a plain lat/lon rectangle: rows evenly spaced in latitude
+  const g = tileGrid({ z: 4, x: 20, y: 5 }, 4, GEOGRAPHIC), lat = (j: number) => Math.asin(g.pos[(j * 5) * 3 + 1]) * 180 / Math.PI
+  near(lat(0) - lat(1), lat(3) - lat(4), 1e-6); near(lat(0), 90 - (5 / 16) * 180, 1e-5); near(g.uv[0], (lonOfX(20, 4, GEOGRAPHIC) + 180) / 360)
+})
+
+test('geographic orientation: prime meridian on +x, north on +y, east towards -z (as SphereGeometry)', () => {
+  const g = tileGrid({ z: 0, x: 1, y: 0 }, 2, GEOGRAPHIC) // the eastern hemisphere tile: lon 0..180, lat 90..-90
+  const p = (j: number, i: number) => [g.pos[(j * 3 + i) * 3], g.pos[(j * 3 + i) * 3 + 1], g.pos[(j * 3 + i) * 3 + 2]]
+  near(p(1, 0)[0], 1); near(p(1, 0)[1], 0) // lon 0, equator
+  near(p(1, 1)[2], -1); near(p(1, 2)[0], -1) // lon 90E on the equator is towards -z, lon 180 is -x
+  near(p(0, 0)[1], 1) // top row = north pole
+})
+
+test('geographic selection: whole globe far away stays on the bundled map; close up picks deeper tiles under the camera', () => {
+  const opts = { pixelRad: 2 * Math.tan(0.4) / 800, minZ: 3, maxZ: 8, maxTexelPx: 1.5, scheme: GEOGRAPHIC }
+  assert.equal(selectTiles({ ...opts, cam: [4, 0, 0] }).length, 0)
+  const sel = selectTiles({ ...opts, cam: [1.0004, 0, 0] })
+  assert.ok(sel.length > 0 && sel.length < 120)
+  assert.ok(sel.every((t) => t.z >= 3 && t.z <= 8))
+  assert.equal(sel[0].z, 8)
+  const lon = lonOfX(sel[0].x + 0.5, 8, GEOGRAPHIC), la = latOfY(sel[0].y + 0.5, 8, GEOGRAPHIC)
+  assert.ok(Math.abs(lon) < 1.5 && Math.abs(la) < 1.5, `${lon} ${la}`)
 })

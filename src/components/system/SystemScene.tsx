@@ -13,6 +13,7 @@ import {
   sysMu, sysR, toEcl, type Frame, type MoonDef, type Orb, type SysId,
 } from '@/lib/system'
 import { Dot, EARLY, Label, Occluder, dotTex, useTexture, v3 } from '../kit'
+import { BodyTiles } from '@/features/earth/BodyTiles'
 import { Rings } from './Rings'
 import { PLANET_MAPS, hdSetting, loadHd } from './planetTex'
 import { bodyTexture } from './textures'
@@ -74,6 +75,7 @@ function Planet({ id, R, labels }: { id: SysId; R: number; labels: boolean }) {
           <sphereGeometry args={[1, 128, 64]} />
           <PlanetSurface id={id} at={spin} R={R} />
         </mesh>
+        <group scale={R * S} rotation={[Math.PI / 2, 0, 0]}><BodyTiles kind={def.tex} /></group>
       </group>
       {def.atm && (
         <mesh scale={R * S * 1.025}>
@@ -130,6 +132,7 @@ function MoonBody({ id, mn, frame, labels }: { id: SysId; mn: MoonDef; frame: Fr
           <sphereGeometry args={[1, segs[0], segs[1]]} />
           {PLANET_MAPS[mn.tex] ? <RealSurface kind={mn.tex} at={g} R={mn.R} /> : <ProcSurface kind={mn.tex} variant={mn.id} />}
         </mesh>
+        <group scale={mn.R * S} rotation={[Math.PI / 2, 0, 0]}><BodyTiles kind={mn.tex} /></group>
       </group>
       <Dot color={mn.color} size={5} />
       {labels && near && <Label>{mn.name}</Label>}
