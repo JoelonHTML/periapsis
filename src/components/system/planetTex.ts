@@ -5,6 +5,11 @@ import * as THREE from 'three'
 import { getCaps } from '@/features/earth/caps'
 import { selectTier } from '@/features/earth/tier'
 import { createStore } from '@/lib/mini-store'
+import CALLISTO from '@/assets/planets/callisto.jpg'
+import ENCELADUS from '@/assets/planets/enceladus.jpg'
+import EUROPA from '@/assets/planets/europa.jpg'
+import GANYMEDE from '@/assets/planets/ganymede.jpg'
+import IO from '@/assets/planets/io.jpg'
 import JUPITER from '@/assets/planets/jupiter.jpg'
 import MARS from '@/assets/planets/mars.jpg'
 import MERCURY from '@/assets/planets/mercury.jpg'
@@ -12,22 +17,33 @@ import MOON from '@/assets/planets/moon.jpg'
 import NEPTUNE from '@/assets/planets/neptune.jpg'
 import SATURN from '@/assets/planets/saturn.jpg'
 import SATURN_RING from '@/assets/planets/saturn-ring.png'
+import TITAN from '@/assets/planets/titan.jpg'
 import URANUS from '@/assets/planets/uranus.jpg'
+import VENUS from '@/assets/planets/venus.jpg'
 
 /** Bundled map per body texture kind (kinds without an entry keep their procedural texture). */
-export const PLANET_MAPS: Record<string, string> = { mercury: MERCURY, mars: MARS, jupiter: JUPITER, saturn: SATURN, uranus: URANUS, neptune: NEPTUNE, moon: MOON }
+export const PLANET_MAPS: Record<string, string> = { mercury: MERCURY, mars: MARS, jupiter: JUPITER, saturn: SATURN, uranus: URANUS, neptune: NEPTUNE, moon: MOON,
+  venus: VENUS, io: IO, europa: EUROPA, ganymede: GANYMEDE, callisto: CALLISTO, titan: TITAN, enceladus: ENCELADUS }
 export { SATURN_RING }
 
-// Immutable tag: push it once with `git tag textures-v1 && git push origin textures-v1`; never move it (the browser cache relies on it).
-export const HD_BASE = 'https://raw.githubusercontent.com/JoelonHTML/periapsis/05a159e703dd742cb317224d3fa75c9a153acd7e/textures/'
+// Immutable commit that contains textures/ (the browser cache relies on it never changing). After merging a commit that adds files to
+// textures/, set this to that commit's hash (the files below only exist from that commit on; until then they 404 and the bundled map stays).
+export const HD_COMMIT = '05a159e703dd742cb317224d3fa75c9a153acd7e'
+export const HD_BASE = `https://raw.githubusercontent.com/JoelonHTML/periapsis/${HD_COMMIT}/textures/`
 const HD: Record<string, { k4: string; k8?: string }> = {
   mercury: { k4: 'mercury-4k.jpg', k8: 'mercury-8k.jpg' }, mars: { k4: 'mars-4k.jpg', k8: 'mars-8k.jpg' }, moon: { k4: 'moon-4k.jpg', k8: 'moon-8k.jpg' },
-  jupiter: { k4: 'jupiter-4k.jpg' }, saturn: { k4: 'saturn-4k.jpg' },
+  jupiter: { k4: 'jupiter-4k.jpg', k8: 'jupiter-8k.jpg' }, saturn: { k4: 'saturn-4k.jpg' },
+  io: { k4: 'io-4k.jpg' }, europa: { k4: 'europa-4k.jpg' }, callisto: { k4: 'callisto-4k.jpg' }, titan: { k4: 'titan-4k.jpg' }, enceladus: { k4: 'enceladus-4k.jpg' },
 }
 
 export const PLANET_CREDITS = {
   who: 'Solar System Scope textures (solarsystemscope.com/textures), derived from NASA imagery; recompressed/resized, hosted via the open-source repo of computationalcore/worldline-kinematics',
   licence: 'CC BY 4.0',
+}
+/** Moon maps as redistributed in CosmoScout VR (DLR, plugins/csp-simple-bodies/textures, credit table there); recompressed. */
+export const MOON_CREDITS = {
+  who: 'Io: USGS Voyager/Galileo SSI global mosaic (public domain). Ganymede: USGS Voyager/Galileo mosaic. Enceladus: NASA/JPL/SSI Cassini colour map PIA18435 (public domain). Titan: USGS/Cassini ISS global mosaic 4 km (infrared, tinted warm here). Europa, Callisto: John van Vliet (Celestia Motherlode), from Voyager/Galileo data',
+  licence: 'Public domain (NASA/USGS); Europa and Callisto: CC (type not stated by the source)',
 }
 
 export type HdMode = 'auto' | 'on' | 'off'

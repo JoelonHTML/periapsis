@@ -16,7 +16,7 @@ import {
   SYSTEMS, SYS_IDS, apoFromE, eccOf, energy, orbA, orbPeriod, planManeuver, segAt, shipState, sysMu, sysName, sysR, vApo, vPeri,
   type MoonDef, type SysId,
 } from '@/lib/system'
-import { PLANET_CREDITS, hdSetting, setHdMode, type HdMode } from './planetTex'
+import { MOON_CREDITS, PLANET_CREDITS, hdSetting, setHdMode, type HdMode } from './planetTex'
 import { KV, NumField, Section, Tex, f } from '../bits'
 
 const nl = (x: number, d = 0) => x.toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d })
@@ -108,7 +108,10 @@ function ViewOptions() {
         </ToggleGroup>
       </div>
       <p className="text-[10.5px] leading-snug text-muted-foreground">
-        Planeetkaarten: {PLANET_CREDITS.who} — {PLANET_CREDITS.licence}. Venus, Ceres, Pluto en de overige manen zijn nog procedureel.
+        Planeetkaarten: {PLANET_CREDITS.who} — {PLANET_CREDITS.licence}. Maankaarten: {MOON_CREDITS.who} — {MOON_CREDITS.licence}. Ceres, Pluto en de overige manen zijn nog procedureel.
+      </p>
+      <p className="text-[10.5px] leading-snug text-muted-foreground">
+        Detailbeelden bij inzoomen op Maan, Mars en Mercurius (internet, instelling &lsquo;Detail-beelden laden&rsquo; bij de Aarde-lagen): NASA Solar System Treks (trek.nasa.gov) &mdash; LRO WAC (NASA/GSFC/ASU), Viking MDIM 2.1 (NASA/USGS), MESSENGER MDIS (NASA/JHUAPL/CIW) — publiek domein.
       </p>
       <p className="text-[10.5px] leading-snug text-muted-foreground">
         Schaal 1 eenheid = 1000 km, manen op ware grootte (met een vast punt zodat je ze terugvindt). Scrol om in te zoomen tot een baan van 200 km boven het oppervlak; &lsquo;Volgen&rsquo; laat de camera met het ruimtevaartuig meebewegen.

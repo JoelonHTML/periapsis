@@ -26,6 +26,7 @@ import { CameraInit, Dot, EARLY, Follow, Label, Occluder, PanelOffset, Starfield
 const S_SOL = 1e-6 // scene units per km (solar view: 1 unit = 1 million km)
 const S_EAR = 1e-3 // earth views: 1 unit = 1000 km
 import TEX_MOON from '@/assets/moon.jpg'
+import { BodyTiles } from '@/features/earth/BodyTileLayer'
 const LEG_COLORS = ['#22d3ee', '#c084fc', '#f472b6']
 
 // ======================================================================= Solar system
@@ -407,6 +408,7 @@ function MoonSystem({ label, moonLabel, lagr, moonPlan }: { label: boolean; moon
       <mesh ref={moon} scale={R_MOON * S_EAR}>
         <sphereGeometry args={[1, 64, 32]} />
         <meshStandardMaterial key={tex ? 'tex' : 'plain'} map={tex} color={tex ? '#ffffff' : '#9ca3af'} roughness={1} />
+        <BodyTiles kind="moon" />
       </mesh>
       <group ref={moonLbl}>
         <Dot color="#d1d5db" size={8} />
