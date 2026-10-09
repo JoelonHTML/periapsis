@@ -34,7 +34,7 @@ export function InfoCard({ sel, onClose }: { sel: Obj; onClose: () => void }) {
     : info.distLy ? `${num(info.distLy, info.distLy < 20 ? 1 : 0, lang)} ${t('sv.ly')}` : null
   const hours = (deg: number) => { const h = deg / 15; return `${Math.floor(h)}h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}m` }
   return (
-    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-slate-100 shadow-xl backdrop-blur" role="region" aria-label={info.title}>
+    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-slate-100 shadow-xl backdrop-blur max-h-[calc(100dvh-14rem)] overflow-y-auto overscroll-contain" role="region" aria-label={info.title}>
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-semibold leading-tight">{info.title}</div>

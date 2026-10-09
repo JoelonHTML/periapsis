@@ -138,3 +138,19 @@ test('place search: offline, diacritics, aliases, nearest place', () => {
   assert.equal(nearestPlace(52.1, 5.1, places, 50)?.[0], 'Utrecht')
   assert.equal(nearestPlace(0, -140, places, 300), null, 'mid-Pacific: no place')
 })
+
+test('texts: nl/en/el have the same keys and placeholders, Greek is Greek, every used key exists', async () => {
+  const { nl, en, el } = await import('./texts.ts')
+  const { DEFAULT_LAYERS } = await import('./state.ts')
+  const keys = Object.keys(nl).sort()
+  assert.deepEqual(Object.keys(en).sort(), keys); assert.deepEqual(Object.keys(el).sort(), keys)
+  const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join()
+  for (const k of keys) { assert.equal(vars(en[k]), vars(nl[k]), `en ${k}`); assert.equal(vars(el[k]), vars(nl[k]), `el ${k}`); assert.ok(k === 'sv.ar' || /[Ͱ-Ͽ]/.test(el[k]), `el ${k} is not Greek`) }
+  const used = new Set<string>()
+  for (const f of ['Panel.tsx', 'Stage.tsx', 'InfoCard.tsx', 'PlaceMap.tsx', 'scene.ts', 'control.ts']) for (const m of readFileSync(new URL(`./${f}`, import.meta.url), 'utf8').matchAll(/['"`](sv\.[A-Za-z0-9.]+)['"`]/g)) used.add(m[1])
+  for (const k of used) assert.ok(k in nl, `missing text ${k}`)
+  for (const l of Object.keys(DEFAULT_LAYERS)) if (l !== 'magLim') assert.ok(`sv.l.${l}` in nl, `layer text ${l}`)
+  for (const k of ['star', 'sun', 'moon', 'planet', 'body', 'con', 'dso', 'sat']) assert.ok(`sv.k.${k}` in nl)
+  for (const k of ['galaxy', 'cluster', 'globular', 'planetary', 'nebula', 'snr']) assert.ok(`sv.type.${k}` in nl)
+  for (const i of [0, 1, 2, 3, 4]) assert.ok(`sv.col.${i}` in nl)
+})

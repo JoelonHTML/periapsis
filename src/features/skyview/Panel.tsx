@@ -50,7 +50,7 @@ function PlaceBlock() {
       </div>
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('sv.placeSearch')} aria-label={t('sv.placeSearch')} autoComplete="off" />
+        <Input className="h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('sv.placeSearch')} aria-label={t('sv.placeSearch')} autoComplete="off" onKeyDown={(e) => { if (e.key === 'Enter') { if (coords) { setObserver({ lat: coords[0], lon: coords[1], altM: 0, name: '', fromGps: false }); setQ('') } else if (hits[0]) choose(hits[0]) } }} />
       </div>
       {coords && <Button type="button" variant="secondary" className="h-11 justify-start" onClick={() => { setObserver({ lat: coords[0], lon: coords[1], altM: 0, name: '', fromGps: false }); setQ('') }}>{t('sv.useCoords', { c: coordText(coords[0], coords[1]) })}</Button>}
       {hits.length > 0 && (
@@ -107,7 +107,7 @@ function FindBlock() {
     <div className="grid gap-2">
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('sv.findPh')} aria-label={t('sv.find')} autoComplete="off" />
+        <Input className="h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('sv.findPh')} aria-label={t('sv.find')} autoComplete="off" onKeyDown={(e) => { if (e.key === 'Enter' && hits[0]) { gotoObj(hits[0].obj); setQ(''); ui.set({ sheet: 'closed' }) } }} />
       </div>
       {hits.length > 0 && (
         <ul className="grid gap-1">

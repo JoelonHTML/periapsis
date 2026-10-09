@@ -84,7 +84,7 @@ function stroke(ctx: CanvasRenderingContext2D, cam: Cam, pts: V3[], xf?: (v: V3)
 let mwCan: HTMLCanvasElement | null = null, mwImg: ImageData | null = null
 
 function drawMilkyWay(ctx: CanvasRenderingContext2D, f: Frame, vis: number) {
-  const q = 5, mw = Math.ceil(f.w / q), mh = Math.ceil(f.h / q)
+  const q = 8, mw = Math.ceil(f.w / q), mh = Math.ceil(f.h / q)
   if (!mwCan || mwCan.width !== mw || mwCan.height !== mh) { mwCan = document.createElement('canvas'); mwCan.width = mw; mwCan.height = mh; mwImg = null }
   const g = mwCan.getContext('2d')!
   mwImg ??= g.createImageData(mw, mh)

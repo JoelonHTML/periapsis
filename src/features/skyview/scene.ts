@@ -78,7 +78,6 @@ export function computeSats(sats: SatRef[], ms: number, site: Site): SatPos[] {
     const st = temeAt(s.sr, ms)
     if (!st) continue
     const l = lookAt(site, st.r, ms)
-    if (l.el < -1) continue
     out.push({ name: s.name, norad: s.norad, alt: l.el, az: l.az, hv: hzVec(l.el, l.az), rangeKm: l.range, heightKm: norm(st.r) - RE, speedKms: norm(st.v), sunlit: isSunlit(st.r, sun) })
   }
   return out

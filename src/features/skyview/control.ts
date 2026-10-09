@@ -3,7 +3,7 @@ import { toMs } from '../../lib/astro.ts'
 import { clock } from '../../lib/store.ts'
 import { observer } from '../../lib/observer.ts'
 import { t } from '../../lib/i18n.ts'
-import { computeBodies, computeSats, describe, objectAltAz, skyCtx, type Bodies, type Obj, type SatPos } from './scene.ts'
+import { computeBodies, computeSats, objectAltAz, skyCtx, type Bodies, type Obj, type SatPos } from './scene.ts'
 import { tap } from '../../lib/haptics.ts'
 import { view } from './state.ts'
 
@@ -24,7 +24,6 @@ export function gotoObj(o: Obj) {
   view.set({ sel: o })
   if (!aa) return
   if (view.get().ar !== 'on') view.set({ az: aa.az, alt: Math.max(aa.alt, 4) })
-  if (aa.alt < 0) showHint(t('sv.belowHint', { n: describe(o, ms, site, b, sats)?.title ?? '' }))
 }
 
 /** AR on/off. iOS asks for permission (must run inside a tap handler). */
