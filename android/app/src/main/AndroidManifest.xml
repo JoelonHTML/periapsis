@@ -213,4 +213,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Tonight: local reminders for passes and sky events -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Sky view AR: rear-camera passthrough behind the sky (the WebView asks for it when getUserMedia is called) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

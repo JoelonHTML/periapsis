@@ -45,13 +45,20 @@ export function basisAzAlt(azDeg: number, altDeg: number): Basis {
   const r: V3 = [Math.cos(a), -Math.sin(a), 0]
   return { f, r, u: cross(r, f) }
 }
-export interface Cam extends Basis { cx: number; cy: number; k: number }
+/** `rect` = rectilinear (pinhole, what a camera sees; k = focal length in px) instead of stereographic (k = 2 * tan(fov/4) scale). */
+export interface Cam extends Basis { cx: number; cy: number; k: number; rect?: boolean }
 /** `fovDeg` is the angular size of the SHORTER screen side; stereographic projection (angle-friendly up to 120 degrees and more). */
 export const camScale = (w: number, h: number, fovDeg: number) => Math.min(w, h) / 2 / (2 * Math.tan((fovDeg * D2R) / 4))
 
 /** Screen position of a horizon vector; false when it is (nearly) behind the camera. */
 export function project(c: Cam, h: V3, out: { x: number; y: number }): boolean {
   const d = dot(h, c.f)
+  if (c.rect) {
+    if (d < 0.02) return false
+    out.x = c.cx + (c.k * dot(h, c.r)) / d
+    out.y = c.cy - (c.k * dot(h, c.u)) / d
+    return true
+  }
   if (d < -0.985) return false
   const s = (2 * c.k) / (1 + d)
   out.x = c.cx + s * dot(h, c.r)
@@ -60,6 +67,10 @@ export function project(c: Cam, h: V3, out: { x: number; y: number }): boolean {
 }
 /** Inverse of `project`: the horizon direction under a screen point. */
 export function unproject(c: Cam, sx: number, sy: number): V3 {
+  if (c.rect) {
+    const X = (sx - c.cx) / c.k, Y = -(sy - c.cy) / c.k
+    return unit([c.f[0] + X * c.r[0] + Y * c.u[0], c.f[1] + X * c.r[1] + Y * c.u[1], c.f[2] + X * c.r[2] + Y * c.u[2]])
+  }
   const X = (sx - c.cx) / c.k, Y = -(sy - c.cy) / c.k, p2 = X * X + Y * Y
   const d = (4 - p2) / (4 + p2), s = 4 / (4 + p2)
   return unit([d * c.f[0] + s * (X * c.r[0] + Y * c.u[0]), d * c.f[1] + s * (X * c.r[1] + Y * c.u[1]), d * c.f[2] + s * (X * c.r[2] + Y * c.u[2])])
