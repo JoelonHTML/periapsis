@@ -168,7 +168,6 @@ export function SkyviewPanel() {
   return (
     <div className="grid gap-5">
       <SkyStage />
-      <p className="text-sm text-muted-foreground">{t('sv.intro')}</p>
       <Section title={t('sv.place')}><PlaceBlock /></Section>
       <Section title={t('sv.find')}><FindBlock /></Section>
       <Section title={t('sv.time')}><TimeBlock /></Section>
@@ -179,6 +178,7 @@ export function SkyviewPanel() {
           <p className="text-xs text-muted-foreground">{t('sv.ar.h')}</p>
         </div>
       </Section>
+      <p className="text-xs text-muted-foreground">{t('sv.intro')}</p>
       <p className="text-[11px] leading-relaxed text-muted-foreground">{t('sv.credits')}</p>
     </div>
   )

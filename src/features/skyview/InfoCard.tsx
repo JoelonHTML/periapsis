@@ -28,13 +28,13 @@ export function InfoCard({ sel, onClose }: { sel: Obj; onClose: () => void }) {
   const alt = aa?.alt ?? info.alt, az = aa?.az ?? info.az
   const below = alt < 0
   const fmtT = (ms: number | null) => { if (ms == null) return '—'; const c = solarClock(ms, site.lon, live.ms); return <span className="tabular-nums">{c.hhmm}{c.day !== 0 && <sup className="ml-0.5 text-[9px] text-slate-400">{c.day > 0 ? `+${c.day}` : c.day}</sup>}</span> }
-  const row = (k: string, v: React.ReactNode) => <><dt className="text-slate-400">{k}</dt><dd className="text-right tabular-nums">{v}</dd></>
+  const row = (k: string, v: React.ReactNode, full = false) => <div className={`flex items-baseline justify-between gap-2 ${full ? 'col-span-2' : ''}`}><dt className="text-slate-400">{k}</dt><dd className="text-right tabular-nums">{v}</dd></div>
   const dist = info.distKm != null
     ? info.distKm > 5e6 ? `${num(info.distKm / AU, 2, lang)} AU · ${num((info.distKm / 299792.458) / 60, 1, lang)} ${t('sv.lightMin')}` : `${num(Math.round(info.distKm / 100) * 100, 0, lang)} km`
     : info.distLy ? `${num(info.distLy, info.distLy < 20 ? 1 : 0, lang)} ${t('sv.ly')}` : null
   const hours = (deg: number) => { const h = deg / 15; return `${Math.floor(h)}h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}m` }
   return (
-    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-white/10 bg-black/70 p-3 text-sm text-slate-100 shadow-xl backdrop-blur" role="region" aria-label={info.title}>
+    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-slate-100 shadow-xl backdrop-blur" role="region" aria-label={info.title}>
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-semibold leading-tight">{info.title}</div>
@@ -42,26 +42,27 @@ export function InfoCard({ sel, onClose }: { sel: Obj; onClose: () => void }) {
         </div>
         <button type="button" onClick={onClose} aria-label={t('sv.close')} className="-m-1 grid size-10 shrink-0 place-items-center rounded-full text-slate-300 active:bg-white/10"><X className="size-4" /></button>
       </div>
-      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-[13px]">
-        {row(t('sky.alt'), <>{num(alt, 1, lang)}°{below && <span className="ml-1.5 rounded-full bg-amber-400/20 px-1.5 text-[11px] text-amber-200">{t('sky.below')}</span>}</>)}
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[13px]">
+        {row(t('sky.alt'), <>{num(alt, 1, lang)}°</>)}
         {row(t('sky.az'), `${num(az, 0, lang)}° ${t(`sky.dir.${compassIdx(az)}`)}`)}
         {info.mag != null && row(t('sky.mag'), num(info.mag, 1, lang))}
         {info.illum != null && row(t('sky.illum'), `${Math.round(info.illum * 100)} %`)}
         {info.bv != null && row(t('sv.colour'), t(`sv.col.${colorKey(info.bv)}`))}
-        {dist && row(t('sky.dist'), dist)}
-        {info.ra != null && row('RA / Dec', `${hours(info.ra)} · ${num(info.dec ?? 0, 1, lang)}°`)}
+        {dist && row(t('sky.dist'), dist, true)}
+        {info.ra != null && row('RA / Dec', `${hours(info.ra)} · ${num(info.dec ?? 0, 1, lang)}°`, true)}
         {info.heightKm != null && row(t('sv.height'), `${num(info.heightKm, 0, lang)} km`)}
         {info.rangeKm != null && row(t('sv.range'), `${num(info.rangeKm, 0, lang)} km`)}
         {info.speedKms != null && row(t('sv.speed'), `${num(info.speedKms, 1, lang)} km/s`)}
-        {info.sunlit != null && row(t('sv.light'), t(info.sunlit ? 'sv.sunlit' : 'sv.shadow'))}
+        {info.sunlit != null && row(t('sv.light'), t(info.sunlit ? 'sv.sunlit' : 'sv.shadow'), true)}
         {info.rts && !info.rts.always && <>
           {row(t('sky.rise'), fmtT(info.rts.rise))}
-          {row(t('sv.transit'), info.rts.transit ? <>{fmtT(info.rts.transit.ms)} <span className="text-slate-400">· {num(info.rts.transit.alt, 0, lang)}°</span></> : '—')}
+          {row(t('sv.transit'), info.rts.transit ? <>{fmtT(info.rts.transit.ms)} <span className="text-slate-400">· {num(info.rts.transit.alt, 0, lang)}°</span></> : '—', true)}
           {row(t('sky.set'), fmtT(info.rts.set))}
         </>}
       </dl>
+      {below && <p className="mt-1.5 inline-block rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] text-amber-200">{t('sky.below')}</p>}
       {info.rts?.always && <p className="mt-1.5 text-xs text-slate-300">{t(info.rts.always === 'up' ? 'sv.alwaysUp' : 'sv.alwaysDown')}</p>}
-      {info.rts && <p className="mt-1.5 text-[11px] text-slate-500">{t('sv.solarNote')}</p>}
+      {info.rts && <p className="mt-1 text-[10px] text-slate-500">{t('sv.solarNote')}</p>}
       {info.kind === 'sat' && info.sunlit != null && <p className="mt-1.5 text-xs text-slate-300">{t(info.sunlit && !below && alt > 5 && (live.b?.sunAlt ?? 0) < -4 ? 'sv.satVisible' : 'sv.satNotVisible')}</p>}
     </div>
   )

@@ -176,7 +176,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     d.dsos.forEach((x, i) => {
       if (x.mag > dsoLim) return
       const v = applyM(f.M, x.vec)
-      if (dotv(v, cam.f) < 0 || !project(cam, v, P)) return
+      if ((L.ground && v[2] < -0.01) || dotv(v, cam.f) < 0 || !project(cam, v, P)) return
       if (P.x < -20 || P.x > w + 20 || P.y < -20 || P.y > h + 20) return
       const col = `rgba(120,215,255,${0.85 * night})`
       ctx.strokeStyle = col
@@ -187,7 +187,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
       else ctx.rect(P.x - r, P.y - r, r * 2, r * 2)
       ctx.stroke(); ctx.setLineDash([])
       hits.push({ x: P.x, y: P.y, obj: { k: 'dso', i }, pri: 1 })
-      if (x.id.startsWith('M') || x.mag < 4) labels.push({ x: P.x + r + 3, y: P.y + 3, text: x.id, pri: 2 - x.mag * 0.1, color: `rgba(140,220,255,${0.9 * night})`, size: 10 })
+      if (x.mag < (f.fov > 60 ? 5.2 : 9)) labels.push({ x: P.x + r + 3, y: P.y + 3, text: x.id, pri: 2 - x.mag * 0.1, color: `rgba(140,220,255,${0.9 * night})`, size: 10 })
     })
   }
 
@@ -197,6 +197,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     const nameMag = zoomF > 1.2 ? 3.6 : zoomF > 1 ? 2.8 : 2.0
     const v: V3 = [0, 0, 0], m = f.M, cf = cam.f
     let lastCol = -1
+    const gMin = L.ground ? -0.012 : -2
     for (let i = 0; i < d.n; i++) {
       const mg = mag[i]
       if (mg > lm) break // sorted by magnitude
@@ -204,13 +205,13 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
       if (vis <= 0.02) continue
       const ox = vec[i * 3], oy = vec[i * 3 + 1], oz = vec[i * 3 + 2]
       v[0] = m[0] * ox + m[1] * oy + m[2] * oz; v[1] = m[3] * ox + m[4] * oy + m[5] * oz; v[2] = m[6] * ox + m[7] * oy + m[8] * oz
-      if (v[0] * cf[0] + v[1] * cf[1] + v[2] * cf[2] < -0.2 || !project(cam, v, P)) continue
+      if (v[2] < gMin || v[0] * cf[0] + v[1] * cf[1] + v[2] * cf[2] < -0.2 || !project(cam, v, P)) continue
       const x = P.x, y = P.y
       if (x < -10 || x > w + 10 || y < -10 || y > h + 10) continue
       const r = (0.5 + 0.38 * (6.6 - mg)) * zoomF
       if (col[i] !== lastCol) { ctx.fillStyle = PAL_CSS[col[i]]; lastCol = col[i] }
       ctx.globalAlpha = vis * Math.min(1, 0.4 + r * 0.45)
-      if (r < 1.25) ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+      if (r < 1.0) ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
       else {
         if (r > 2.2) { ctx.globalAlpha = vis * 0.9; ctx.drawImage(glowSprite(col[i]), x - r * 3.4, y - r * 3.4, r * 6.8, r * 6.8); ctx.globalAlpha = vis }
         ctx.beginPath(); ctx.arc(x, y, r, 0, 6.3); ctx.fill()
@@ -226,7 +227,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
   if (L.conNames && night > 0.1) {
     d.cons.forEach((c, i) => {
       const v = applyM(f.M, c.vec)
-      if (dotv(v, cam.f) < 0.1 || !project(cam, v, P)) return
+      if ((L.ground && v[2] < -0.1) || dotv(v, cam.f) < 0.1 || !project(cam, v, P)) return
       if (P.x < 20 || P.x > w - 20 || P.y < 20 || P.y > h - 20) return
       labels.push({ x: P.x, y: P.y, text: conName(c).toUpperCase(), pri: 0.5, color: `rgba(120,165,235,${0.7 * night})`, size: 10, italic: true })
       hits.push({ x: P.x, y: P.y, obj: { k: 'con', i }, pri: 0 })
@@ -237,7 +238,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
   const sunP = { x: 0, y: 0 }
   let sunOk = false
   const kpx = (radiusDeg: number, minPx: number, at: V3) => { const th = Math.acos(clamp(dotv(at, cam.f), -1, 1)); const sc = 1 / Math.cos(th / 2) ** 2; return Math.max(minPx, radiusDeg * D2R * cam.k * sc) }
-  if (L.sun && project(cam, b.sun.hv, sunP) && dotv(b.sun.hv, cam.f) > -0.2) {
+  if (L.sun && (!L.ground || b.sun.hv[2] > -0.04) && project(cam, b.sun.hv, sunP) && dotv(b.sun.hv, cam.f) > -0.2) {
     sunOk = true
     const r = kpx(b.sun.radius, 7, b.sun.hv)
     const g = ctx.createRadialGradient(sunP.x, sunP.y, r * 0.6, sunP.x, sunP.y, r * 6)
@@ -247,7 +248,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     hits.push({ x: sunP.x, y: sunP.y, obj: { k: 'sun' }, pri: 3 })
     labels.push({ x: sunP.x + r + 4, y: sunP.y - r, text: f.names.sun, pri: 9, color: '#ffe9a8', size: 12 })
   } else project(cam, b.sun.hv, sunP) && (sunOk = true)
-  if (L.moon && dotv(b.moon.hv, cam.f) > -0.2 && project(cam, b.moon.hv, P)) {
+  if (L.moon && (!L.ground || b.moon.hv[2] > -0.03) && dotv(b.moon.hv, cam.f) > -0.2 && project(cam, b.moon.hv, P)) {
     const r = kpx(b.moon.radius, 9, b.moon.hv)
     const mx = P.x, my = P.y
     const sp = sunOk ? sunP : null
@@ -258,7 +259,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
   }
   if (L.planets) {
     for (const p of b.planets) {
-      if (dotv(p.hv, cam.f) < -0.2 || !project(cam, p.hv, P)) continue
+      if ((L.ground && p.hv[2] < -0.01) || dotv(p.hv, cam.f) < -0.2 || !project(cam, p.hv, P)) continue
       const vis = clamp((lim - p.mag) / 1.2, 0, 1)
       if (vis < 0.05) continue
       const r = clamp(2 + (1.5 - p.mag) * 0.7, 2, 5.5) * zoomF
@@ -276,7 +277,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
   if (L.sats) {
     for (const s of f.sats) {
       if (L.satsSunlitOnly && !s.sunlit) continue
-      if (dotv(s.hv, cam.f) < -0.2 || !project(cam, s.hv, P)) continue
+      if ((L.ground && s.hv[2] < -0.005) || dotv(s.hv, cam.f) < -0.2 || !project(cam, s.hv, P)) continue
       if (P.x < -10 || P.x > w + 10 || P.y < -10 || P.y > h + 10) continue
       const iss = s.norad === 25544
       const vis = s.sunlit ? 1 : 0.45

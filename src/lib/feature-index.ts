@@ -27,7 +27,7 @@ export const FEATURES: Feature[] = [
   // ---- Satellieten
   F('track', 'explore', 'sats', ['ISS en satellieten volgen', 'Live positie, hoogte, snelheid, grondspoor op de kaart'], ['Track the ISS and satellites', 'Live position, altitude, speed, ground track'], ['Παρακολούθηση ISS και δορυφόρων', 'Θέση, ύψος, ταχύτητα, ίχνος εδάφους'], { key: true, kw: 'iss tle sgp4 celestrak starlink gps grondspoor' }),
   F('tle', 'explore', 'sats', ['Eigen TLE', 'Plak de baangegevens van elke satelliet'], ['Your own TLE', 'Paste orbital elements of any satellite'], ['Δικό σου TLE', 'Επικόλλησε στοιχεία τροχιάς'], { kw: 'tle twoline' }),
-  F('passes', 'explore', 'passes', ['Overkomsten', 'Wanneer en waar een satelliet boven jou zichtbaar is'], ['Passes', 'When and where a satellite is visible above you'], ['Διελεύσεις', 'Πότε και πού φαίνεται ένας δορυφόρος'], { key: true, kw: 'zichtbaar overkomst pass' }),
+  F('passes', 'explore', 'passes', ['Overkomsten', 'Wanneer en waar een satelliet boven jou zichtbaar is'], ['Passes', 'When and where a satellite is visible above you'], ['Διελεύσεις', 'Πότε και πού φαίνεται ένας δορυφόρος'], { kw: 'zichtbaar overkomst pass' }),
   // ---- Vanavond
   F('planets', 'sky', 'tonight', ['Planeten vanavond', 'Welke planeten zichtbaar zijn, waar en wanneer'], ['Planets tonight', 'Which planets are visible, where and when'], ['Πλανήτες απόψε', 'Ποιοι πλανήτες φαίνονται, πού και πότε'], { key: true, kw: 'zichtbaar hemel venus jupiter' }),
   F('moonphase', 'sky', 'tonight', ['Maanfase en schemering', 'Maanfase, op- en ondergang, zon en schemering'], ['Moon phase and twilight', 'Moon phase, rise and set, sun and twilight'], ['Φάση Σελήνης και λυκόφως', 'Φάση, ανατολή και δύση, λυκόφως'], { kw: 'volle maan zonsondergang' }),

@@ -14,7 +14,7 @@ import { tap } from '@/lib/haptics'
 import { useUi } from '@/lib/ui-store'
 import '../tonight/i18n'
 import './i18n'
-import { basisAzAlt, basisFromOrientation, blendBasis, camScale, horizonMatrix, hzVec, hzAltAz, solarClock, yawBasis, type Basis, type Cam } from './geom.ts'
+import { basisAzAlt, basisFromOrientation, blendBasis, camScale, horizonMatrix, project, hzVec, hzAltAz, solarClock, yawBasis, type Basis, type Cam } from './geom.ts'
 import { computeBodies, computeSats, ensureSats, ensureSky, objKey, objectAltAz, skyCtx, skyState, type SatPos } from './scene.ts'
 import { drawEdgeArrow, drawSky, type Frame, type Hit } from './render.ts'
 import { FOV_MAX, FOV_MIN, layers, saveYaw, view, useView } from './state.ts'
@@ -41,7 +41,7 @@ export function SkyStage() {
   }, [])
 
   const wide = size.w >= 1000 && size.h > 500
-  const inset = useMemo(() => ({ left: covered.left || (wide && panelOpen ? 416 : 0), bottom: wide ? 76 : covered.bottom, top: wide ? 0 : size.h <= 500 ? 48 : 56 }), [covered, wide, panelOpen, size.h])
+  const inset = useMemo(() => ({ left: covered.left || (wide && panelOpen ? 416 : 0), bottom: wide ? 140 : covered.bottom, top: wide ? 0 : size.h <= 500 ? 48 : 56 }), [covered, wide, panelOpen, size.h])
   const insetRef = useRef(inset); insetRef.current = inset
 
   // ---------- AR: device orientation ----------
@@ -73,6 +73,7 @@ export function SkyStage() {
     const cv = canvas.current!, ctx = cv.getContext('2d')!
     let raf = 0, lastSig = '', lastSatReal = 0, lastSatMs = 0, lastFrame = performance.now(), hits: Hit[] = []
     let satList: SatPos[] = []
+    const pt = { x: 0, y: 0 }
     const names = { sun: t('sky.p.sun'), moon: t('sky.p.moon'), planets: Object.fromEntries(PLANET_IDS.map((p) => [p, t(`sky.p.${p}`)])) as Record<string, string> }
     const compass = [0, 2, 4, 6, 8, 10, 12, 14].map((i) => t(`sky.dir.${i}`))
     const loop = (now: number) => {
@@ -104,7 +105,12 @@ export function SkyStage() {
       hits = drawSky(ctx, frame)
       if (v.sel) {
         const aa = objectAltAz(v.sel, ms, site, bodies, satList)
-        if (aa) drawEdgeArrow(ctx, frame, hzVec(aa.alt, aa.az), '#38bdf8')
+        if (aa) {
+          const hv = hzVec(aa.alt, aa.az)
+          if (drawEdgeArrow(ctx, frame, hv, '#38bdf8') === null && aa.alt < 0 && project(cam, hv, pt)) { // on screen but below the horizon: dashed ring over the ground
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(pt.x, pt.y, 14, 0, 6.3); ctx.stroke(); ctx.setLineDash([])
+          }
+        }
       }
       hitsRef.current = hits
       camRef.current = cam
@@ -180,7 +186,7 @@ export function SkyStage() {
     <div className="fixed inset-0 z-[5] touch-none select-none overflow-hidden bg-[#04060b]" data-skyview>
       <canvas ref={canvas} tabIndex={0} aria-label={tr('sv.canvas')} className="absolute inset-0 size-full touch-none outline-none" style={{ cursor: arOn ? 'default' : 'grab' }} />
       {!ready && <div className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-300">{tr('sv.loading')}</div>}
-      <div className="pointer-events-none absolute flex flex-col gap-2" style={{ left: wide ? inset.left + 16 : 8, right: wide ? 300 : 8, top: wide ? 12 : `calc(env(safe-area-inset-top) + ${inset.top + 4}px)` }}>
+      <div className="pointer-events-none absolute flex flex-col gap-2" style={{ left: wide ? inset.left + 16 : 8, right: wide ? 300 : 8, top: wide ? 60 : `calc(env(safe-area-inset-top) + ${inset.top + 4}px)` }}>
         <div className="pointer-events-auto flex max-w-full flex-wrap items-center gap-x-2 self-start rounded-xl border border-white/10 bg-black/55 px-3 py-1.5 text-xs text-slate-100 backdrop-blur">
           <span className="min-w-0 truncate font-semibold">{name || tr('sky.loc.unnamed')}</span>
           <span className="tabular-nums text-slate-300">{coord}</span>
