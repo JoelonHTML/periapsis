@@ -36,7 +36,7 @@ function PlaceBlock() {
   const coords = parseCoords(q)
   const hits = useMemo(() => (coords ? [] : findPlaces(q, places, 6)), [q, places, coords])
   const choose = (p: Place) => { setObserver({ lat: p[2], lon: p[3], altM: p[5] ?? 0, name: p[0], fromGps: false }); setQ(''); ui.set({ sheet: 'closed' }) }
-  const useGps = async () => {
+  const fromGps = async () => {
     setBusy(true); setFail(false)
     const ok = await locate()
     if (ok) { const l = await loadPlaces(), o = observer.get(), n = nearestPlace(o.lat, o.lon, l, 30); setObserver({ name: n ? n[0] : '' }) } else setFail(true)
@@ -67,7 +67,7 @@ function PlaceBlock() {
       )}
       {q.trim().length >= 2 && !coords && places.length > 0 && hits.length === 0 && <p className="text-xs text-muted-foreground">{t('sv.noPlace')}</p>}
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" variant="secondary" className="h-11 gap-2" disabled={busy} onClick={() => void useGps()}><LocateFixed className="size-4" />{busy ? t('sky.loc.locating') : t('sv.gps')}</Button>
+        <Button type="button" variant="secondary" className="h-11 gap-2" disabled={busy} onClick={() => void fromGps()}><LocateFixed className="size-4" />{busy ? t('sky.loc.locating') : t('sv.gps')}</Button>
         <Button type="button" variant={map ? 'default' : 'secondary'} className="h-11 gap-2" aria-expanded={map} onClick={() => setMap(!map)}><MapIcon className="size-4" />{t('sv.map')}</Button>
       </div>
       {fail && <p role="status" className="text-xs text-amber-300">{t('sky.loc.gpsFail')}</p>}
@@ -141,9 +141,9 @@ function Filters() {
       {GROUPS.map(([title, keys]) => (
         <div key={title} className="grid gap-1.5">
           <div className="text-[11px] font-medium text-muted-foreground">{t(title)}</div>
-          <div className="grid grid-cols-1 gap-1.5 min-[440px]:grid-cols-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {keys.map((k) => (
-              <label key={k} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border px-3 text-sm ${k === 'satsSunlitOnly' && !L.sats ? 'opacity-50' : ''}`}>
+              <label key={k} className={`flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border px-2.5 text-[13px] leading-tight ${k === 'satsSunlitOnly' && !L.sats ? 'opacity-50' : ''}`}>
                 <span className="min-w-0">{t(`sv.l.${k}`)}</span>
                 <Switch checked={L[k] as boolean} disabled={k === 'satsSunlitOnly' && !L.sats} onCheckedChange={(v) => setLayer(k, v as never)} aria-label={t(`sv.l.${k}`)} />
               </label>

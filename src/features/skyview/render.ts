@@ -104,12 +104,12 @@ function drawMilkyWay(ctx: CanvasRenderingContext2D, f: Frame, vis: number) {
   ctx.drawImage(mwCan, 0, 0, mw * q, mh * q)
 }
 
-function drawMoon(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, b: Bodies, sunPx: { x: number; y: number } | null) {
+function drawMoon(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, b: Bodies, sunPx: { x: number; y: number } | null, night: number) {
   const m = b.moon
   // bright limb faces the Sun on screen
   const ang = sunPx ? Math.atan2(sunPx.y - y, sunPx.x - x) : -Math.PI / 4
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang)
-  ctx.fillStyle = 'rgba(40,48,66,0.9)'; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = `rgba(40,48,66,${0.22 + 0.68 * night})`; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill()
   const f = m.illum
   ctx.fillStyle = '#f1ecd9'; ctx.beginPath()
   ctx.arc(0, 0, r, -Math.PI / 2, Math.PI / 2, false)
@@ -236,10 +236,9 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
 
   // ---- Sun, Moon, planets
   const sunP = { x: 0, y: 0 }
-  let sunOk = false
+  const sunOk = project(cam, b.sun.hv, sunP) // also needed for the Moon's orientation when the Sun layer is off
   const kpx = (radiusDeg: number, minPx: number, at: V3) => { const th = Math.acos(clamp(dotv(at, cam.f), -1, 1)); const sc = 1 / Math.cos(th / 2) ** 2; return Math.max(minPx, radiusDeg * D2R * cam.k * sc) }
-  if (L.sun && (!L.ground || b.sun.hv[2] > -0.04) && project(cam, b.sun.hv, sunP) && dotv(b.sun.hv, cam.f) > -0.2) {
-    sunOk = true
+  if (L.sun && sunOk && (!L.ground || b.sun.hv[2] > -0.04) && dotv(b.sun.hv, cam.f) > -0.2) {
     const r = kpx(b.sun.radius, 7, b.sun.hv)
     const g = ctx.createRadialGradient(sunP.x, sunP.y, r * 0.6, sunP.x, sunP.y, r * 6)
     g.addColorStop(0, 'rgba(255,230,160,0.55)'); g.addColorStop(1, 'rgba(255,210,120,0)')
@@ -247,13 +246,13 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     ctx.fillStyle = '#fff3c4'; ctx.beginPath(); ctx.arc(sunP.x, sunP.y, r, 0, 6.3); ctx.fill()
     hits.push({ x: sunP.x, y: sunP.y, obj: { k: 'sun' }, pri: 3 })
     labels.push({ x: sunP.x + r + 4, y: sunP.y - r, text: f.names.sun, pri: 9, color: '#ffe9a8', size: 12 })
-  } else project(cam, b.sun.hv, sunP) && (sunOk = true)
+  }
   if (L.moon && (!L.ground || b.moon.hv[2] > -0.03) && dotv(b.moon.hv, cam.f) > -0.2 && project(cam, b.moon.hv, P)) {
     const r = kpx(b.moon.radius, 9, b.moon.hv)
     const mx = P.x, my = P.y
     const sp = sunOk ? sunP : null
     ctx.fillStyle = 'rgba(255,255,240,0.08)'; ctx.beginPath(); ctx.arc(mx, my, r * 2.2, 0, 6.3); ctx.fill()
-    drawMoon(ctx, mx, my, r, b, sp)
+    drawMoon(ctx, mx, my, r, b, sp, night)
     hits.push({ x: mx, y: my, obj: { k: 'moon' }, pri: 3 })
     labels.push({ x: mx + r + 4, y: my - r, text: f.names.moon, pri: 9, color: '#f1ecd9', size: 12 })
   }
