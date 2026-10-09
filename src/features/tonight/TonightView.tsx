@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Section } from '@/components/bits'
-import { BODIES, toMs } from '@/lib/astro'
+import { BODIES, toJ2000, toMs } from '@/lib/astro'
 import { clock } from '@/lib/store'
 import { useT } from '@/lib/i18n'
 import { LocationBar, Pill, TimeOf, useLang, useSite } from './ui'
@@ -207,6 +207,8 @@ export function TonightPanel() {
   const auto = now >= lo && now <= hi ? Math.round(now / (5 * MIN)) * 5 * MIN : Math.min((night.sunset ?? night.start) + 120 * MIN, night.mid)
   const domeMs = custom && custom.key === key ? custom.ms : auto
 
+  // the dome slider also moves the app clock, so the 3D Earth's day/night follows it (paused while you scrub; "Nu" goes back to real time)
+  const setDome = (ms: number, live = false) => { setCustom({ key, ms }); clock.t = toJ2000(ms); clock.paused = !live }
   const simMs = toMs(clock.t)
   const simDiffers = Math.abs(simMs - now) > 12 * 3600e3 && localISO(simMs) !== date
   const ordered = useMemo(() => [...night.planets.filter((p) => p.visible), ...night.planets.filter((p) => !p.visible)], [night])
@@ -236,9 +238,9 @@ export function TonightPanel() {
           <span className="w-16 shrink-0 text-lg font-semibold tabular-nums">{timeStr(domeMs, lang)}</span>
           <div className="flex min-h-11 flex-1 items-center">
             <Slider aria-label={t('sky.time')} min={0} max={Math.max(5, Math.round((hi - lo) / MIN))} step={5} value={[Math.round((domeMs - lo) / MIN)]}
-              onValueChange={(v) => setCustom({ key, ms: lo + v[0] * MIN })} />
+              onValueChange={(v) => setDome(lo + v[0] * MIN)} />
           </div>
-          <Button type="button" variant="outline" className="h-11 shrink-0 px-3" onClick={() => setCustom({ key, ms: Math.round(Date.now() / (5 * MIN)) * 5 * MIN })}>{t('sky.now')}</Button>
+          <Button type="button" variant="outline" className="h-11 shrink-0 px-3" onClick={() => { setDome(Math.round(Date.now() / (5 * MIN)) * 5 * MIN, true); clock.t = toJ2000(Date.now()) }}>{t('sky.now')}</Button>
         </div>
         <p className="text-[11px] text-muted-foreground">{t('sky.dome.h')}</p>
       </Section>
