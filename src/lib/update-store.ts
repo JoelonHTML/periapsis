@@ -64,7 +64,11 @@ async function applyDesktop(latest: Update, d: NonNullable<ReturnType<typeof des
   if (updates.get().s.phase === 'readyrestart') { void d.installUpdate(); return true }
   updates.set({ s: { phase: 'downloading', latest, pct: 0 } })
   const ok = await d.checkUpdate() // progress / downloaded events arrive through initDesktop(); the last one flips the state to 'readyrestart'
-  if (!ok) { updates.set({ s: { phase: 'applyfail', latest, why: 'offline' } }); return false }
+  if (ok !== true) {
+    // A release whose Windows files are still being uploaded answers 404 / "Cannot find latest.yml": that is "not ready yet", not "no connection".
+    const why = typeof ok === 'string' && /404|latest\.yml|cannot find/i.test(ok) ? 'notready' : 'offline'
+    updates.set({ s: { phase: 'applyfail', latest, why } }); return false
+  }
   return true
 }
 /** Restart into the downloaded update (Windows app). */

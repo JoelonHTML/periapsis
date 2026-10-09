@@ -48,12 +48,12 @@ function setupUpdater() {
   autoUpdater.on('update-available', (i) => send({ type: 'available', version: i.version }))
   autoUpdater.on('update-downloaded', (i) => send({ type: 'downloaded', version: i.version }))
   autoUpdater.on('error', (e) => send({ type: 'error', message: String(e && e.message || e).slice(0, 200) }))
-  ipcMain.handle('periapsis:checkUpdate', () => autoUpdater.checkForUpdates().then(() => true).catch(() => false))
+  ipcMain.handle('periapsis:checkUpdate', () => autoUpdater.checkForUpdates().then(() => true).catch((e) => String((e && e.message) || e).slice(0, 300))) // true, or why not
   ipcMain.handle('periapsis:installUpdate', () => autoUpdater.quitAndInstall(true, true)) // silent, and start the app again
   setTimeout(() => { autoUpdater.checkForUpdates().catch(() => {}) }, 8000) // after start-up, in the background
 }
 if (!app.isPackaged || PORTABLE) {
-  ipcMain.handle('periapsis:checkUpdate', () => false)
+  ipcMain.handle('periapsis:checkUpdate', () => 'not packaged')
   ipcMain.handle('periapsis:installUpdate', () => false)
 }
 

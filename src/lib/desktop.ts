@@ -6,7 +6,8 @@ export interface DesktopBridge {
   fetch(url: string, headers?: Record<string, string>): Promise<{ status: number; body: string; error?: string }>
   openExternal(url: string): Promise<void>
   info(): Promise<{ portable: boolean; version: string; packaged: boolean }>
-  checkUpdate(): Promise<boolean>
+  /** true, or the updater's error message (older builds answered false). */
+  checkUpdate(): Promise<boolean | string>
   installUpdate(): Promise<unknown>
   onUpdate(cb: (m: DesktopUpdateMsg) => void): () => void
 }

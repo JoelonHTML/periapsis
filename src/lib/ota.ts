@@ -13,7 +13,7 @@ export function metaOf(html: string, name: string): string {
 
 export const NATIVE_EPOCH = (typeof document !== 'undefined' ? document.querySelector('meta[name="periapsis-native"]')?.getAttribute('content') : null) ?? '1'
 
-export type OtaFail = 'offline' | 'bad-file' | 'needs-apk' | 'storage'
+export type OtaFail = 'offline' | 'bad-file' | 'needs-apk' | 'storage' | 'notready'
 export type OtaResult = { ok: true } | { ok: false; why: OtaFail }
 
 /** Is this downloaded text a complete Periapsis build for exactly this version and this APK generation? */
