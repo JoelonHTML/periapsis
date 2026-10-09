@@ -150,11 +150,62 @@
 .tour-ring { transition: left 260ms cubic-bezier(0.23, 1, 0.32, 1), top 260ms cubic-bezier(0.23, 1, 0.32, 1), width 260ms cubic-bezier(0.23, 1, 0.32, 1), height 260ms cubic-bezier(0.23, 1, 0.32, 1); }
 @keyframes tour-pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
 @keyframes tour-fade { from { opacity: 0; } }
+/* Start screen: world tiles as an accordion of photo strips (desktop), a 2-column grid (tablet) or a list (phone).
+   Only flex-grow, the label position and the arrow opacity animate, so it stays smooth and interrupts cleanly. */
+.home-in { animation: home-in 1s ease-out backwards; }
+@keyframes home-in { from { opacity: 0; transform: translateY(30px); } }
+.home-cats { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100%; max-width: 1100px; margin: 0 auto; }
+.home-cat { position: relative; display: block; height: 150px; min-width: 0; overflow: hidden; border-radius: 1.25rem; border: 1px solid var(--border);
+  background: #04060b center / cover no-repeat; color: #fff; isolation: isolate; outline: none; -webkit-tap-highlight-color: transparent; }
+.home-cat::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(4,6,11,.9) 0%, rgba(4,6,11,.35) 45%, rgba(4,6,11,.1) 100%); }
+.home-cat--last { border-color: rgba(34,211,238,.55); }
+.home-cat:focus-visible { box-shadow: 0 0 0 2px #22d3ee; }
+.home-cat__label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -60%); display: flex; align-items: center; gap: .5rem; white-space: nowrap;
+  font-size: 1.15rem; font-weight: 600; line-height: 1.3; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+.home-cat__sub { position: absolute; left: 1rem; right: 1rem; top: calc(50% + 1.1rem); text-align: center; font-size: .78rem; color: rgba(255,255,255,.75); }
+.home-cat__arrow, .home-cat__more { display: none; }
+@media (min-width: 768px) and (max-width: 899px) {
+  .home-cats { grid-template-columns: 1fr 1fr; max-width: 750px; }
+  .home-cat { height: 200px; transition: transform .3s ease-out, box-shadow .3s ease-out; }
+  .home-cat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .home-cat:hover, .home-cat:focus-visible { transform: scale(1.015); box-shadow: 0 12px 30px rgba(0,0,0,.45); }
+}
+@media (min-width: 900px) {
+  .home-cats { display: flex; height: clamp(380px, 58vh, 500px); }
+  .home-cat { flex: 1 1 0; height: auto; transition: flex-grow .55s cubic-bezier(.2,.7,.2,1), box-shadow .55s cubic-bezier(.2,.7,.2,1); }
+  .home-cat:hover, .home-cat:focus-visible { flex-grow: 4; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+  .home-cat:focus-visible { box-shadow: 0 0 0 2px #22d3ee, 0 18px 40px rgba(0,0,0,.5); }
+  .home-cat__sub, .home-cat__icon { display: none; }
+  /* rest: title turned 90°, reading upwards, at the bottom just left of the middle; transform-origin bottom-left so opening is a turn, not a jump */
+  .home-cat__label { top: auto; left: 50%; bottom: 20px; transform: rotate(-90deg); transform-origin: left bottom; font-size: 1.35rem;
+    transition: left .5s cubic-bezier(.2,.7,.2,1), bottom .5s cubic-bezier(.2,.7,.2,1), transform .5s cubic-bezier(.2,.7,.2,1); }
+  .home-cat:hover .home-cat__label, .home-cat:focus-visible .home-cat__label { left: 22px; bottom: 20px; transform: rotate(0deg); }
+  .home-cat__arrow { display: inline-block; opacity: 0; transition: opacity .4s ease-out; }
+  .home-cat__more { display: block; position: absolute; left: 22px; right: 22px; bottom: 62px; min-width: 260px; opacity: 0; transition: opacity .4s ease-out; }
+  .home-cat:hover :is(.home-cat__arrow, .home-cat__more), .home-cat:focus-visible :is(.home-cat__arrow, .home-cat__more) { opacity: 1; transition-delay: .15s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-banner { transition: opacity 200ms ease; }
+}
+/* "Minder animaties" (Instellingen) and the OS setting both switch off transitions and keyframes. */
+:root[data-reduce-motion] *, :root[data-reduce-motion] *::before, :root[data-reduce-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
+/* Tour: cards pop in from slightly below with opacity (transform + opacity only, < 300 ms); reduced motion → opacity only. */
+.tour-pop { animation: tour-pop 240ms cubic-bezier(0.23, 1, 0.32, 1); }
+.tour-fade { animation: tour-fade 200ms ease-out; }
+.tour-ring { transition: left 260ms cubic-bezier(0.23, 1, 0.32, 1), top 260ms cubic-bezier(0.23, 1, 0.32, 1), width 260ms cubic-bezier(0.23, 1, 0.32, 1), height 260ms cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes tour-pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@keyframes tour-fade { from { opacity: 0; } }
 /* Start screen: the world tiles rise into place one after another. */
 .home-rise { animation: home-rise 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both; }
 @keyframes home-rise { from { opacity: 0; transform: translateY(36px) scale(0.96); } }
 @media (prefers-reduced-motion: reduce) {
-  .tour-pop, .home-rise { animation-name: tour-fade; }
+  .tour-pop { animation-name: tour-fade; }
+  .home-in { animation: none; }
+  .home-cat, .home-cat *, .home-cat__label { transition: none !important; }
   .tour-ring { transition: none; }
 }
 /* App feel on a phone: no text-selection / long-press menu / grey tap flash on the 3D view and chrome (inputs stay selectable). */
