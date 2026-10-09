@@ -12,6 +12,7 @@ import { ui, useUi } from '@/lib/ui-store'
 import { applyUpdate, refreshUpdates, restartForUpdate, useUpdates } from '@/lib/update-store'
 import { isDesktop } from '@/lib/desktop'
 import { APP_VERSION } from '@/lib/update'
+import { WidgetsSection } from '@/features/widgets/WidgetsSection'
 
 const ver = (v: string) => (v === 'dev' ? 'dev' : `v${v}`)
 
@@ -123,6 +124,7 @@ function Body() {
         <Toggle k="haptics" label={t('set.haptics')} hint={t('set.haptics.h')} />
         <Toggle k="keepAwake" label={t('set.awake')} hint={t('set.awake.h')} />
       </section>
+      <WidgetsSection />
       <section className="grid gap-2">
         <Button variant="outline" className="h-12 justify-start gap-3 text-sm" onClick={() => { ui.set({ settingsOpen: false }); startTour() }}>
           <GraduationCap className="size-5" /> {t('set.tour')}
