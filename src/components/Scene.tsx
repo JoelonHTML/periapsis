@@ -13,6 +13,7 @@ import {
 import { craftPosition, eventPosition, samplePath, type Solution } from '@/lib/mga'
 import { labels } from '@/lib/labels'
 import { clock, selectedSolution, shipSolution, useApp, type View } from '@/lib/store'
+import { useUi } from '@/lib/ui-store'
 import { ExtraObjects } from './ExtraObjects'
 import { FlybyScene } from './Flyby3D'
 import { GalaxyScene } from './Galaxy'
@@ -479,9 +480,10 @@ export function Scene({ view, plan, lat, lon, siteName }: {
   const moonPlan = useApp((s) => s.moon)
   const showFlyby = view === 'flyby' && sol && sol.events[flybyIdx]?.kind === 'flyby'
   const camFit = useApp((s) => s.camFit)
+  const skyOn = useUi((s) => s.tab === 'skyview') // the planetarium covers the 3D scene: stop rendering it behind
   const cam: [number, number, number] = view === 'solar' && camFit > 0 ? [0, camFit * 1.15, camFit * 1.55] : CAMERAS[view]
   return (
-    <Canvas onCreated={() => requestAnimationFrame(hideSplash)} dpr={[1, 1.5]} performance={{ min: 0.6 }} gl={{ logarithmicDepthBuffer: true, antialias: window.devicePixelRatio < 2, powerPreference: 'high-performance' }} camera={{ position: CAMERAS.solar, fov: 45, near: 1e-5, far: 1e7 }}>
+    <Canvas frameloop={skyOn ? 'never' : 'always'} onCreated={() => requestAnimationFrame(hideSplash)} dpr={[1, 1.5]} performance={{ min: 0.6 }} gl={{ logarithmicDepthBuffer: true, antialias: window.devicePixelRatio < 2, powerPreference: 'high-performance' }} camera={{ position: CAMERAS.solar, fov: 45, near: 1e-5, far: 1e7 }}>
       <color attach="background" args={['#04060b']} />
       {view !== 'galaxy' && <Starfield />}
       <PanelOffset />
