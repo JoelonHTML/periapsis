@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_live_name_events">Volgende gebeurtenis · 2×2</string>
+    <string name="widget_live_name_events_large">Hemelagenda · 4×2</string>
+    <string name="widget_live_name_iss">Volgende ISS-overkomst · 2×1</string>
+    <string name="widget_live_name_iss_wide">ISS-overkomsten · 4×1</string>
+    <string name="widget_live_name_launch">Volgende lancering · 4×1</string>
+    <string name="widget_live_name_kp">Ruimteweer · 2×1</string>
+    <string name="widget_live_desc_events">De volgende gebeurtenis aan de hemel met datum en aftelling.</string>
+    <string name="widget_live_desc_events_large">De eerstvolgende vier gebeurtenissen uit de hemelagenda.</string>
+    <string name="widget_live_desc_iss">Tijd, hoogte en richting van de volgende ISS-overkomst.</string>
+    <string name="widget_live_desc_iss_wide">Aftelling naar de volgende ISS-overkomst en de daarna.</string>
+    <string name="widget_live_desc_launch">Aftelling naar de volgende raketlancering.</string>
+    <string name="widget_live_desc_kp">Huidige Kp-index van geomagnetische activiteit.</string>
+    <string name="widget_live_empty">Geen komende gegevens. Open Periapsis.</string>
+    <string name="widget_live_now">Nu</string>
+    <string name="widget_live_in_min">over %1$d min</string>
+    <string name="widget_live_in_h">over %1$d u</string>
+    <string name="widget_live_in_d">over %1$d d</string>
+    <string name="widget_live_max_el">max %1$d°</string>
+    <string name="widget_live_following">Daarna %1$s</string>
+</resources>
