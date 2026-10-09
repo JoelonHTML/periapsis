@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { BODIES, fmtLy, galToXyz } from '@/lib/galaxy'
 import { currentPlan, currentTarget, flight, gstore } from '@/lib/galaxy-store'
-import { ARMS, armPoint } from './generate'
+import { ARMS, LOCAL_ARM, SPUR, armAtRadius } from './generate'
 import { EARLY, Label } from '../kit'
 import { GC, PointCloud, SUN_NAME, UNIT_LY, toScene } from './GalaxyField'
 
@@ -33,6 +33,7 @@ export function Flight() {
   const camera = useThree((s) => s.camera)
   const controls = useThree((s) => s.controls) as unknown as Controls | null
   const craft = useRef<THREE.Group>(null)
+  if (import.meta.env?.DEV) (window as unknown as { __gal?: unknown }).__gal = { camera, controls }
   const trail = useRef<THREE.Group>(null)
   const frame = useMemo(() => ({ u: new THREE.Vector3(), p: new THREE.Vector3(), up: new THREE.Vector3() }), [])
   const last = useRef(new THREE.Vector3())
@@ -48,9 +49,11 @@ export function Flight() {
     const l: Cand[] = [{ id: 'sun', name: SUN_NAME, pos: new THREE.Vector3() }]
     for (const b of BODIES) l.push({ id: b.id, name: `${b.name} · ${fmtLy(b.d)}`, pos: toScene(galToXyz(b.l, b.b, b.d)) })
     ARMS.forEach((a, i) => {
-      const [x, y] = armPoint(i, 35000 + (i === 3 ? 4000 : 0))
+      const [x, y] = armAtRadius(i, a.id === 'outer' ? 38000 : a.id === 'sag' ? 28000 : 33000)
       l.push({ id: 'arm' + i, name: a.name, pos: toScene([26000 + x, y, 0]), farOnly: true, arm: true })
     })
+    const [sx, sy] = armAtRadius(LOCAL_ARM, 25500)
+    l.push({ id: 'spur', name: SPUR.name, pos: toScene([26000 + sx, sy - 0, 0]), farOnly: true, arm: true })
     return l
   }, [])
 
