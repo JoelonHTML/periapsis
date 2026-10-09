@@ -24,7 +24,7 @@ import { flybyWindow, type Solution } from '@/lib/mga'
 import { ui, useUi, type Tab } from '@/lib/ui-store'
 import { Tour } from '@/components/tour/Tour'
 import { useT } from '@/lib/i18n'
-import { modeTabs } from '@/lib/modes'
+import { modeTabs, TAB_VIEW } from '@/lib/modes'
 import { FEATURE_PANELS } from '@/features'
 import { StartScreen } from '@/components/StartScreen'
 import { MobileApp } from '@/components/Mobile'
@@ -150,9 +150,9 @@ export default function App() {
   const onTab = (v: string) => {
     setTab(v as Tab)
     if (v === 'view' || v === 'more') return // phone-only tabs: never touch the 3D view
-    const cur = store.get().view
-    if (v === 'galaxy' || v === 'system') store.set({ view: v })
-    else if (cur === 'galaxy' || cur === 'system') store.set({ view: 'solar' })
+    const cur = store.get().view, own = TAB_VIEW[v as Tab]
+    if (own) store.set({ view: own })
+    else if (cur === 'galaxy' || cur === 'system' || (cur === 'earth' && mode === 'explore')) store.set({ view: 'solar' })
   }
   const orbit = useApp((s) => s.orbit)
   const craft = useApp((s) => s.craft)

@@ -46,7 +46,7 @@ test('missing caches give null/empty, other languages localize', () => {
 
 test('deep links', () => {
   assert.deepEqual(parseDeepLink('periapsis://open/sky/tonight'), { mode: 'sky', tab: 'tonight' })
-  assert.deepEqual(parseDeepLink('periapsis://open/sats/passes'), { mode: 'sats', tab: 'passes' })
+  assert.deepEqual(parseDeepLink('periapsis://open/explore/passes'), { mode: 'explore', tab: 'passes' })
   assert.deepEqual(parseDeepLink('periapsis://open/sky/live/'), { mode: 'sky', tab: 'live' })
   for (const bad of ['periapsis://open/sky/passes', 'periapsis://open/nope/tonight', 'https://x/open/sky/tonight', 'periapsis://open/sky', '', null, undefined])
     assert.equal(parseDeepLink(bad), null, String(bad))

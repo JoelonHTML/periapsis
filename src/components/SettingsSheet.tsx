@@ -10,7 +10,7 @@ import { LANGS, useT } from '@/lib/i18n'
 import { startTour } from '@/lib/tour-store'
 import { ui, useUi } from '@/lib/ui-store'
 import { applyUpdate, refreshUpdates, restartForUpdate, useUpdates } from '@/lib/update-store'
-import { isDesktop } from '@/lib/desktop'
+import { desktop, isDesktop } from '@/lib/desktop'
 import { APP_VERSION } from '@/lib/update'
 import { WidgetsSection } from '@/features/widgets/WidgetsSection'
 
@@ -68,8 +68,11 @@ function UpdateCard() {
           ? <><Download className="size-5" /> {st.phase === 'readyrestart' ? t('upd.restart') : live && (st.phase === 'available' || st.phase === 'installprompt' || retryLive) ? t('upd.now', { v: latest.version }) : t('upd.apk', { v: latest.version })}</>
           : <><RefreshCw className="size-5" /> {st.phase === 'idle' ? t('upd.check') : t('upd.recheck')}</>}
       </Button>
-      {available && live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}
-        <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>{t('upd.apkInstead')}</button></p>}
+      {available && live && (isDesktop()
+        ? <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHintPc')}{' '}
+            <button type="button" className="underline underline-offset-2" onClick={() => void desktop()?.openExternal(`https://github.com/JoelonHTML/periapsis/releases/download/v${latest.version}/Periapsis-Setup-${latest.version}.exe`)}>{t('upd.exeInstead')}</button></p>
+        : <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}
+            <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>{t('upd.apkInstead')}</button></p>)}
       {available && !live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.apkHint')}</p>}
     </section>
   )

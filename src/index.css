@@ -150,8 +150,11 @@
 .tour-ring { transition: left 260ms cubic-bezier(0.23, 1, 0.32, 1), top 260ms cubic-bezier(0.23, 1, 0.32, 1), width 260ms cubic-bezier(0.23, 1, 0.32, 1), height 260ms cubic-bezier(0.23, 1, 0.32, 1); }
 @keyframes tour-pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
 @keyframes tour-fade { from { opacity: 0; } }
+/* Start screen: the world tiles rise into place one after another. */
+.home-rise { animation: home-rise 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both; }
+@keyframes home-rise { from { opacity: 0; transform: translateY(36px) scale(0.96); } }
 @media (prefers-reduced-motion: reduce) {
-  .tour-pop { animation-name: tour-fade; }
+  .tour-pop, .home-rise { animation-name: tour-fade; }
   .tour-ring { transition: none; }
 }
 /* App feel on a phone: no text-selection / long-press menu / grey tap flash on the 3D view and chrome (inputs stay selectable). */

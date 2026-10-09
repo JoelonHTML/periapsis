@@ -13,7 +13,7 @@ import nl.periapsis.app.R;
 
 /** Next ISS pass 2x1: start time, max elevation, direction. */
 public class IssWidget extends BaseWidget {
-    static final String LINK = "periapsis://open/sats/passes";
+    static final String LINK = "periapsis://open/explore/passes";
 
     @Override
     protected RemoteViews build(Context c, @Nullable JSONObject snap, int widthDp, int heightDp, int appWidgetId) {

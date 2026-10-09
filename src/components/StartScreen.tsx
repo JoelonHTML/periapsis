@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Compass, Orbit, Satellite, Search, Telescope, X } from 'lucide-react'
+import { ChevronRight, Compass, Orbit, Search, Telescope, X } from 'lucide-react'
 import { keyFeatures, searchFeatures, type Feature } from '@/lib/feature-index'
 import { useSettings } from '@/lib/settings'
 import { useT } from '@/lib/i18n'
@@ -8,8 +8,8 @@ import { MODES, MODE_ORDER, modeTabs } from '@/lib/modes'
 import { store } from '@/lib/store'
 import { openMode, ui, useUi, type Mode } from '@/lib/ui-store'
 
-const ICON: Record<Mode, typeof Orbit> = { design: Orbit, sats: Satellite, sky: Telescope, explore: Compass }
-const TINT: Record<Mode, string> = { design: 'text-cyan-300', sats: 'text-emerald-300', sky: 'text-amber-200', explore: 'text-violet-300' }
+const ICON: Record<Mode, typeof Orbit> = { design: Orbit, sky: Telescope, explore: Compass }
+const TINT: Record<Mode, string> = { design: 'text-cyan-300', sky: 'text-amber-200', explore: 'text-violet-300' }
 
 /** Open a world: its first tab, its own 3D view, drawer half open so its tools are visible. */
 export function enterMode(m: Mode, tab = modeTabs(m)[0]) {
@@ -27,6 +27,7 @@ export function StartScreen() {
   const home = useUi((s) => s.home)
   const last = useUi((s) => s.mode)
   const [q, setQ] = useState('')
+  const [picked, setPicked] = useState<Mode | null>(null) // tile that lifts up before its world opens
   if (!home) return null
   const hits = searchFeatures(q, lang)
   const open = (f: Feature) => { setQ(''); enterMode(f.mode, f.tab) }
@@ -62,11 +63,12 @@ export function StartScreen() {
           </ul>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {MODE_ORDER.map((m) => {
+            {MODE_ORDER.map((m, i) => {
               const Icon = ICON[m]
               return (
-                <button key={m} type="button" onClick={() => enterMode(m)}
-                  className={`tour-pop flex min-h-44 flex-col items-start gap-2 rounded-3xl border bg-card/90 p-4 text-left shadow-lg transition-transform active:scale-[0.97] ${m === last ? 'ring-2 ring-cyan-400/60' : ''}`}>
+                <button key={m} type="button" disabled={!!picked} style={{ animationDelay: `${80 + i * 90}ms` }}
+                  onClick={() => { setPicked(m); setTimeout(() => { setPicked(null); enterMode(m) }, 260) }}
+                  className={`home-rise flex min-h-44 flex-col items-start gap-2 rounded-3xl border bg-card/90 p-4 text-left shadow-lg transition-[transform,opacity,box-shadow] duration-300 ease-out active:scale-[0.97] ${i === MODE_ORDER.length - 1 && MODE_ORDER.length % 2 ? 'col-span-2' : ''} ${picked === m ? '-translate-y-3 scale-[1.03] shadow-2xl shadow-cyan-500/20' : picked ? 'translate-y-2 opacity-0' : ''} ${m === last ? 'ring-2 ring-cyan-400/60' : ''}`}>
                   <Icon className={`size-8 ${TINT[m]}`} strokeWidth={1.6} />
                   <div className="mt-auto text-base font-semibold leading-tight">{t(`mode.${m}`)}</div>
                   <ul className="grid gap-0.5 text-[11.5px] leading-snug text-muted-foreground">
