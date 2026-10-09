@@ -8,8 +8,15 @@ const VERT = /* glsl */ `
 varying vec2 vUv;
 varying vec3 vN;
 varying vec3 vP;
+#ifdef TILE
+attribute vec2 tuv;   // the tile's own texture coordinates (Web Mercator); uv stays the global equirect one for the shared maps
+varying vec2 vTuv;
+#endif
 void main() {
   vUv = uv;
+  #ifdef TILE
+    vTuv = tuv;
+  #endif
   vN = normalize(mat3(modelMatrix) * normal);
   vec4 wp = modelMatrix * vec4(position, 1.0);
   vP = wp.xyz;
@@ -38,6 +45,10 @@ const FRAG_TAIL = /* glsl */ `
 /** R = elevation, G = land/ice (roughness: 0 over open water), B = cloud cover. */
 export const GROUND_FRAG = FRAG_HEAD + /* glsl */ `
 uniform sampler2D uDay;
+#ifdef TILE
+uniform sampler2D uTile;
+varying vec2 vTuv;
+#endif
 uniform sampler2D uNight;
 uniform sampler2D uData;
 uniform vec3 uNorth;
@@ -55,7 +66,11 @@ void main() {
   vec3 V = normalize(cameraPosition - vP);
   vec3 L = normalize(uSun);
   vec4 data = texture2D(uData, vUv);
-  vec3 day = texture2D(uDay, vUv).rgb;
+  #ifdef TILE
+    vec3 day = texture2D(uTile, vTuv).rgb;
+  #else
+    vec3 day = texture2D(uDay, vUv).rgb;
+  #endif
 
   vec3 N = Ng;
   #ifdef RELIEF
@@ -115,11 +130,12 @@ void main() {
 
 export const CLOUD_FRAG = FRAG_HEAD + /* glsl */ `
 uniform sampler2D uData;
+uniform float uFade; // 0 when the camera is close above the surface (clouds would hide the detail tiles)
 void main() {
   #include <logdepthbuf_fragment>
   vec3 Ng = normalize(vN);
   vec3 L = normalize(uSun);
-  float c = smoothstep(0.18, 0.95, texture2D(uData, vUv).b);
+  float c = uFade * smoothstep(0.18, 0.95, texture2D(uData, vUv).b);
   float ndl = dot(Ng, L);
   float dif = clamp((ndl + 0.08) / 1.08, 0.0, 1.0);
   dif = dif * (1.5 - 0.5 * dif);

@@ -126,9 +126,9 @@ test('quality tiers', () => {
 
 test('settings parsing is tolerant and uses the versioned key', () => {
   assert.equal(EARTH_KEY, 'periapsis.earth.v1')
-  assert.deepEqual(parseSettings(null), { quality: 'auto', custom: {} })
-  assert.deepEqual(parseSettings('not json'), { quality: 'auto', custom: {} })
-  assert.deepEqual(parseSettings('{"quality":"mid","custom":{"clouds":false,"borders":"yes","x":1}}'), { quality: 'mid', custom: { clouds: false } })
+  assert.deepEqual(parseSettings(null), { quality: 'auto', custom: {}, detail: 'auto' })
+  assert.deepEqual(parseSettings('not json'), { quality: 'auto', custom: {}, detail: 'auto' })
+  assert.deepEqual(parseSettings('{"quality":"mid","custom":{"clouds":false,"borders":"yes","x":1}}'), { quality: 'mid', custom: { clouds: false }, detail: 'auto' })
   assert.equal(parseSettings('{"quality":"ultra"}').quality, 'auto')
 })
 

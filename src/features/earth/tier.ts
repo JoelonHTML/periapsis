@@ -41,6 +41,8 @@ export type TierConfig = {
   relief: boolean
   cloudShadow: boolean
   segments: [number, number]
+  /** Streamed detail tiles kept in memory (256² px each, ~0.35 MB on the GPU with mipmaps). */
+  tileCache: number
   /** Default overlay switches (the user's own choices win). */
   layers: Layers
 }
@@ -56,17 +58,17 @@ export function tierConfig(tier: Tier, maxTextureSize = 4096): TierConfig {
   switch (tier) {
     case 'low':
       return {
-        tier, dayTex: t(2048), nightTex: t(1024), dataTex: t(1024), relief: false, cloudShadow: false, segments: [64, 32],
+        tier, dayTex: t(2048), nightTex: t(1024), dataTex: t(1024), relief: false, cloudShadow: false, segments: [64, 32], tileCache: 48,
         layers: { clouds: true, nightLights: true, atmosphere: true, coast: false, borders: false, cities: false },
       }
     case 'mid':
       return {
-        tier, dayTex: t(4096), nightTex: t(2048), dataTex: t(2048), relief: true, cloudShadow: false, segments: [96, 48],
+        tier, dayTex: t(4096), nightTex: t(2048), dataTex: t(2048), relief: true, cloudShadow: false, segments: [96, 48], tileCache: 160,
         layers: { clouds: true, nightLights: true, atmosphere: true, coast: false, borders: true, cities: false },
       }
     default:
       return {
-        tier, dayTex: t(4096), nightTex: t(4096), dataTex: t(4096), relief: true, cloudShadow: true, segments: [128, 64],
+        tier, dayTex: t(4096), nightTex: t(4096), dataTex: t(4096), relief: true, cloudShadow: true, segments: [128, 64], tileCache: 360,
         layers: { clouds: true, nightLights: true, atmosphere: true, coast: false, borders: true, cities: true },
       }
   }
