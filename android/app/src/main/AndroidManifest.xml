@@ -136,6 +136,7 @@
         <!-- ===== Home-screen widgets: LIVE widgets (classes + xml/widget_info_* owned by the live-widgets agent) ===== -->
         <receiver
             android:name=".widgets.EventsWidget"
+            android:label="@string/widget_live_name_events"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -146,6 +147,7 @@
         </receiver>
         <receiver
             android:name=".widgets.EventsWidgetLarge"
+            android:label="@string/widget_live_name_events_large"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -156,6 +158,7 @@
         </receiver>
         <receiver
             android:name=".widgets.IssWidget"
+            android:label="@string/widget_live_name_iss"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -166,6 +169,7 @@
         </receiver>
         <receiver
             android:name=".widgets.IssWidgetWide"
+            android:label="@string/widget_live_name_iss_wide"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -176,6 +180,7 @@
         </receiver>
         <receiver
             android:name=".widgets.LaunchWidget"
+            android:label="@string/widget_live_name_launch"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -186,6 +191,7 @@
         </receiver>
         <receiver
             android:name=".widgets.KpWidget"
+            android:label="@string/widget_live_name_kp"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
