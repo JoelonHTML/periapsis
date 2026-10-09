@@ -290,7 +290,7 @@ function Sources() {
   return (
     <div className="grid gap-1 border-t pt-3 text-[10.5px] leading-snug text-muted-foreground">
       <p><span className="font-medium text-foreground/80">Melkweg-model (procedureel, ca. 200 000 sterren):</span> Zon ca. 26 000 ly van het centrum, balk 27 000 ly onder 27°, spiraalarmen onder ca. 12°, schijf met straal ca. 50 000 ly, dikte ca. 1 000 ly. 1 schaaleenheid = 10 ly. Sterren dichtbij de Zon zijn procedureel aangevuld; de benoemde sterren staan op hun echte plaats.</p>
-      <p>Bron: Reid e.a. 2019 (spiraalarmen), Wegg e.a. 2015 (balk), GRAVITY 2019 (afstand tot Sgr A*). Sterren: SIMBAD/Hipparcos/Gaia, afstanden afgerond (&quot;ca.&quot;); (l, b) uit RA/Dec (J2000) met de IAU-galactische pool.</p>
+      <p>Bron: Reid e.a. 2019 (spoed ≈ 9–17°, Orion-spoor), Wegg e.a. 2015 en Benjamin e.a. 2005 (balk, 27°), Churchwell e.a. 2009 en NASA/JPL-Caltech/R. Hurt (artist concept, alleen als visuele referentie; geen afbeelding gebruikt), GRAVITY 2019 (afstand tot Sgr A*). Sterren: SIMBAD/Hipparcos/Gaia, afstanden afgerond (&quot;ca.&quot;); (l, b) uit RA/Dec (J2000) met de IAU-galactische pool.</p>
     </div>
   )
 }
