@@ -1,3 +1,4 @@
+import { settings } from '@/lib/settings'
 import type { Craft } from '@/lib/store'
 
 /** Input values of one calculator (numbers; the burn list is a string). */
@@ -23,8 +24,14 @@ export interface Res { err?: string; rows?: Row[]; tex?: string[]; note?: string
 export const CATS = ['Baanmechanica', 'Interplanetair', 'Aandrijving', 'Stand & rotatie', 'Aardomgeving', 'Overig'] as const
 export type Cat = (typeof CATS)[number]
 
+/** Pick the text for the current interface language (nl is the fallback). */
+export const L = (nl: string, en: string, el: string) => { const l = settings.get().lang; return l === 'en' ? en : l === 'el' ? el : nl }
+/** English / Greek texts of a card: title, blurb, source, input labels (by input key). Cards without `loc` stay Dutch. */
+export interface Loc { title: string; blurb: string; src?: string; labels?: Record<string, string>; options?: Record<string, string[]> }
+
 export interface Calc {
   id: string
+  loc?: { en: Loc; el: Loc }
   title: string
   cat: Cat
   blurb: string // one line, also searched
