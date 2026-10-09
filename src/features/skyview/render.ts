@@ -1,6 +1,6 @@
 // Canvas 2D renderer of the Sky view. One call = one frame. ~5000 stars are projected with a single 3x3 matrix and drawn as
 // pixels / small discs (no per-star DOM, no three.js), which is plenty for 60 fps on a mid-range phone.
-import { limitingMag, project, type Cam, type V3, applyM, hzVec, D2R } from './geom.ts'
+import { limitingMag, project, unproject, type Cam, type V3, applyM, hzVec, D2R } from './geom.ts'
 import { PALETTE, mwLevel, type SkyData } from './skydata.ts'
 import type { Layers } from './state.ts'
 import { objKey, PLANET_COLOR, conName, type Bodies, type Obj, type SatPos } from './scene.ts'
@@ -13,6 +13,8 @@ export interface Frame {
   /** localized compass points N, NE, E, SE, S, SW, W, NW */
   compass: string[]
   fov: number
+  /** AR over the live camera picture: transparent canvas (no sky / ground fill), pinhole camera, stars visible in daylight too */
+  overlay?: boolean
   names: { sun: string; moon: string; planets: Record<string, string> }
 }
 
@@ -90,8 +92,11 @@ function drawMilkyWay(ctx: CanvasRenderingContext2D, f: Frame, vis: number) {
   mwImg ??= g.createImageData(mw, mh)
   const px = mwImg.data, c = f.cam, m = f.M
   for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
-    const X = (x * q + q / 2 - c.cx) / c.k, Y = -(y * q + q / 2 - c.cy) / c.k, p2 = X * X + Y * Y, d = (4 - p2) / (4 + p2), s = 4 / (4 + p2)
-    const hx = d * c.f[0] + s * (X * c.r[0] + Y * c.u[0]), hy = d * c.f[1] + s * (X * c.r[1] + Y * c.u[1]), hz = d * c.f[2] + s * (X * c.r[2] + Y * c.u[2])
+    let hx: number, hy: number, hz: number
+    if (c.rect) { [hx, hy, hz] = unproject(c, x * q + q / 2, y * q + q / 2) } else {
+      const X = (x * q + q / 2 - c.cx) / c.k, Y = -(y * q + q / 2 - c.cy) / c.k, p2 = X * X + Y * Y, d = (4 - p2) / (4 + p2), s = 4 / (4 + p2)
+      hx = d * c.f[0] + s * (X * c.r[0] + Y * c.u[0]); hy = d * c.f[1] + s * (X * c.r[1] + Y * c.u[1]); hz = d * c.f[2] + s * (X * c.r[2] + Y * c.u[2])
+    }
     const o = (y * mw + x) * 4
     if (hz < -0.03 && f.layers.ground) { px[o + 3] = 0; continue }
     const ex = m[0] * hx + m[3] * hy + m[6] * hz, ey = m[1] * hx + m[4] * hy + m[7] * hz, ez = m[2] * hx + m[5] * hy + m[8] * hz
@@ -126,10 +131,11 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
   const labels: Label[] = []
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   const sunAlt = L.atmosphere ? b.sunAlt : -30
-  const lim = L.atmosphere ? limitingMag(b.sunAlt) : 99
+  const lim = f.overlay ? Math.max(5, L.atmosphere ? limitingMag(b.sunAlt) : 99) : L.atmosphere ? limitingMag(b.sunAlt) : 99 // over a camera picture the bright stars stay marked in daylight
   const night = clamp((lim - 2) / 4, 0, 1) // 0 in daylight, 1 when dark
 
   // ---- sky background
+  if (f.overlay) ctx.clearRect(0, 0, w, h) // the camera shows through
   const { top, hor } = skyColors(sunAlt)
   const azv = Math.atan2(cam.f[0], cam.f[1]) / D2R
   const pa = { x: 0, y: 0 }, pb = { x: 0, y: 0 }
@@ -138,7 +144,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     const g = ctx.createLinearGradient(pa.x, pa.y, pb.x, pb.y)
     g.addColorStop(0, rgb(hor)); g.addColorStop(1, rgb(top)); ctx.fillStyle = g
   } else ctx.fillStyle = rgb(lerp3(hor, top, 0.5))
-  ctx.fillRect(0, 0, w, h)
+  if (!f.overlay) ctx.fillRect(0, 0, w, h)
 
   // ---- Milky Way
   if (L.mw) { const v = clamp((lim - 3) / 3, 0, 1); if (v > 0.02) drawMilkyWay(ctx, f, v) }
@@ -296,7 +302,11 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     const nz = cam.f[2] // = sin(alt of view)
     const nx = cam.r[2], ny = cam.u[2]
     const gc = lerp3([8, 11, 9], [52, 66, 46], clamp((sunAlt + 8) / 18, 0, 1))
-    if (L.ground) {
+    if (f.overlay) { // real horizon is in the camera picture: just the line (it tilts with the phone's roll)
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5
+      const hz: V3[] = []; for (let a = 0; a <= 360; a += 2) hz.push(hzVec(0, a))
+      stroke(ctx, cam, hz)
+    } else if (L.ground) {
       ctx.fillStyle = rgb(gc)
       if (Math.abs(nz) < 0.003) {
         ctx.save(); ctx.translate(cam.cx, cam.cy); ctx.rotate(Math.atan2(ny, -nx)); ctx.fillRect(0, -1e5, 1e5, 2e5); ctx.restore()

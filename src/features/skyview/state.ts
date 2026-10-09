@@ -1,6 +1,7 @@
 // Shared state of the Sky view: filter layers (persisted), camera, selection, AR status. Panel and Stage both read it.
 import { createStore } from '../../lib/mini-store.ts'
 import type { Obj } from './scene.ts'
+import { loadFovCal, type CamStatus } from './camera.ts'
 
 export interface Layers {
   stars: boolean; starNames: boolean; lines: boolean; conNames: boolean
@@ -46,10 +47,13 @@ export const view = createStore({
   az: 180, alt: 35, fov: coarse ? 75 : 95,
   sel: null as Obj | null,
   ar: 'off' as ArStatus,
-  /** heading fine-tune in AR (deg, positive = clockwise); persists */
-  arYaw: (() => { try { return Number(globalThis.localStorage?.getItem('periapsis.skyview.yaw.v1')) || 0 } catch { return 0 } })(),
+  /** rear camera behind the sky in AR */
+  cam: 'off' as CamStatus,
+  /** user calibration of the camera field of view (factor on tan(FOV/2)); persists */
+  fovCal: loadFovCal(),
+  /** the FOV the AR overlay is drawn with (deg, horizontal x vertical of the screen), for the calibration read-out */
+  camFov: { h: 0, v: 0 },
   /** a hint line over the sky (AR calibration, "below the horizon", ...) */
   hint: '' as string,
 })
 export const useView = view.useStore
-export const saveYaw = () => { try { globalThis.localStorage?.setItem('periapsis.skyview.yaw.v1', String(view.get().arYaw)) } catch { /* ignore */ } }
