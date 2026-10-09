@@ -1,7 +1,7 @@
 import { createStore } from './mini-store.ts'
 
 export type Tab = 'mission' | 'earth' | 'system' | 'calc' | 'lagrange' | 'galaxy' | 'formulas' | 'view' | 'more'
-  | 'sats' | 'passes' | 'tonight' | 'events' | 'bodies' | 'missions' | 'live' | 'burns' | 'catalog'
+  | 'sats' | 'passes' | 'tonight' | 'events' | 'bodies' | 'missions' | 'live' | 'burns' | 'catalog' | 'skyview'
 export type Mode = 'design' | 'sky' | 'explore'
 const MODE_KEY = 'periapsis.mode.v1'
 const savedMode = (): Mode => { try { const m = globalThis.localStorage?.getItem(MODE_KEY); return m === 'sats' ? 'explore' : m === 'sky' || m === 'explore' ? m : 'design' /* satellites moved into Explore */ } catch { return 'design' } }

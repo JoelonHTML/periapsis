@@ -13,9 +13,10 @@ import { BurnsPanel } from './burns/Panel'
 import { LivePanel } from './live/Panel'
 import { CatalogPanel } from './catalog/Panel'
 import { CatalogSceneLayer } from './catalog/SceneLayer'
+import { SkyviewPanel } from './skyview/Panel'
 
 export const FEATURE_PANELS: Partial<Record<Tab, ComponentType>> = {
-  sats: SatsPanel, passes: PassesPanel, tonight: TonightPanel, events: EventsPanel, bodies: BodiesPanel, missions: MissionsPanel, burns: BurnsPanel, live: LivePanel, catalog: CatalogPanel,
+  sats: SatsPanel, passes: PassesPanel, tonight: TonightPanel, events: EventsPanel, bodies: BodiesPanel, missions: MissionsPanel, burns: BurnsPanel, live: LivePanel, catalog: CatalogPanel, skyview: SkyviewPanel,
 }
 /** Extra three.js content per view, rendered inside the r3f Canvas (Scene.tsx). */
 export const FEATURE_SCENE_LAYERS: ComponentType<{ view: View }>[] = [SatsSceneLayer, MissionsSceneLayer, CatalogSceneLayer]

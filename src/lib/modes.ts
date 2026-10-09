@@ -6,7 +6,7 @@ export interface ModeDef { id: Mode; tabs: Tab[]; more: Tab[]; scene: 'solar' | 
 export const MODES: Record<Mode, ModeDef> = {
   design: { id: 'design', tabs: ['mission', 'earth', 'calc', 'view', 'more'], more: ['burns', 'lagrange', 'formulas'], scene: 'solar' },
   sky: { id: 'sky', tabs: ['tonight', 'events', 'live', 'view'], more: [], scene: 'solar' },
-  explore: { id: 'explore', tabs: ['bodies', 'system', 'sats', 'galaxy', 'more'], more: ['missions', 'passes', 'catalog', 'lagrange'], scene: 'solar' },
+  explore: { id: 'explore', tabs: ['bodies', 'system', 'skyview', 'sats', 'more'], more: ['galaxy', 'missions', 'passes', 'catalog', 'lagrange'], scene: 'solar' },
 }
 export const MODE_ORDER: Mode[] = ['design', 'sky', 'explore']
 /** Tabs that bring their own 3D view; any other tab returns to the solar system from these. */
