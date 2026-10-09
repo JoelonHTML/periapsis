@@ -13,7 +13,7 @@ import {
   sysMu, sysR, toEcl, type Frame, type MoonDef, type Orb, type SysId,
 } from '@/lib/system'
 import { Dot, EARLY, Label, Occluder, dotTex, useTexture, v3 } from '../kit'
-import { BodyTiles } from '@/features/earth/BodyTiles'
+import { BodyTiles } from '@/features/earth/BodyTileLayer'
 import { Rings } from './Rings'
 import { PLANET_MAPS, hdSetting, loadHd } from './planetTex'
 import { bodyTexture } from './textures'
@@ -321,6 +321,44 @@ function CamRig({ id, frame }: { id: SysId; frame: Frame }) {
   return null
 }
 
+/**
+ * Zooming scales the altitude (not the distance to the centre) of whichever body the camera orbits (the planet at the origin, or the moon being
+ * targeted), so the surface detail tiles are reachable; the camera stops 0.03% of a radius above the ground. Runs after the controls' own update.
+ */
+function SurfaceZoom({ id, frame }: { id: SysId; frame: Frame }) {
+  const controls = useThree((s) => s.controls) as (THREE.EventDispatcher & { target: THREE.Vector3; minDistance: number; rotateSpeed: number }) | null
+  const st = useMemo(() => ({ prev: 0, body: '', c: new THREE.Vector3() }), [])
+  const base = useRef<{ min: number; rot: number } | null>(null)
+  useEffect(() => {
+    if (!controls) return
+    const b = base.current = { min: controls.minDistance, rot: controls.rotateSpeed }
+    return () => { controls.minDistance = b.min; controls.rotateSpeed = b.rot }
+  }, [controls])
+  useFrame(({ camera }) => {
+    if (!controls || !base.current) return
+    // which body is the orbit centre?
+    let key = '', R = 0
+    const t = controls.target, c = st.c
+    if (t.length() < 0.05 * sysR(id) * S) { key = id; R = sysR(id) * S; c.set(0, 0, 0) }
+    else for (const mn of SYSTEMS[id].moons) {
+      world(moonPosEcl(id, mn, clock.t, frame), c)
+      if (c.distanceTo(t) < 0.05 * mn.R * S) { key = mn.id; R = mn.R * S; break }
+    }
+    if (!key) { st.prev = 0; st.body = ''; controls.minDistance = base.current.min; controls.rotateSpeed = base.current.rot; return }
+    const minAlt = R * 3e-4
+    controls.minDistance = R + minAlt
+    let d = camera.position.distanceTo(c)
+    const p = st.prev
+    if (key === st.body && p > R && p < 3 * R && d < 3 * R && Math.abs(d / p - 1) > 1e-6) {
+      d = R + Math.max(minAlt, (p - R) * (d / p))
+      camera.position.sub(c).setLength(d).add(c)
+    }
+    st.prev = d; st.body = key
+    controls.rotateSpeed = Math.min(base.current.rot, Math.max(0.03, ((d - R) / R) * 1.2 * base.current.rot))
+  })
+  return null
+}
+
 // ---------------------------------------------------------------------------------------------- scene
 function SystemBody({ id }: { id: SysId }) {
   const def = SYSTEMS[id], R = sysR(id)
@@ -336,6 +374,7 @@ function SystemBody({ id }: { id: SysId }) {
       <ambientLight intensity={0.2} />
       <directionalLight ref={light} intensity={2.8} />
       <CamRig id={id} frame={frame} />
+      <SurfaceZoom id={id} frame={frame} />
       <group rotation={[-Math.PI / 2, 0, 0]}>
         <Basis x={frame.X} y={frame.Y} z={frame.Z}>
           <Planet id={id} R={R} labels={labels} />

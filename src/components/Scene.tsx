@@ -25,7 +25,7 @@ import { CameraInit, Dot, EARLY, Follow, Label, Occluder, PanelOffset, Starfield
 const S_SOL = 1e-6 // scene units per km (solar view: 1 unit = 1 million km)
 const S_EAR = 1e-3 // earth views: 1 unit = 1000 km
 import TEX_MOON from '@/assets/moon.jpg'
-import { BodyTiles } from '@/features/earth/BodyTiles'
+import { BodyTiles } from '@/features/earth/BodyTileLayer'
 const LEG_COLORS = ['#22d3ee', '#c084fc', '#f472b6']
 
 // ======================================================================= Solar system
