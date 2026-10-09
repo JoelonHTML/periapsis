@@ -149,6 +149,9 @@ function Credits() {
         © {new Date().getFullYear()} Joël Nieuwkoop · Periapsis<br />
         {t('set.rights')}
       </p>
+      <p className="max-w-[17rem] text-[10px] leading-relaxed text-muted-foreground/80">
+        Planet &amp; Moon maps: Solar System Scope (solarsystemscope.com/textures), derived from NASA data, CC BY 4.0
+      </p>
     </footer>
   )
 }

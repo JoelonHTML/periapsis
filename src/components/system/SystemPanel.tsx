@@ -16,6 +16,7 @@ import {
   SYSTEMS, SYS_IDS, apoFromE, eccOf, energy, orbA, orbPeriod, planManeuver, segAt, shipState, sysMu, sysName, sysR, vApo, vPeri,
   type MoonDef, type SysId,
 } from '@/lib/system'
+import { PLANET_CREDITS, hdSetting, setHdMode, type HdMode } from './planetTex'
 import { KV, NumField, Section, Tex, f } from '../bits'
 
 const nl = (x: number, d = 0) => x.toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d })
@@ -81,6 +82,7 @@ function ViewOptions() {
   const orbits = sys.useStore((s) => s.orbits)
   const kind = sys.useStore((s) => s.cam.kind)
   const follow = sys.useStore((s) => s.follow)
+  const hd = hdSetting.useStore((s) => s.mode)
   return (
     <Section title="Weergave">
       <div className="grid gap-1">
@@ -97,6 +99,17 @@ function ViewOptions() {
         <label className="flex items-center justify-between gap-2"><span>Banen</span><Switch checked={orbits} onCheckedChange={(v) => sys.set({ orbits: v })} /></label>
         <label className="flex items-center justify-between gap-2"><span>Volgen</span><Switch checked={follow === 'craft'} onCheckedChange={setFollowCraft} /></label>
       </div>
+      <div className="grid gap-1">
+        <Label className="text-xs text-muted-foreground">HD-texturen (4k/8k, wordt van het internet geladen als je dichtbij komt)</Label>
+        <ToggleGroup type="single" variant="outline" size="sm" className="w-full" value={hd} onValueChange={(v) => { if (v) setHdMode(v as HdMode) }}>
+          <ToggleGroupItem value="auto" className="flex-1 px-1 text-[11px]">Auto</ToggleGroupItem>
+          <ToggleGroupItem value="on" className="flex-1 px-1 text-[11px]">Aan</ToggleGroupItem>
+          <ToggleGroupItem value="off" className="flex-1 px-1 text-[11px]">Uit</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+      <p className="text-[10.5px] leading-snug text-muted-foreground">
+        Planeetkaarten: {PLANET_CREDITS.who} — {PLANET_CREDITS.licence}. Venus, Ceres, Pluto en de overige manen zijn nog procedureel.
+      </p>
       <p className="text-[10.5px] leading-snug text-muted-foreground">
         Schaal 1 eenheid = 1000 km, manen op ware grootte (met een vast punt zodat je ze terugvindt). Scrol om in te zoomen tot een baan van 200 km boven het oppervlak; &lsquo;Volgen&rsquo; laat de camera met het ruimtevaartuig meebewegen.
       </p>

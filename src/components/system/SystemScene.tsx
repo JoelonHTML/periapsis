@@ -5,7 +5,6 @@ import { Line } from '@react-three/drei'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as THREE from 'three'
 import TEX_EARTH from '@/assets/earth.jpg'
-import TEX_MOON from '@/assets/moon.jpg'
 import { BODIES, DAY, fmtDateTime, moonGeoEcliptic, perifocalBasis, type Vec } from '@/lib/astro'
 import { clock } from '@/lib/store'
 import { sys, shipKey, ensureShip, currentSeg, type Ship } from '@/lib/system-store'
@@ -15,6 +14,7 @@ import {
 } from '@/lib/system'
 import { Dot, EARLY, Label, Occluder, dotTex, useTexture, v3 } from '../kit'
 import { Rings } from './Rings'
+import { PLANET_MAPS, hdSetting, loadHd } from './planetTex'
 import { bodyTexture } from './textures'
 
 const S = 1e-3
@@ -40,11 +40,28 @@ function PhotoSurface({ url }: { url: string }) {
   const map = useTexture(url)
   return <meshStandardMaterial key={map ? 'tex' : 'plain'} map={map} color={map ? '#ffffff' : '#4b5563'} roughness={1} metalness={0} />
 }
+/** Bundled ~2k map, swapped for the 4k/8k one (fetched once, see planetTex.ts) when the camera comes within 10 radii of `at`. */
+function RealSurface({ kind, at, R }: { kind: string; at: React.RefObject<THREE.Object3D | null>; R: number }) {
+  const base = useTexture(PLANET_MAPS[kind])
+  const mode = hdSetting.useStore((s) => s.mode)
+  const [hd, setHd] = useState<THREE.Texture | null>(null)
+  const asked = useRef(false), tmp = useMemo(() => new THREE.Vector3(), [])
+  useEffect(() => { asked.current = false }, [mode])
+  useFrame(({ camera }) => {
+    if (asked.current || !at.current || camera.position.distanceTo(at.current.getWorldPosition(tmp)) > R * S * 10) return
+    asked.current = true
+    loadHd(kind).then((t) => { if (t) setHd(t) })
+  })
+  const map = (mode !== 'off' && hd) || base
+  return <meshStandardMaterial key={map ? 'tex' : 'plain'} map={map} color={map ? '#ffffff' : '#4b5563'} roughness={1} metalness={0} />
+}
 function ProcSurface({ kind, variant }: { kind: string; variant: string }) {
   const proc = useMemo(() => bodyTexture(kind, variant), [kind, variant])
   return <meshStandardMaterial map={proc} color="#ffffff" roughness={1} metalness={0} />
 }
-const PlanetSurface = ({ id }: { id: SysId }) => (id === 'earth' ? <PhotoSurface url={TEX_EARTH} /> : <ProcSurface kind={SYSTEMS[id].tex} variant="" />)
+const PlanetSurface = ({ id, at, R }: { id: SysId; at: React.RefObject<THREE.Object3D | null>; R: number }) => (
+  id === 'earth' ? <PhotoSurface url={TEX_EARTH} /> : PLANET_MAPS[SYSTEMS[id].tex] ? <RealSurface kind={SYSTEMS[id].tex} at={at} R={R} /> : <ProcSurface kind={SYSTEMS[id].tex} variant="" />
+)
 
 function Planet({ id, R, labels }: { id: SysId; R: number; labels: boolean }) {
   const def = SYSTEMS[id], spin = useRef<THREE.Group>(null)
@@ -55,7 +72,7 @@ function Planet({ id, R, labels }: { id: SysId; R: number; labels: boolean }) {
       <group ref={spin}>
         <mesh scale={R * S} rotation={[Math.PI / 2, 0, 0]}>
           <sphereGeometry args={[1, 128, 64]} />
-          <PlanetSurface id={id} />
+          <PlanetSurface id={id} at={spin} R={R} />
         </mesh>
       </group>
       {def.atm && (
@@ -111,7 +128,7 @@ function MoonBody({ id, mn, frame, labels }: { id: SysId; mn: MoonDef; frame: Fr
       <group ref={spin}>
         <mesh scale={mn.R * S} rotation={[Math.PI / 2, 0, 0]}>
           <sphereGeometry args={[1, segs[0], segs[1]]} />
-          {mn.tex === 'moon' ? <PhotoSurface url={TEX_MOON} /> : <ProcSurface kind={mn.tex} variant={mn.id} />}
+          {PLANET_MAPS[mn.tex] ? <RealSurface kind={mn.tex} at={g} R={mn.R} /> : <ProcSurface kind={mn.tex} variant={mn.id} />}
         </mesh>
       </group>
       <Dot color={mn.color} size={5} />
@@ -262,22 +279,15 @@ function CamRig({ id, frame }: { id: SysId; frame: Frame }) {
       const ra = ship ? currentSeg(ship).orb.ra : R * 1.5
       dist = c.moon === 'chase' ? Math.max(1e-3, Math.min(R * S * 0.7, ra * S * 0.6)) : Math.max(R, ra) * S * 5.5
     } else if (c.kind === 'moon') dist = (SYSTEMS[id].moons.find((x) => x.id === c.moon)?.R ?? 100) * S * 7
-    // Look from the Sun's side (lit hemisphere) and from above the planet's equator; system/spacecraft presets keep the user's viewing angle.
-    const sd = sunDir(id, clock.t), Z = frame.Z, k = sd[0] * Z[0] + sd[1] * Z[1] + sd[2] * Z[2]
-    let h: Vec = [sd[0] - Z[0] * k, sd[1] - Z[1] * k, sd[2] - Z[2] * k]
-    if (Math.hypot(h[0], h[1], h[2]) < 0.2) h = frame.X
-    const hn = Math.hypot(h[0], h[1], h[2])
-    const chase = c.kind === 'craft' && c.moon === 'chase'
-    const lit = c.kind === 'planet' || c.kind === 'moon' || chase
-    // chase: view from outside the orbit so the planet fills the background behind the spacecraft
-    const cr = chase && ship ? toEcl(frame, shipState(ship.segs, sysMu(id), clock.t).r) : sd
-    const cn = Math.hypot(cr[0], cr[1], cr[2]) || 1
-    const e: Vec = chase
-      ? [(cr[0] / cn) * 0.85 + Z[0] * 0.35, (cr[1] / cn) * 0.85 + Z[1] * 0.35, (cr[2] / cn) * 0.85 + Z[2] * 0.35]
-      : lit
-        ? [sd[0] * 0.9 + Z[0] * 0.3, sd[1] * 0.9 + Z[1] * 0.3, sd[2] * 0.9 + Z[2] * 0.3]
-        : [(h[0] / hn) * 0.8 + Z[0] * 0.6, (h[1] / hn) * 0.8 + Z[1] * 0.6, (h[2] / hn) * 0.8 + Z[2] * 0.6]
-    const dir = first.current || lit ? v3(e, 1).normalize() : camera.position.clone().sub(controls.target).normalize()
+    // Presets keep the user's viewing direction (same part of space in view) and only retarget + dolly; the initial view looks from the Sun's side, slightly above the equator.
+    let dir: THREE.Vector3
+    if (first.current) {
+      const sd = sunDir(id, clock.t), Z = frame.Z, k = sd[0] * Z[0] + sd[1] * Z[1] + sd[2] * Z[2]
+      let h: Vec = [sd[0] - Z[0] * k, sd[1] - Z[1] * k, sd[2] - Z[2] * k]
+      if (Math.hypot(h[0], h[1], h[2]) < 0.2) h = frame.X
+      const hn = Math.hypot(h[0], h[1], h[2])
+      dir = v3([(h[0] / hn) * 0.8 + Z[0] * 0.6, (h[1] / hn) * 0.8 + Z[1] * 0.6, (h[2] / hn) * 0.8 + Z[2] * 0.6], 1).normalize()
+    } else dir = camera.position.clone().sub(controls.target).normalize()
     anim.current = {
       t0: performance.now(), dur: first.current ? 0 : 900, from: controls.target.clone(),
       fromDist: Math.max(1e-6, camera.position.distanceTo(controls.target)), toDist: dist, dir,

@@ -4,11 +4,12 @@
 //  - uses a radial colour/alpha strip (C/B/A rings, Cassini division, Encke gap for Saturn).
 // The log-depth chunks keep depth testing consistent with the other (standard) materials of the scene.
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { clock } from '@/lib/store'
 import { fromEcl, sunDir, type Frame, type RingDef, type SysId } from '@/lib/system'
 import { EARLY } from '../kit'
+import { SATURN_RING } from './planetTex'
 import { ringTexture } from './textures'
 
 const S = 1e-3
@@ -63,6 +64,12 @@ export function Rings({ id, def, frame, R }: { id: SysId; def: RingDef; frame: F
     },
     vertexShader: vert, fragmentShader: frag, transparent: true, side: THREE.DoubleSide, depthWrite: false,
   }), [def, R])
+  useEffect(() => { // Saturn: the real radial colour/alpha profile (Solar System Scope) replaces the procedural strip once loaded
+    if (def.kind !== 'saturn') return
+    let alive = true
+    new THREE.TextureLoader().load(SATURN_RING, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; if (alive) mat.uniforms.map.value = t })
+    return () => { alive = false }
+  }, [def, mat])
   const tmp = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera }) => {
     const sd = fromEcl(frame, sunDir(id, clock.t))
