@@ -1,10 +1,11 @@
 // Builds the offline data of the Sky view (src/features/skyview/data/*.json) from
-//  - d3-celestial (BSD-3-Clause, (c) 2015 Olaf Frohn): stars.6, constellations(.lines), dsos.14 (Messier only) + dsos.bright, starnames, dsonames, mw
+//  - d3-celestial (BSD-3-Clause, (c) 2015 Olaf Frohn): stars.8 (Hipparcos/Tycho, to mag 8), constellations(.lines/.bounds), dsos.14 (Messier/NGC/IC/Collinder), starnames, dsonames, mw
+//  - writes sky.json plus the deflate-raw binaries stars.bin and dsos.bin
 //  - all-the-cities 3.1.0 (MIT) = GeoNames (CC BY 4.0)
 // Usage: node scripts/build-skydata.mjs <dir with the d3-celestial data files> <dir with node_modules/all-the-cities> [debug.png]
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { deflateSync } from 'node:zlib'
+import { deflateRawSync, deflateSync } from 'node:zlib'
 
 const [src, cityPkg, dbg] = process.argv.slice(2)
 const out = new URL('../src/features/skyview/data/', import.meta.url).pathname
@@ -13,21 +14,41 @@ const w = (f, d) => { const s = JSON.stringify(d); writeFileSync(out + f, s); co
 const r = (x, n) => +x.toFixed(n)
 const ra360 = (x) => ((x % 360) + 360) % 360
 
-// ---------- stars ----------
+// ---------- stars (binary, see src/features/skyview/skydata.ts decodeStars) ----------
 const names = J('starnames.json')
-const stars = J('stars.6.json').features.map((f) => {
+const raw8 = J('stars.8.json').features.map((f) => {
   const [lon, lat] = f.geometry.coordinates
   const bv = parseFloat(f.properties.bv)
-  return [f.id, r(ra360(lon), 2), r(lat, 2), r(f.properties.mag, 2), Number.isFinite(bv) ? r(bv, 2) : 0.6]
-}).sort((a, b) => a[3] - b[3])
-// distances (light-years, rounded, Hipparcos/Gaia magnitudes of order) of the best-known stars, by proper name
-const LY = { Sirius: 8.6, Canopus: 310, Arcturus: 37, 'Rigil Kentaurus': 4.4, Vega: 25, Capella: 43, Rigel: 860, Procyon: 11.5, Betelgeuse: 550, Achernar: 140, Hadar: 390, Altair: 17, Acrux: 320, Aldebaran: 65, Antares: 550, Spica: 250, Pollux: 34, Fomalhaut: 25, Deneb: 2600, Mimosa: 280, Regulus: 79, Adhara: 430, Castor: 51, Gacrux: 88, Shaula: 570, Bellatrix: 250, Elnath: 130, Miaplacidus: 110, Alnilam: 2000, Alnitak: 1260, Mintaka: 1200, Alioth: 83, Dubhe: 123, Merak: 79, Mirfak: 510, Polaris: 430, Algol: 90, Mizar: 83, Alkaid: 104, Hamal: 66, Denebola: 36, Saiph: 650, Sadr: 1800, Alphard: 177, Peacock: 180, Alnair: 100, Wezen: 1800, Sargas: 270, 'Kaus Australis': 140, Avior: 630, Menkalinan: 82, Atria: 415, Alhena: 105, Mirzam: 500, Diphda: 96, Nunki: 225, Algieba: 130, Alphecca: 75, Thuban: 300, Arneb: 1300, Schedar: 228, Navi: 610, Caph: 55, Albireo: 430, Rasalhague: 49, Eltanin: 150, Alpheratz: 97, Markab: 133, Enif: 690, Scheat: 196, Kochab: 130, Almach: 350 }
-const keep = {}
-for (const s of stars) {
-  const n = names[s[0]]
-  if (!n) continue
-  const nm = n.name || '', ba = n.bayer || ''
-  if (nm || (ba && s[3] < 3.2)) keep[s[0]] = [nm, ba, n.c || '', n.el || '', LY[nm] ?? 0]
+  return { hip: f.id, ra: ra360(lon), dec: lat, mag: f.properties.mag, bv: Number.isFinite(bv) ? bv : null }
+}).sort((a, b) => a.hip - b.hip)
+// distances (light-years, rounded) of the best-known stars, by proper name
+const LY = { Sirius: 8.6, Canopus: 310, Arcturus: 37, 'Rigil Kentaurus': 4.4, Vega: 25, Capella: 43, Rigel: 860, Procyon: 11.5, Betelgeuse: 550, Achernar: 140, Hadar: 390, Altair: 17, Acrux: 320, Aldebaran: 65, Antares: 550, Spica: 250, Pollux: 34, Fomalhaut: 25, Deneb: 2600, Mimosa: 280, Regulus: 79, Adhara: 430, Castor: 51, Gacrux: 88, Shaula: 570, Bellatrix: 250, Elnath: 130, Miaplacidus: 110, Alnilam: 2000, Alnitak: 1260, Mintaka: 1200, Alioth: 83, Dubhe: 123, Merak: 79, Mirfak: 510, Polaris: 430, Algol: 90, Mizar: 83, Alkaid: 104, Hamal: 66, Denebola: 36, Saiph: 650, Sadr: 1800, Alphard: 177, Peacock: 180, Alnair: 100, Wezen: 1800, Sargas: 270, 'Kaus Australis': 140, Avior: 630, Menkalinan: 82, Atria: 415, Alhena: 105, Mirzam: 500, Diphda: 96, Nunki: 225, Algieba: 130, Alphecca: 75, Thuban: 300, Arneb: 1300, Schedar: 228, Navi: 610, Caph: 55, Albireo: 430, Rasalhague: 49, Eltanin: 150, Alpheratz: 97, Markab: 133, Enif: 690, Scheat: 196, Kochab: 130, Almach: 350, Mira: 300, Algenib: 390, Sabik: 88, Zubeneschamali: 185, Zubenelgenubi: 77, Vindemiatrix: 110, Rasalgethi: 360, Alcor: 82, Sheratan: 60, Mesarthim: 164, Segin: 440, Ruchbah: 99, Alderamin: 49, Pleione: 440, Atlas: 430, Electra: 440, Maia: 440, Merope: 440, Taygeta: 440, Alcyone: 440 }
+const hipSet = new Set(raw8.map((s) => s.hip))
+const keep = {} // hip -> [name, bayer, con, el, ly, flamsteed, HD, variable-designation]
+for (const [k, n] of Object.entries(names)) {
+  const hip = +String(n.hip || '').replace(/\D/g, '') || +k
+  if (!hipSet.has(hip) || keep[hip]) continue
+  const nm = n.name || '', ba = n.bayer || '', fl = n.flam || '', vr = n.var || ''
+  if (nm || ba || fl || vr) keep[hip] = [nm, ba, n.c || '', n.el || '', LY[nm] ?? 0, fl, (n.hd || '').replace(/\D/g, '') || '', vr]
+}
+{
+  const N = raw8.length
+  const buf = Buffer.alloc(4 + N * (3 + 3 + 1 + 1 + 2))
+  buf.writeUInt32LE(N, 0)
+  const oRa = 4, oDec = oRa + 3 * N, oMag = oDec + 3 * N, oBv = oMag + N, oHip = oBv + N
+  const w24 = (o, v) => { buf[o] = v & 255; buf[o + 1] = (v >> 8) & 255; buf[o + 2] = (v >> 16) & 255 }
+  let prev = 0
+  raw8.forEach((s, i) => {
+    w24(oRa + 3 * i, Math.min(0xffffff, Math.round((s.ra / 360) * 0x1000000)))
+    w24(oDec + 3 * i, Math.min(0xffffff, Math.round(((s.dec + 90) / 180) * 0x1000000)))
+    buf[oMag + i] = Math.max(0, Math.min(255, Math.round((s.mag + 2) * 20)))
+    buf[oBv + i] = s.bv == null ? 255 : Math.max(0, Math.min(254, Math.round((s.bv + 0.5) * 100)))
+    const d = s.hip - prev; prev = s.hip
+    if (d > 65535) throw new Error('hip gap')
+    buf.writeUInt16LE(d, oHip + 2 * i)
+  })
+  const z = deflateRawSync(buf, { level: 9 })
+  writeFileSync(out + 'stars.bin', z); console.log('stars.bin', N, 'stars', buf.length, '->', z.length)
 }
 
 // ---------- constellations ----------
@@ -42,25 +63,51 @@ for (const f of J('constellations.json').features) {
 const lines = {}
 for (const f of J('constellations.lines.json').features)
   lines[f.id] = (lines[f.id] ?? []).concat(f.geometry.coordinates.map((l) => l.map(([lon, lat]) => [r(ra360(lon), 2), r(lat, 2)])))
+// IAU boundaries (J2000 RA/Dec polygons; lon is RA in degrees, possibly negative or past 360)
+const bounds = {}
+for (const f of J('constellations.bounds.json').features) bounds[f.id] = (bounds[f.id] ?? []).concat(f.geometry.coordinates.map((ring) => ring.map(([lon, lat]) => [r(lon, 2), r(lat, 2)])))
+for (const c of cons) if (!bounds[c[0]]) throw new Error('no bounds ' + c[0])
 
-// ---------- deep-sky: Messier + the brightest others ----------
+// ---------- deep sky (binary): Messier, NGC, IC, Collinder, LMC, SMC from d3-celestial dsos.14 ----------
 const dn = J('dsonames.json')
-const dsoName = (id) => dn[id.replace(/^NGC /, '')]?.name ?? dn[id.replace(' ', '')]?.name ?? dn[id]?.name ?? ''
-const dsoEl = (id) => dn[id.replace(/^NGC /, '')]?.el ?? dn[id.replace(' ', '')]?.el ?? ''
-const dsos = []
+const nameOf = (key) => dn[key] ?? null
+const TYPES = ['g', 'oc', 'gc', 'pn', 'bn', 'en', 'rn', 'sfr', 'snr', 'dn', 'gg', 's', 's0', 'e', 'i', 'sd']
+const CATS = ['M', 'NGC', 'IC', 'Cr', 'LMC', 'SMC']
+const dim = (s) => { const m = String(s).match(/^([\d.]+)(?:x([\d.]+))?/); return m ? [+m[1], +(m[2] ?? m[1])] : [0, 0] }
+const recs = []
+const dsoNames = {}
 for (const f of J('dsos.14.json').features) {
-  if (!/^M \d+$/.test(f.properties.desig)) continue
+  const p = f.properties, m = /^(M|NGC|IC|Cr) (\d+)$/.exec(p.desig) ?? (p.desig === 'LMC' || p.desig === 'SMC' ? [p.desig, p.desig, '0'] : null)
+  if (!m || !TYPES.includes(p.type)) continue
+  const mag = +p.mag, [a, b] = dim(p.dim)
+  if (mag > 14.2 || (mag > 900 && Math.max(a, b) < 10)) continue
   const [lon, lat] = f.geometry.coordinates
-  dsos.push([f.properties.desig.replace(' ', ''), f.properties.type, r(ra360(lon), 3), r(lat, 3), r(+f.properties.mag, 1), dsoName(f.id), dsoEl(f.id)])
+  const ngc = /^NGC (\d+)$/.exec(f.id)
+  recs.push({ type: TYPES.indexOf(p.type), cat: CATS.indexOf(m[1]), num: +m[2], ngc: m[1] === 'M' && ngc ? +ngc[1] : 0, ra: ra360(lon), dec: lat, mag: mag > 900 ? 99 : mag, maj: a, min: b, key: f.id, des: p.desig })
 }
-for (const f of J('dsos.bright.json').features) {
-  const p = f.properties, [lon, lat] = f.geometry.coordinates
-  if (dsos.some((d) => Math.abs(d[2] - ra360(lon)) < 0.3 && Math.abs(d[3] - lat) < 0.3)) continue
-  if (p.type === 'pos' || p.type === 's') continue
-  dsos.push([p.desig, p.type, r(ra360(lon), 3), r(lat, 3), r(+p.mag, 1), dsoName(f.id), dsoEl(f.id)])
+// Collinder clusters that sit on top of an NGC/IC/M object are the same thing: drop them
+const real = recs.filter((x) => x.cat !== 3)
+const dsoList = recs.filter((x) => x.cat !== 3 || !real.some((y) => Math.abs(y.dec - x.dec) < 0.3 && Math.abs(((y.ra - x.ra + 540) % 360) - 180) * Math.cos(x.dec * Math.PI / 180) < 0.3))
+dsoList.sort((a, b) => a.mag - b.mag)
+dsoList.forEach((x, i) => {
+  const nm = nameOf(x.des.replace(' ', '')) ?? nameOf(x.key.replace(/^NGC /, '')) ?? nameOf(x.key.replace(' ', '')) ?? nameOf(x.key) ?? nameOf(x.des)
+  if (nm?.name) dsoNames[i] = [nm.name, nm.el || '']
+})
+{
+  const N = dsoList.length, RS = 3 + 3 + 1 + 1 + 1 + 2 + 2 + 2 + 2
+  const buf = Buffer.alloc(4 + N * RS)
+  buf.writeUInt32LE(N, 0)
+  let o = 4
+  const w24 = (v) => { buf[o] = v & 255; buf[o + 1] = (v >> 8) & 255; buf[o + 2] = (v >> 16) & 255; o += 3 }
+  for (const x of dsoList) {
+    w24(Math.min(0xffffff, Math.round((x.ra / 360) * 0x1000000))); w24(Math.min(0xffffff, Math.round(((x.dec + 90) / 180) * 0x1000000)))
+    buf[o++] = x.type; buf[o++] = x.cat; buf[o++] = x.mag >= 99 ? 255 : Math.max(0, Math.min(254, Math.round((x.mag + 3) * 10)))
+    buf.writeUInt16LE(x.num, o); o += 2; buf.writeUInt16LE(x.ngc, o); o += 2
+    buf.writeUInt16LE(Math.min(65535, Math.round(x.maj * 10)), o); o += 2; buf.writeUInt16LE(Math.min(65535, Math.round(x.min * 10)), o); o += 2
+  }
+  const z = deflateRawSync(buf, { level: 9 })
+  writeFileSync(out + 'dsos.bin', z); console.log('dsos.bin', N, 'objects', buf.length, '->', z.length, 'named', Object.keys(dsoNames).length)
 }
-// famous objects the lists lack as such
-dsos.push(['LMC', 'g', 80.894, -69.756, 0.9, 'Large Magellanic Cloud', 'Μεγάλο Νέφος του Μαγγελάνου'], ['SMC', 'g', 13.187, -72.829, 2.7, 'Small Magellanic Cloud', 'Μικρό Νέφος του Μαγγελάνου'])
 
 // ---------- Milky Way: nested outlines -> density grid (1 degree cells, RA x Dec), run-length coded ----------
 // The outer outlines are belts between two curves that each run once round the whole sky in RA, so the fill is an
@@ -106,7 +153,7 @@ if (dbg) { // greyscale PNG for eyeballing
 }
 
 // ---------- places ----------
-if (!cityPkg) { console.log('no all-the-cities dir given: places.json left as is'); w('sky.json', { stars, names: keep, cons, lines, dsos, mw: { w: W, h: H, rle } }); process.exit(0) }
+if (!cityPkg) { console.log('no all-the-cities dir given: places.json left as is'); w('sky.json', { names: keep, cons, lines, bounds, dsoNames, mw: { w: W, h: H, rle } }); process.exit(0) }
 const cities = createRequire(cityPkg + '/')('all-the-cities')
 const EXTRA_CC = new Set(['NL', 'BE', 'GR', 'LU'])
 const places = cities
@@ -123,6 +170,6 @@ const SITES = [
 ]
 for (const s of SITES) places.push(s)
 
-w('sky.json', { stars, names: keep, cons, lines, dsos, mw: { w: W, h: H, rle } })
+w('sky.json', { names: keep, cons, lines, bounds, dsoNames, mw: { w: W, h: H, rle } })
 w('places.json', places)
-console.log('stars', stars.length, 'named', Object.keys(keep).length, 'cons', cons.length, 'dsos', dsos.length, 'places', places.length)
+console.log('named', Object.keys(keep).length, 'cons', cons.length, 'places', places.length)

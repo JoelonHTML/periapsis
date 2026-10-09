@@ -2,14 +2,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { inflateRawSync } from 'node:zlib'
 import { applyM, applyMT, basisAzAlt, basisFromOrientation, blendBasis, bvColor, camScale, horizonMatrix, hzAltAz, hzVec, limitingMag, project, radecVec, riseTransitSet, solarClock, unproject, yawBasis, type Cam, type V3 } from './geom.ts'
 import { bodyAltAz } from '../tonight/sky.ts'
 import { findPlaces, nearestPlace, ALIASES, type Place } from './places.ts'
-import { decodeSky, type RawSky } from './skydata.ts'
+import { conIndexAt, decodeSky, galVec, spectralClass, type RawSky } from './skydata.ts'
 
 const raw = JSON.parse(readFileSync(new URL('./data/sky.json', import.meta.url), 'utf8')) as RawSky
 const places = JSON.parse(readFileSync(new URL('./data/places.json', import.meta.url), 'utf8')) as Place[]
-const sky = decodeSky(raw)
+const bin = (f: string) => new Uint8Array(inflateRawSync(readFileSync(new URL(`./data/${f}`, import.meta.url))))
+const sky = decodeSky(raw, bin('stars.bin'), bin('dsos.bin'))
 const near = (a: number, b: number, tol: number, msg = '') => assert.ok(Math.abs(a - b) <= tol, `${msg} ${a} vs ${b} (tol ${tol})`)
 const angDiff = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180)
 const star = (name: string) => { const i = sky.names.findIndex((n) => n?.name === name); assert.ok(i >= 0, name); return i }
@@ -38,7 +40,7 @@ function sirius(ms: number, lat: number, lon: number) {
 }
 test('Sirius altitude and azimuth match an independent calculation (< 0.1 deg)', () => {
   const s = star('Sirius'), v = radecVec(sky.ra[s], sky.dec[s])
-  near(sky.mag[s], -1.44, 0.01)
+  near(sky.mag[s], -1.44, 0.06)
   for (const [lat, lon, ms] of [[52.09, 5.12, Date.UTC(2026, 0, 15, 21)], [-33.9, 18.4, Date.UTC(2026, 1, 1, 20, 30)], [35, 139, Date.UTC(2025, 11, 20, 14)], [64, -22, Date.UTC(2026, 9, 9, 3)]] as const) {
     const mine = hzAltAz(applyM(horizonMatrix(ms, lat, lon), v)), ref = sirius(ms, lat, lon)
     near(mine.alt, ref.alt, 0.1, 'alt'); assert.ok(angDiff(mine.az, ref.az) < 0.1 / Math.max(0.2, Math.cos(ref.alt * Math.PI / 180)), `az ${mine.az} vs ${ref.az}`)
@@ -118,14 +120,59 @@ test('colours and daylight limit are sane', () => {
   assert.ok(limitingMag(-30) > 6 && limitingMag(-6) < 4 && limitingMag(20) < -2 && limitingMag(-10) > limitingMag(-5))
 })
 
-test('sky data is complete: stars, constellations, Milky Way, deep sky', () => {
-  assert.ok(sky.n > 5000 && sky.mag[0] < -1 && sky.mag[sky.n - 1] <= 6.01)
+test('sky data is complete: 41k stars to mag 8, constellations, Milky Way, deep sky', () => {
+  assert.ok(sky.n > 41000 && sky.mag[0] < -1 && sky.mag[sky.n - 1] > 7.5 && sky.mag[sky.n - 1] <= 8.1)
+  for (let i = 1; i < sky.n; i++) if (sky.mag[i] < sky.mag[i - 1]) assert.fail('sorted by magnitude')
+  near(sky.ra[star('Sirius')], 101.287, 0.01); near(sky.dec[star('Sirius')], -16.716, 0.01)
   assert.equal(sky.cons.length, 88)
   assert.ok(sky.lineSegs.length / 6 > 600)
-  assert.ok(sky.dsos.some((d) => d.id === 'M31') && sky.dsos.some((d) => d.id === 'M42'))
+  assert.ok(sky.borders.length >= 88)
   const g = sky.mw // the band: bright at the galactic centre (RA 266, Dec -29), empty at the north galactic pole (RA 192, Dec 27)
-  assert.ok(g.w === 360 && g.cells[(90 + 29) * 360 + 266] >= 3 && g.cells[(90 - 27) * 360 + 192] === 0)
-  assert.ok(g.cells[(90 - 60) * 360 + 5] >= 1, 'Cassiopeia in the band')
+  assert.ok(g.w === 360 && g.cells[(90 + 29) * 360 + 266] > 0.5 && g.cells[(90 - 27) * 360 + 192] < 0.05)
+  assert.ok(g.cells[(90 - 60) * 360 + 5] > 0.1, 'Cassiopeia in the band')
+})
+
+test('deep-sky catalogue: parsing, ids, sizes, surface brightness', () => {
+  const by = (id: string) => { const d = sky.dsos.find((x) => x.id === id); assert.ok(d, id); return d! }
+  assert.ok(sky.dsos.length > 5000)
+  for (let i = 1; i < sky.dsos.length; i++) assert.ok(sky.dsos[i].mag >= sky.dsos[i - 1].mag, 'sorted by magnitude')
+  const m31 = by('M31')
+  assert.equal(m31.alt, 'NGC 224'); assert.equal(m31.type, 's'); near(m31.mag, 3.4, 0.1); near(m31.ra, 10.685, 0.01); near(m31.dec, 41.269, 0.01)
+  near(m31.maj, 189, 2); near(m31.min, 62, 2); assert.equal(m31.pa, 35); near(m31.sb, 22.2, 0.5, 'M31 surface brightness (mag/arcsec2)')
+  const m42 = by('M42'); assert.equal(m42.alt, 'NGC 1976'); assert.equal(m42.type, 'bn'); assert.ok(m42.name.includes('Orion'))
+  assert.equal(by('M45').type, 'sfr'); assert.ok(by('NGC 7000').maj >= 100); assert.ok(sky.dsos.filter((x) => x.id.startsWith('M')).length >= 105)
+  assert.ok(sky.dsos.some((x) => x.id.startsWith('IC ')) && sky.dsos.some((x) => x.id.startsWith('NGC ')))
+  assert.ok(sky.dsos.some((x) => x.type === 'gc' && x.id === 'NGC 5139'), 'omega Centauri')
+  assert.ok(by('M13').type === 'gc' && by('M57').type === 'pn')
+  assert.ok(Number.isFinite(m42.sb) === (m42.mag < 90))
+})
+
+test('constellation lookup from the IAU boundaries: known stars', () => {
+  const at = (name: string) => { const i = star(name); return sky.cons[conIndexAt(sky, sky.ra[i], sky.dec[i])]?.id }
+  assert.equal(at('Polaris'), 'UMi'); assert.equal(at('Betelgeuse'), 'Ori'); assert.equal(at('Sirius'), 'CMa'); assert.equal(at('Vega'), 'Lyr')
+  assert.equal(at('Rigil Kentaurus'), 'Cen'); assert.equal(at('Acrux'), 'Cru'); assert.equal(at('Deneb'), 'Cyg'); assert.equal(at('Antares'), 'Sco')
+  assert.equal(at('Spica'), 'Vir'); assert.equal(at('Regulus'), 'Leo'); assert.equal(at('Aldebaran'), 'Tau'); assert.equal(at('Thuban'), 'Dra')
+  assert.equal(sky.cons[conIndexAt(sky, 0, -89.5)].id, 'Oct', 'south pole'); assert.equal(sky.cons[conIndexAt(sky, 180, 89.9)].id, 'UMi', 'north pole')
+  assert.equal(at('Algenib'), 'Peg', 'east of 0h RA'); assert.equal(at('Alpheratz'), 'And'); assert.equal(at('Markab'), 'Peg', 'west of 0h RA'); assert.equal(at('Caph'), 'Cas')
+  assert.equal(at('Unukalhai'), 'Ser', 'two-part constellation (Serpens)')
+})
+test('constellation lookup agrees with the catalogue designations (Bayer/Flamsteed) for >98 % of 3000 named stars', () => {
+  let ok = 0, n = 0
+  for (let i = 0; i < sky.n; i++) {
+    const nm = sky.names[i]
+    if (!nm?.con || !(nm.bayer || nm.flam)) continue
+    n++
+    if (sky.cons[conIndexAt(sky, sky.ra[i], sky.dec[i])]?.id === nm.con) ok++
+  }
+  assert.ok(n > 2000 && ok / n > 0.98, `${ok}/${n}`)
+})
+
+test('galactic coordinates: the centre, the pole and the plane', () => {
+  const sgr = galVec(0, 0), ra = (Math.atan2(sgr[1], sgr[0]) * 180 / Math.PI + 360) % 360, dec = Math.asin(sgr[2]) * 180 / Math.PI
+  near(ra, 266.405, 0.05); near(dec, -28.936, 0.05)
+  const p = galVec(0, 90); near((Math.atan2(p[1], p[0]) * 180 / Math.PI + 360) % 360, 192.859, 0.01); near(Math.asin(p[2]) * 180 / Math.PI, 27.128, 0.01)
+  const a = galVec(180, 0); near(a[0] * sgr[0] + a[1] * sgr[1] + a[2] * sgr[2], -1, 1e-9)
+  assert.equal(spectralClass(-0.2), 'B'); assert.equal(spectralClass(0.65), 'G'); assert.equal(spectralClass(1.7), 'M')
 })
 
 test('place search: offline, diacritics, aliases, nearest place', () => {
@@ -149,8 +196,8 @@ test('texts: nl/en/el have the same keys and placeholders, Greek is Greek, every
   const used = new Set<string>()
   for (const f of ['Panel.tsx', 'Stage.tsx', 'InfoCard.tsx', 'PlaceMap.tsx', 'scene.ts', 'control.ts']) for (const m of readFileSync(new URL(`./${f}`, import.meta.url), 'utf8').matchAll(/['"`](sv\.[A-Za-z0-9.]+)['"`]/g)) used.add(m[1])
   for (const k of used) assert.ok(k in nl, `missing text ${k}`)
-  for (const l of Object.keys(DEFAULT_LAYERS)) if (l !== 'magLim') assert.ok(`sv.l.${l}` in nl, `layer text ${l}`)
-  for (const k of ['star', 'sun', 'moon', 'planet', 'body', 'con', 'dso', 'sat']) assert.ok(`sv.k.${k}` in nl)
+  for (const l of Object.keys(DEFAULT_LAYERS)) if (l !== 'magLim' && l !== 'bortle') assert.ok(`sv.l.${l}` in nl, `layer text ${l}`)
+  for (const k of ['star', 'sun', 'moon', 'planet', 'body', 'con', 'dso', 'sat', 'dwarf']) assert.ok(`sv.k.${k}` in nl)
   for (const k of ['galaxy', 'cluster', 'globular', 'planetary', 'nebula', 'snr']) assert.ok(`sv.type.${k}` in nl)
   for (const i of [0, 1, 2, 3, 4]) assert.ok(`sv.col.${i}` in nl)
 })
