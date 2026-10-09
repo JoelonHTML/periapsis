@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_open_app">Open Periapsis</string>
+    <string name="widget_open_app_hint">Open the app once to load the sky data.</string>
+    <string name="widget_sample_title">Tonight</string>
+    <string name="widget_sample_main">3 planets · Venus</string>
+    <string name="widget_sample_moon">Moon</string>
+    <string name="widget_sample_pct">42% · Waxing crescent</string>
+    <string name="widget_desc_planets">Planets visible tonight, with direction and best time.</string>
+    <string name="widget_desc_moon">Current moon phase, illumination and rise / set.</string>
+    <string name="widget_desc_sun">Sunset, sunrise, dusk and dawn.</string>
+    <string name="widget_desc_tonight">Tonight at a glance: sun, moon, planets, next event and ISS pass.</string>
+    <string name="widget_name_planets_small">Planets tonight · 2×1</string>
+    <string name="widget_name_planets">Planets tonight · 2×2</string>
+    <string name="widget_name_planets_wide">Planets tonight · 4×2</string>
+    <string name="widget_name_planets_large">Planets tonight · 4×3</string>
+    <string name="widget_name_moon_small">Moon · 1×1</string>
+    <string name="widget_name_moon">Moon · 2×2</string>
+    <string name="widget_name_sun">Sun &amp; twilight · 2×1</string>
+    <string name="widget_name_tonight">Tonight · 4×4</string>
+</resources>

@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Widget taps: periapsis://open/<route> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="periapsis" android:host="open" />
+            </intent-filter>
+
         </activity>
 
         <provider
@@ -34,6 +42,159 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- ===== Home-screen widgets: sky widgets (framework agent) ===== -->
+        <receiver
+            android:name=".widgets.PlanetsWidgetSmall"
+            android:label="@string/widget_name_planets_small"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_planets_small" />
+        </receiver>
+        <receiver
+            android:name=".widgets.PlanetsWidget"
+            android:label="@string/widget_name_planets"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_planets" />
+        </receiver>
+        <receiver
+            android:name=".widgets.PlanetsWidgetWide"
+            android:label="@string/widget_name_planets_wide"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_planets_wide" />
+        </receiver>
+        <receiver
+            android:name=".widgets.PlanetsWidgetLarge"
+            android:label="@string/widget_name_planets_large"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_planets_large" />
+        </receiver>
+        <receiver
+            android:name=".widgets.MoonWidgetSmall"
+            android:label="@string/widget_name_moon_small"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_moon_small" />
+        </receiver>
+        <receiver
+            android:name=".widgets.MoonWidget"
+            android:label="@string/widget_name_moon"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_moon" />
+        </receiver>
+        <receiver
+            android:name=".widgets.SunWidget"
+            android:label="@string/widget_name_sun"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_sun" />
+        </receiver>
+        <receiver
+            android:name=".widgets.TonightWidget"
+            android:label="@string/widget_name_tonight"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_tonight" />
+        </receiver>
+
+        <!-- ===== Home-screen widgets: LIVE widgets (classes + xml/widget_info_* owned by the live-widgets agent) ===== -->
+        <receiver
+            android:name=".widgets.EventsWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_events" />
+        </receiver>
+        <receiver
+            android:name=".widgets.EventsWidgetLarge"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_events_large" />
+        </receiver>
+        <receiver
+            android:name=".widgets.IssWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_iss" />
+        </receiver>
+        <receiver
+            android:name=".widgets.IssWidgetWide"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_iss_wide" />
+        </receiver>
+        <receiver
+            android:name=".widgets.LaunchWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_launch" />
+        </receiver>
+        <receiver
+            android:name=".widgets.KpWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_kp" />
+        </receiver>
+        <!-- ===== end widgets ===== -->
     </application>
 
     <!-- Permissions -->
