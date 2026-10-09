@@ -5,7 +5,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { clock } from '@/lib/store'
 import { configFor } from './caps'
+import { EarthTiles } from './EarthTiles'
 import { earthSettings } from './settings'
+import { detailEnabled } from './tiles'
 import { ATMO_FRAG, ATMO_VERT, CLOUD_FRAG, EARTH_VERT, GROUND_FRAG } from './shaders'
 import { effectiveLayers, type Layers, type TierConfig } from './tier'
 import { acquireEarthMaps, type EarthMaps } from './textures'
@@ -40,7 +42,13 @@ export function EarthBody({ radius = 1, sunDir }: { radius?: number; sunDir: (ou
   const cloudU = useMemo(() => ({ value: 0 }), [])
   const clouds = useMemo(() => ({ value: 1 }), [])
   const lights = useMemo(() => ({ value: 1 }), [])
-  useEffect(() => { clouds.value = layers.clouds ? 1 : 0; lights.value = layers.nightLights ? 1 : 0 }, [clouds, lights, layers.clouds, layers.nightLights])
+  useEffect(() => { lights.value = layers.nightLights ? 1 : 0 }, [lights, layers.nightLights])
+
+  const detailMode = earthSettings.useStore((s) => s.detail)
+  const detail = detailEnabled(detailMode, cfg.tier === 'low', !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData)
+  const fade = useMemo(() => ({ value: 1 }), [])
+  const cloudsOn = useRef(true)
+  cloudsOn.current = layers.clouds
 
   const ground = useMemo(() => {
     if (!maps) return null
@@ -57,10 +65,18 @@ export function EarthBody({ radius = 1, sunDir }: { radius?: number; sunDir: (ou
   const cloudMat = useMemo(() => {
     if (!maps) return null
     return new THREE.ShaderMaterial({
-      uniforms: { uSun: sun, uData: { value: maps.data } },
+      uniforms: { uSun: sun, uData: { value: maps.data }, uFade: fade },
       vertexShader: EARTH_VERT, fragmentShader: CLOUD_FRAG, transparent: true, depthWrite: false,
     })
-  }, [maps, sun])
+  }, [maps, sun, fade])
+  // detail tiles: the same ground shader with the tile's own texture (shares every uniform with the bundled globe)
+  const makeTileMat = useMemo(() => {
+    if (!ground) return null
+    return (tex: THREE.Texture) => new THREE.ShaderMaterial({
+      uniforms: { ...ground.uniforms, uTile: { value: tex } }, defines: { ...ground.defines, TILE: '' },
+      vertexShader: EARTH_VERT, fragmentShader: GROUND_FRAG,
+    })
+  }, [ground])
   const atmoMat = useMemo(() => new THREE.ShaderMaterial({
     uniforms: { uSun: sun, uShell: { value: ATMO_R } },
     vertexShader: ATMO_VERT, fragmentShader: ATMO_FRAG, transparent: true, depthWrite: false, side: THREE.BackSide, blending: THREE.AdditiveBlending,
@@ -71,7 +87,8 @@ export function EarthBody({ radius = 1, sunDir }: { radius?: number; sunDir: (ou
 
   const groundRef = useRef<THREE.Mesh>(null), cloudRef = useRef<THREE.Mesh>(null)
   // priority 0: runs after the callers' EARLY (-1) frame callbacks that set the globe's rotation
-  useFrame(() => {
+  const wp = useMemo(() => new THREE.Vector3(), [])
+  useFrame(({ camera }) => {
     sunDir(sun.value).normalize()
     const m = groundRef.current
     if (m) {
@@ -82,6 +99,10 @@ export function EarthBody({ radius = 1, sunDir }: { radius?: number; sunDir: (ou
     const a = (clock.t * CLOUD_DRIFT) % (2 * Math.PI)
     if (cloudRef.current) cloudRef.current.rotation.y = a
     cloudU.value = a / (2 * Math.PI)
+    // clouds fade out when the camera drops below ~300 km so they do not hide the detail imagery
+    if (m) fade.value = Math.min(1, Math.max(0, (camera.position.distanceTo(m.getWorldPosition(wp)) / radius - 1.012) / 0.05))
+    clouds.value = cloudsOn.current ? fade.value : 0
+    if (cloudRef.current) cloudRef.current.visible = fade.value > 0.001
   })
 
   return (
@@ -90,6 +111,7 @@ export function EarthBody({ radius = 1, sunDir }: { radius?: number; sunDir: (ou
         <sphereGeometry args={[1, cfg.segments[0], cfg.segments[1]]} />
         {ground ? <primitive object={ground} attach="material" /> : <meshStandardMaterial color="#2b5fb3" roughness={1} />}
       </mesh>
+      {detail && makeTileMat && <EarthTiles radius={radius} tileCache={cfg.tileCache} makeMat={makeTileMat} />}
       {layers.clouds && cloudMat && (
         <mesh ref={cloudRef} scale={radius * CLOUD_R} renderOrder={1}>
           <sphereGeometry args={[1, cfg.segments[0], cfg.segments[1]]} />

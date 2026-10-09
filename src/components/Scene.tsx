@@ -18,6 +18,7 @@ import { FlybyScene } from './Flyby3D'
 import { GalaxyScene } from './Galaxy'
 import { SystemScene } from './PlanetSystem'
 import { EarthBody, useEarthConfig } from '@/features/earth/EarthBody'
+import { useSurfaceZoom } from '@/features/earth/EarthTiles'
 import { EarthOverlays } from '@/features/earth/EarthOverlays'
 import { CameraInit, Dot, EARLY, Follow, Label, Occluder, PanelOffset, Starfield, dotTex, useTexture, v3 } from './kit'
 
@@ -284,6 +285,7 @@ const sunWorld = (out: THREE.Vector3) => v3(unit(sunGeo(clock.t)), 1, out)
 function Globe({ lat, lon, siteName, label }: { lat: number; lon: number; siteName: string; label: boolean }) {
   const ref = useRef<THREE.Group>(null)
   const { layers } = useEarthConfig()
+  useSurfaceZoom(RE * S_EAR)
   useFrame(() => { ref.current!.rotation.y = gmst(clock.t) }, EARLY)
   const R = RE * S_EAR
   const site = new THREE.Vector3(Math.cos(lat * DEG_) * Math.cos(lon * DEG_), Math.sin(lat * DEG_), -Math.cos(lat * DEG_) * Math.sin(lon * DEG_)).multiplyScalar(R * 1.003)

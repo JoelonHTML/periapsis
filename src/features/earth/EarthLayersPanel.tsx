@@ -5,7 +5,7 @@ import { useT } from '@/lib/i18n'
 import { configFor } from './caps'
 import { EARTH_CREDITS } from './credits'
 import './i18n'
-import { earthSettings, setLayer, setQuality } from './settings'
+import { earthSettings, setDetail, setLayer, setQuality, type DetailMode } from './settings'
 import { effectiveLayers, type Layers, type Quality } from './tier'
 
 const ROWS: [keyof Layers, string][] = [
@@ -17,6 +17,7 @@ export function EarthLayersPanel() {
   const t = useT()
   const quality = earthSettings.useStore((s) => s.quality)
   const custom = earthSettings.useStore((s) => s.custom)
+  const detail = earthSettings.useStore((s) => s.detail)
   const cfg = configFor(quality)
   const layers = effectiveLayers(cfg, custom)
   return (
@@ -35,6 +36,14 @@ export function EarthLayersPanel() {
           <SelectContent>{(['auto', 'low', 'mid', 'high'] as const).map((q) => <SelectItem key={q} value={q}>{t(`earth.q.${q}`)}</SelectItem>)}</SelectContent>
         </Select>
       </div>
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span>{t('earth.detail')}</span>
+        <Select value={detail} onValueChange={(v) => setDetail(v as DetailMode)}>
+          <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>{(['auto', 'on', 'off'] as const).map((q) => <SelectItem key={q} value={q}>{t(`earth.d.${q}`)}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <p className="text-[10.5px] text-muted-foreground">{t('earth.detail.note')}</p>
       <p className="text-[10.5px] text-muted-foreground">{t('earth.q.now', { tier: t(`earth.q.${cfg.tier}`), tex: cfg.dayTex })}</p>
       <details className="text-[10.5px] text-muted-foreground">
         <summary className="cursor-pointer">{t('earth.credits')}</summary>
