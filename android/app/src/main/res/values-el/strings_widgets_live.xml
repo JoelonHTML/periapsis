@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_live_name_events">Επόμενο γεγονός · 2×2</string>
+    <string name="widget_live_name_events_large">Αστρονομικό ημερολόγιο · 4×2</string>
+    <string name="widget_live_name_iss">Επόμενη διέλευση ISS · 2×1</string>
+    <string name="widget_live_name_iss_wide">Διελεύσεις ISS · 4×1</string>
+    <string name="widget_live_name_launch">Επόμενη εκτόξευση · 4×1</string>
+    <string name="widget_live_name_kp">Διαστημικός καιρός · 2×1</string>
+    <string name="widget_live_desc_events">Το επόμενο γεγονός στον ουρανό με ημερομηνία και αντίστροφη μέτρηση.</string>
+    <string name="widget_live_desc_events_large">Τα επόμενα τέσσερα γεγονότα του αστρονομικού ημερολογίου.</string>
+    <string name="widget_live_desc_iss">Ώρα, ύψος και κατεύθυνση της επόμενης διέλευσης του ISS.</string>
+    <string name="widget_live_desc_iss_wide">Αντίστροφη μέτρηση για την επόμενη διέλευση του ISS και την μεθεπόμενη.</string>
+    <string name="widget_live_desc_launch">Αντίστροφη μέτρηση για την επόμενη εκτόξευση πυραύλου.</string>
+    <string name="widget_live_desc_kp">Ο τρέχων δείκτης Kp της γεωμαγνητικής δραστηριότητας.</string>
+    <string name="widget_live_empty">Δεν υπάρχουν δεδομένα. Άνοιξε το Periapsis.</string>
+    <string name="widget_live_now">Τώρα</string>
+    <string name="widget_live_in_min">σε %1$d λ</string>
+    <string name="widget_live_in_h">σε %1$d ώ</string>
+    <string name="widget_live_in_d">σε %1$d μ</string>
+    <string name="widget_live_max_el">μέγ %1$d°</string>
+    <string name="widget_live_following">Έπειτα %1$s</string>
+</resources>

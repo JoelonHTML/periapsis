@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_live_name_events">Next event · 2×2</string>
+    <string name="widget_live_name_events_large">Sky calendar · 4×2</string>
+    <string name="widget_live_name_iss">Next ISS pass · 2×1</string>
+    <string name="widget_live_name_iss_wide">ISS passes · 4×1</string>
+    <string name="widget_live_name_launch">Next launch · 4×1</string>
+    <string name="widget_live_name_kp">Space weather · 2×1</string>
+    <string name="widget_live_desc_events">The next sky event with date and countdown.</string>
+    <string name="widget_live_desc_events_large">The next four events in the sky calendar.</string>
+    <string name="widget_live_desc_iss">Time, elevation and direction of the next ISS pass.</string>
+    <string name="widget_live_desc_iss_wide">Countdown to the next ISS pass and the one after.</string>
+    <string name="widget_live_desc_launch">Countdown to the next rocket launch.</string>
+    <string name="widget_live_desc_kp">Current Kp index of geomagnetic activity.</string>
+    <string name="widget_live_empty">No upcoming data. Open Periapsis.</string>
+    <string name="widget_live_now">Now</string>
+    <string name="widget_live_in_min">in %1$d min</string>
+    <string name="widget_live_in_h">in %1$d h</string>
+    <string name="widget_live_in_d">in %1$d d</string>
+    <string name="widget_live_max_el">max %1$d°</string>
+    <string name="widget_live_following">Then %1$s</string>
+</resources>

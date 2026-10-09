@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_live_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView android:id="@+id/widget_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/widget_bg" android:scaleType="fitXY"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center_vertical" android:padding="12dp">
+<TextView android:id="@+id/wl_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="#94a3b8" android:maxLines="3" android:ellipsize="end" />
+</LinearLayout>
+</FrameLayout>
