@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseKpForecast, currentKp, dailyMaxKp, gScale, parseOvation, auroraAt, ovalEdge, parsePlasma, parseMag, parseFlare } from './spaceweather.ts'
-import { parseApod } from './apod.ts'
+import { parseApod, APOD_PAGE } from './apod.ts'
 import { parseLaunches } from './launches.ts'
 import { parseApproaches, parseCd, diameterKm, sizeRangeM, LD_KM } from './asteroids.ts'
 import { formatCountdown, ageParts, parseUtc, safeUrl } from './util.ts'
@@ -75,6 +75,53 @@ test('APOD: image, video, hostile urls, rate-limit error', () => {
   assert.throws(() => parseApod({ error: { code: 'OVER_RATE_LIMIT', message: 'x' } }))
   assert.equal(parseApod({ title: 'X', url: 'https://a.b/c.jpg', hdurl: 'javascript:1', media_type: 'image' }).hdurl, null)
   mustThrow(parseApod)
+})
+const APOD_HTML = `<html>
+<head>
+<title> APOD: 2026 October 9 - The Pillars &amp; More
+</title>
+</head>
+<body BGCOLOR="#F4F4FF" text="#000000" link="#0000FF" vlink="#7F0F9F" alink="#FF0000">
+<center>
+<h1> Astronomy Picture of the Day </h1>
+<p>
+<a href="archivepix.html">Discover the cosmos!</a>
+Each day a different image or photograph of our fascinating universe is
+featured, along with a brief explanation written by a professional astronomer.
+<p>
+2026 October 9
+<br>
+<a href="image/2610/Pillars_Webb_4000.jpg">
+<IMG SRC="image/2610/Pillars_Webb_1080.jpg"
+alt="See Explanation.  Clicking on the picture will download
+the highest resolution version available." style="max-width:100%"></a>
+</center>
+
+<center>
+<b> The Pillars &amp; More </b> <br>
+<b> Image Credit &amp;
+<a href="lib/about_apod.html#srapply">Copyright</a>: </b>
+<a href="https://example.org">Some Astro</a>
+</center> <p>
+
+<b> Explanation: </b>
+What do the <a href="x.html">Pillars</a> look like in infrared?
+Dark dust is transparent here.
+<p> <center>
+<b> Tomorrow's picture: </b>open space
+</center>
+</body></html>`
+test('APOD: web page fallback and pages without an image url', () => {
+  const a = parseApod(APOD_HTML)
+  assert.equal(a.date, '2026-10-09'); assert.equal(a.title, 'The Pillars & More'); assert.equal(a.video, false)
+  assert.equal(a.url, new URL('image/2610/Pillars_Webb_1080.jpg', APOD_PAGE).href)
+  assert.equal(a.hdurl, 'https://apod.nasa.gov/apod/image/2610/Pillars_Webb_4000.jpg')
+  assert.equal(a.copyright, 'Some Astro'); assert.match(a.explanation, /^What do the Pillars look like in infrared\? Dark dust is transparent here\.$/)
+  const yt = parseApod(APOD_HTML.replace(/<a href="image[\s\S]*?<\/a>/, '<iframe width="960" height="540" src="https://www.youtube.com/embed/abc?rel=0" frameborder="0"></iframe>'))
+  assert.equal(yt.video, true); assert.equal(yt.url, 'https://www.youtube.com/embed/abc?rel=0')
+  const other = parseApod({ title: 'Interactive', media_type: 'other', date: '2026-10-08' })
+  assert.equal(other.url, 'https://apod.nasa.gov/apod/ap261008.html'); assert.equal(other.video, true)
+  assert.throws(() => parseApod('<html>Service Unavailable</html>'))
 })
 test('launches: documented shape, missing fields, string info_urls', () => {
   const l = parseLaunches(launchesFixture(NOW))

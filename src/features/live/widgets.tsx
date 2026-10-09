@@ -49,7 +49,8 @@ export function useFeed<T>(spec: FeedSpec<T>): Feed<T> {
     let r: Fetched<T>
     try {
       r = await getCached(s.key, s.url, opts)
-      if (!r.data && r.error && r.error !== 'offline' && s.fallbackUrl) r = await getCached(s.key, s.fallbackUrl, opts)
+      // Primary failed (even with a stale cache to show): try the fallback; keep the primary's diagnostics if that fails too.
+      if (r.error && r.error !== 'offline' && s.fallbackUrl) { const alt = await getCached(s.key, s.fallbackUrl, opts); if (!alt.error) r = alt }
     } catch { r = { data: null, fetchedAt: null, fromCache: false, error: 'offline' } }
     if (!alive.current) return
     setSt((p) => ({ data: r.data, fetchedAt: r.fetchedAt, error: r.error, detail: r.detail, loading: false, note: force && r.fromCache && !r.error && r.fetchedAt === p.fetchedAt }))

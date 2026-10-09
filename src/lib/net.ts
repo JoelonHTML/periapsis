@@ -10,7 +10,7 @@ export interface Fetched<T> {
 }
 interface Entry { t: number; v: unknown }
 const PREFIX = 'periapsis.net.'
-const lastTry = new Map<string, number>() // per cache key, this session
+const lastTry = new Map<string, number>() // per cache key + url, this session (so a fallback URL isn't throttled by its primary)
 
 function read(key: string): Entry | null {
   try { const e = JSON.parse(globalThis.localStorage?.getItem(PREFIX + key) ?? 'null'); return e && typeof e.t === 'number' ? e : null } catch { return null }
@@ -47,9 +47,9 @@ export async function getCached<T>(key: string, url: string, opts: { maxAgeMs: n
   const cached = read(key)
   const fromCache = (error: Fetched<T>['error'], detail?: string): Fetched<T> => ({ data: (cached?.v as T) ?? null, fetchedAt: cached?.t ?? null, fromCache: true, error, detail })
   if (cached && !opts.force && now - cached.t < opts.maxAgeMs) return fromCache(null)
-  const tried = lastTry.get(key)
+  const tk = key + ' ' + url, tried = lastTry.get(tk)
   if (tried !== undefined && now - tried < (opts.minRetryMs ?? 10 * 60_000) && cached) return fromCache(null)
-  lastTry.set(key, now)
+  lastTry.set(tk, now)
   let res: { status: number; body: unknown }
   try { res = await raw(url, opts.headers ?? { Accept: 'application/json' }) } catch (e) { return fromCache('offline', String((e as Error)?.message ?? e).slice(0, 160)) }
   if (res.status < 200 || res.status >= 300) return fromCache('http', `HTTP ${res.status}${snippet(res.body) ? ' · ' + snippet(res.body) : ''}`)
