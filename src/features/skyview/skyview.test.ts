@@ -128,7 +128,7 @@ test('sky data is complete: 41k stars to mag 8, constellations, Milky Way, deep 
   assert.ok(sky.lineSegs.length / 6 > 600)
   assert.ok(sky.borders.length >= 88)
   const g = sky.mw // the band: bright at the galactic centre (RA 266, Dec -29), empty at the north galactic pole (RA 192, Dec 27)
-  assert.ok(g.w === 360 && g.cells[(90 + 29) * 360 + 266] > 0.5 && g.cells[(90 - 27) * 360 + 192] < 0.05)
+  assert.ok(g.w === 360 && g.cells[(90 + 29) * 360 + 266] > 0.3 && g.cells[(90 - 27) * 360 + 192] < 0.05)
   assert.ok(g.cells[(90 - 60) * 360 + 5] > 0.1, 'Cassiopeia in the band')
 })
 

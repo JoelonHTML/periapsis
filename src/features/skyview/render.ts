@@ -56,6 +56,7 @@ function glowSprite(bucket: number) {
   return (glow[bucket] = c)
 }
 const PAL_CSS = PALETTE.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`)
+const STAR_G: number[][] = Array.from({ length: PALETTE.length * 4 }, () => [])
 let whiteGlowCan: HTMLCanvasElement | null = null
 function whiteGlow() {
   if (whiteGlowCan) return whiteGlowCan
@@ -380,6 +381,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
     const hitMag = f.fov < 15 ? lim : 4.2
     const v: V3 = [0, 0, 0], m = f.M, cf = cam.f
     let lastCol = -1
+    for (const g of STAR_G) g.length = 0
     const gMin = L.ground ? -0.012 : -2
     const sizeLim = Math.min(lim, 6.6 + (lim - 6.6) * 0.5) // star discs grow slower than the limit
     for (let i = 0; i < d.n; i++) {
@@ -398,10 +400,11 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
       const x = P.x, y = P.y
       if (x < -10 || x > w + 10 || y < -10 || y > h + 10) continue
       const r = clamp(0.5 + 0.38 * (6.6 - mg - ext * 0.5) + (sizeLim - 6.6) * 0.1, 0.45, 7) * zoomF
-      if (col[i] !== lastCol) { ctx.fillStyle = PAL_CSS[col[i]]; lastCol = col[i] }
-      ctx.globalAlpha = vis * Math.min(1, 0.4 + r * 0.45)
-      if (r < 1.0) ctx.fillRect(x - r, y - r, 2 * r, 2 * r)
+      const al = vis * Math.min(1, 0.4 + r * 0.45)
+      if (r < 1.3) STAR_G[col[i] * 4 + Math.min(3, (al * 4) | 0)].push(x - r, y - r, 2 * r) // faint stars: batched per colour and brightness class, one fill each
       else {
+        if (col[i] !== lastCol) { ctx.fillStyle = PAL_CSS[col[i]]; lastCol = col[i] }
+        ctx.globalAlpha = al
         if (r > 2.2) { ctx.globalAlpha = vis * 0.9; ctx.drawImage(glowSprite(col[i]), x - r * 3.4, y - r * 3.4, r * 6.8, r * 6.8); ctx.globalAlpha = vis }
         ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill()
       }
@@ -411,6 +414,14 @@ export function drawSky(ctx: CanvasRenderingContext2D, f: Frame): Hit[] {
         const txt = (f.lang === 'el' && nm.el) || nm.name || (nm.bayer ? nm.bayer : nm.flam ? nm.flam : '') + (nm.bayer || nm.flam ? ` ${nm.con}` : '')
         if (txt.trim()) labels.push({ x: x + r + 3, y: y - 2, text: txt.trim(), pri: 4 - mg, color: 'rgba(210,225,255,0.85)', size: 11 })
       }
+    }
+    for (let gi = 0; gi < STAR_G.length; gi++) {
+      const g = STAR_G[gi]
+      if (!g.length) continue
+      ctx.fillStyle = PAL_CSS[gi >> 2]; ctx.globalAlpha = ((gi & 3) + 0.5) / 4
+      ctx.beginPath()
+      for (let k = 0; k < g.length; k += 3) ctx.rect(g[k], g[k + 1], g[k + 2], g[k + 2])
+      ctx.fill()
     }
     ctx.globalAlpha = 1
   }

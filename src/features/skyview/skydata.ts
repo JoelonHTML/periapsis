@@ -142,6 +142,20 @@ function smoothMw(cells: Uint8Array, w: number, h: number, max: number): Float32
   return a
 }
 
+/** Star counts (mag 5.5 to 8) on the same 1-degree grid, blurred: the Milky Way's texture (rifts, clouds) that the nested outlines lack. */
+function starDensity(s: { n: number; ra: Float32Array; dec: Float32Array; mag: Float32Array }, w: number, h: number): Float32Array {
+  let a = new Float32Array(w * h), b = new Float32Array(w * h)
+  for (let i = 0; i < s.n; i++) { const x = Math.min(w - 1, Math.floor(s.ra[i])), y = Math.min(h - 1, Math.max(0, Math.floor(90 - s.dec[i]))); if (s.mag[i] > 5.5) a[y * w + x] += 1 } // counts of the faint stars: a few bright ones must not make hot spots
+  const R = 2
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let t = 0; for (let k = -R; k <= R; k++) t += a[y * w + ((x + k + w) % w)]; b[y * w + x] = t / (2 * R + 1) }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let t = 0; for (let k = -R; k <= R; k++) t += b[Math.min(h - 1, Math.max(0, y + k)) * w + x]; a[y * w + x] = t / (2 * R + 1) }
+  }
+  const sorted = Float32Array.from(a).sort(), p = sorted[Math.floor(sorted.length * 0.985)] || 1
+  for (let i = 0; i < a.length; i++) a[i] = Math.min(1, a[i] / p)
+  return a
+}
+
 export function decodeSky(raw: RawSky, starBytes: Uint8Array, dsoBytes: Uint8Array): SkyData {
   const s = decodeStars(starBytes, raw.names)
   const cons: Con[] = raw.cons.map((c) => ({ id: c[0], la: c[1], en: c[2], nl: c[3], el: c[4], ra: c[5], dec: c[6], vec: radecVec(c[5], c[6]) }))
@@ -156,7 +170,11 @@ export function decodeSky(raw: RawSky, starBytes: Uint8Array, dsoBytes: Uint8Arr
   const cells = new Uint8Array(raw.mw.w * raw.mw.h)
   let p = 0, max = 0
   for (let i = 0; i + 1 < raw.mw.rle.length; i += 2) { cells.fill(raw.mw.rle[i], p, p + raw.mw.rle[i + 1]); max = Math.max(max, raw.mw.rle[i]); p += raw.mw.rle[i + 1] }
-  return { ...s, cons, lineSegs: new Float32Array(segs), lineCon: new Uint8Array(segCon), borders, bounds, dsos: decodeDsos(dsoBytes, raw.dsoNames), mw: { w: raw.mw.w, h: raw.mw.h, cells: smoothMw(cells, raw.mw.w, raw.mw.h, max) } }
+  const mwBase = smoothMw(cells, raw.mw.w, raw.mw.h, max), dens = starDensity(s, raw.mw.w, raw.mw.h)
+  let mx = 0
+  for (let i = 0; i < mwBase.length; i++) { mwBase[i] *= 0.4 + 0.8 * dens[i] ** 0.8; mx = Math.max(mx, mwBase[i]) } // rifts (few stars) darken, star clouds brighten
+  for (let i = 0; i < mwBase.length; i++) mwBase[i] /= mx
+  return { ...s, cons, lineSegs: new Float32Array(segs), lineCon: new Uint8Array(segCon), borders, bounds, dsos: decodeDsos(dsoBytes, raw.dsoNames), mw: { w: raw.mw.w, h: raw.mw.h, cells: mwBase } }
 }
 
 // ---------- which constellation is a point in (IAU boundaries) ----------
