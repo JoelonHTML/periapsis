@@ -59,6 +59,7 @@ export function EarthTiles({ radius, tileCache, makeMat }: { radius: number; til
   useFrame(({ camera, clock }, dt) => {
     const g = group.current, src = store.active
     if (!g) return
+    if (import.meta.env.DEV) Object.assign(window, { __earth: { camera, group: g, store } }) // dev only: scripted camera for screenshots
     st.acc += dt
     if (st.acc < 0.1 && st.ver === store.version) return
     st.acc = 0; st.ver = store.version
@@ -89,6 +90,7 @@ export function EarthTiles({ radius, tileCache, makeMat }: { radius: number; til
       }
     }
     store.request(req, keep)
+    if (import.meta.env.DEV) Object.assign((window as unknown as { __earth: object }).__earth, { wantedZ: Math.max(0, ...wanted.map((t) => t.z)), nWanted: wanted.length, nReq: req.length })
 
     const now = clock.elapsedTime
     for (const [k, t] of draw) {
@@ -97,7 +99,7 @@ export function EarthTiles({ radius, tileCache, makeMat }: { radius: number; til
       if (d && d.tex !== tex) { drop(k); d = undefined }
       if (!d) {
         const gr = tileGrid(t, t.z < 8 ? 8 : t.z < 11 ? 4 : 2), geo = new THREE.BufferGeometry()
-        geo.setAttribute('position', new THREE.BufferAttribute(gr.pos, 3)).setAttribute('uv', new THREE.BufferAttribute(gr.uv, 2)).setAttribute('tuv', new THREE.BufferAttribute(gr.tuv, 2))
+        geo.setAttribute('position', new THREE.BufferAttribute(gr.pos, 3)).setAttribute('normal', new THREE.BufferAttribute(gr.pos, 3)).setAttribute('uv', new THREE.BufferAttribute(gr.uv, 2)).setAttribute('tuv', new THREE.BufferAttribute(gr.tuv, 2))
         geo.setIndex(new THREE.BufferAttribute(gr.index, 1))
         const mesh = new THREE.Mesh(geo, makeMat(tex))
         mesh.scale.setScalar(1 + LIFT + LIFT_Z * t.z)

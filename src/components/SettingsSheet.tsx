@@ -155,7 +155,8 @@ function Credits() {
         {t('set.rights')}
       </p>
       <p className="max-w-[17rem] text-[10px] leading-relaxed text-muted-foreground/80">
-        Planet &amp; Moon maps: Solar System Scope (solarsystemscope.com/textures), derived from NASA data, CC BY 4.0
+        Planet &amp; Moon maps: Solar System Scope (solarsystemscope.com/textures), derived from NASA data, CC BY 4.0<br />
+        Earth zoom imagery: Sentinel-2 cloudless 2016 by EOX (s2maps.eu, CC BY 4.0, contains modified Copernicus Sentinel data); fallback NASA Blue Marble via GIBS
       </p>
     </footer>
   )
