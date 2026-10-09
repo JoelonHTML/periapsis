@@ -132,7 +132,7 @@ test('store: fails over silently to the next source after 5 errors; all dead = i
   const urls: string[] = []
   let t = 0
   const st = new TileStore<string>(TILE_SOURCES, (u) => { urls.push(u); return u.includes('eox') ? Promise.reject(new Error('blocked')) : Promise.resolve(u) }, () => {}, { max: 50, now: () => t })
-  st.request(ids(6, 7), new Set()); await tick(); await tick()
+  for (let i = 0; i < 2; i++) { st.request(ids(6, 7), new Set()); await tick(); await tick() } // both EOX layers fail over in turn
   assert.equal(st.active?.id, 'gibs')
   st.request(ids(6, 7), new Set()); await tick(); await tick()
   assert.ok(st.get(7, 2, 0)?.includes('gibs.earthdata'))
@@ -142,7 +142,7 @@ test('store: fails over silently to the next source after 5 errors; all dead = i
   assert.equal(urls.length, n)
 
   const dead = new TileStore<string>(TILE_SOURCES, () => Promise.reject(new Error('offline')), () => {}, { max: 5, now: () => t, retryMs: 10 })
-  for (let i = 0; i < 4; i++) { dead.request(ids(6, 7), new Set()); await tick(); await tick(); t += 100 }
+  for (let i = 0; i < 6; i++) { dead.request(ids(6, 7), new Set()); await tick(); await tick(); t += 100 }
   assert.equal(dead.active, null)
   dead.request(ids(6), new Set()) // no throw, no requests
   assert.equal(dead.size, 0)
@@ -198,4 +198,14 @@ test('geographic selection: whole globe far away stays on the bundled map; close
   assert.equal(sel[0].z, 8)
   const lon = lonOfX(sel[0].x + 0.5, 8, GEOGRAPHIC), la = latOfY(sel[0].y + 0.5, 8, GEOGRAPHIC)
   assert.ok(Math.abs(lon) < 1.5 && Math.abs(la) < 1.5, `${lon} ${la}`)
+})
+
+test('blank "no data" tiles are recognised, real imagery is not', async () => {
+  const { isBlankTile } = await import('./tiles.ts')
+  const fill = (r: number, g: number, b: number, a = 255) => Array.from({ length: 16 * 16 }, () => [r, g, b, a]).flat()
+  assert.equal(isBlankTile(fill(0, 0, 0)), true) // black JPEG
+  assert.equal(isBlankTile(fill(0, 0, 0, 0)), true) // transparent PNG
+  assert.equal(isBlankTile(fill(255, 255, 255, 0)), true)
+  assert.equal(isBlankTile(fill(8, 22, 45)), false) // dark open ocean
+  const mixed = fill(0, 0, 0); mixed[4 * 37] = 120; assert.equal(isBlankTile(mixed), false) // a coast in a black sea
 })

@@ -7,7 +7,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { TileStore } from './tileStore'
-import { GEOGRAPHIC, MERCATOR, parentOf, selectTiles, tileGrid, tileKey, TILE_SOURCES, type TileId, type TileSource } from './tiles'
+import { GEOGRAPHIC, isBlankTile, MERCATOR, parentOf, selectTiles, tileGrid, tileKey, TILE_SOURCES, type TileId, type TileSource } from './tiles'
 
 const MIN_Z = 5 // Earth: the bundled 4096 px map is about level 4; deeper levels only
 const MAX_WANTED = 100
@@ -27,6 +27,17 @@ function sources(body: string, real: TileSource[]): TileSource[] {
 
 type Drawn = { mesh: THREE.Mesh; tex: THREE.Texture; last: number }
 
+let probe: CanvasRenderingContext2D | null = null
+/** Downscale to 16×16 and look for any real pixel (needs the CORS-clean image we already require for WebGL). */
+function blank(im: HTMLImageElement): boolean {
+  try {
+    probe ??= Object.assign(document.createElement('canvas'), { width: 16, height: 16 }).getContext('2d', { willReadFrequently: true })
+    if (!probe) return false
+    probe.clearRect(0, 0, 16, 16); probe.drawImage(im, 0, 0, 16, 16)
+    return isBlankTile(probe.getImageData(0, 0, 16, 16).data)
+  } catch { return false }
+}
+
 /**
  * Streaming detail tiles for a sphere. Earth passes its ground shader (`makeMat`); other bodies pass their own `src` list (geographic scheme)
  * and `plain`, which draws the tiles with a lit standard material on the tile's own UVs.
@@ -40,6 +51,7 @@ export function EarthTiles({ radius, tileCache, makeMat, body = 'earth', src: re
   const store = useMemo(() => new TileStore<THREE.Texture>(sources(body, realSrc), (url) => new Promise((res, rej) => {
     const im = new Image(); im.crossOrigin = 'anonymous'
     im.onload = () => {
+      if (blank(im)) { rej(new Error('blank tile')); return } // "no data" answers count as failures (fail-over), never a black patch
       const t = new THREE.Texture(im)
       t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping
       t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = aniso; t.needsUpdate = true

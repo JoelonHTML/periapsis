@@ -163,19 +163,33 @@ export class Lru<V> {
 
 export type TileSource = { id: string; name: string; url: (z: number, x: number, y: number) => string; maxZ: number; attribution: string; licence: string; scheme?: Scheme }
 
-/** Primary first. Both are Web Mercator XYZ-compatible, CORS-enabled and free to use with attribution. */
+/** Primary first; the store falls over to the next when one keeps failing. All are Web Mercator XYZ-compatible and CORS-enabled.
+ *  EOX layer ids: the 2016 mosaic is plain `s2cloudless_3857` (later years carry the year: `s2cloudless-2020_3857`). */
 export const TILE_SOURCES: TileSource[] = [
   {
+    id: 'eox2020', name: 'Sentinel-2 cloudless 2020 (EOX)', maxZ: 14,
+    url: (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/${z}/${y}/${x}.jpg`,
+    attribution: 'Sentinel-2 cloudless – s2maps.eu by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)', licence: 'CC BY-NC-SA 4.0',
+  },
+  {
     id: 'eox', name: 'Sentinel-2 cloudless 2016 (EOX)', maxZ: 14,
-    url: (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2016_3857/default/g/${z}/${y}/${x}.jpg`,
+    url: (z, x, y) => `https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/${z}/${y}/${x}.jpg`,
     attribution: 'Sentinel-2 cloudless – s2maps.eu by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016)', licence: 'CC BY 4.0',
   },
   {
     id: 'gibs', name: 'Blue Marble (NASA GIBS)', maxZ: 8,
-    url: (z, x, y) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/${z}/${y}/${x}.jpeg`,
+    url: (z, x, y) => `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/${z}/${y}/${x}.jpeg`,
     attribution: 'Imagery: NASA Blue Marble via GIBS / EOSDIS', licence: 'Public domain',
   },
 ]
+
+/** A server's "no data" answer (a black or fully transparent tile with HTTP 200) must count as a failure, never be drawn as a black patch.
+ *  `px` = RGBA of a small downscaled copy. Real imagery always has some brightness somewhere (even open ocean is dark blue, not 0). */
+export function isBlankTile(px: ArrayLike<number>): boolean {
+  let max = 0, opaque = 0
+  for (let i = 0; i < px.length; i += 4) { if (px[i + 3] > 8) { opaque++; max = Math.max(max, px[i], px[i + 1], px[i + 2]) } }
+  return opaque === 0 || max < 10
+}
 
 /** Detail tiles: 'on' always, 'off' never, 'auto' unless the device is weak (low tier) or asks to save data. */
 export function detailEnabled(mode: 'auto' | 'on' | 'off', lowTier: boolean, saveData: boolean): boolean {
