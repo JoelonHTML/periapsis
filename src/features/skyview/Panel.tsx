@@ -20,7 +20,8 @@ import { PlaceMap } from './PlaceMap.tsx'
 import { findPlaces, loadPlaces, nearestPlace, coordText, type Place } from './places.ts'
 import { gotoObj, toggleAr } from './control.ts'
 import { searchObjects, skyCtx, skyState } from './scene.ts'
-import { layers, setLayer, useLayers, useView, type Layers } from './state.ts'
+import { DEFAULT_LAYERS, layers, setLayer, useLayers, useView, type Layers } from './state.ts'
+import { bortleLimit } from './optics.ts'
 import { solarClock } from './geom.ts'
 
 const parseCoords = (q: string): [number, number] | null => {
@@ -125,11 +126,12 @@ function FindBlock() {
 }
 
 const GROUPS: [string, (keyof Layers)[]][] = [
-  ['sv.g.stars', ['stars', 'starNames', 'lines', 'conNames']],
-  ['sv.g.solar', ['sun', 'moon', 'planets']],
+  ['sv.g.stars', ['stars', 'starNames', 'lines', 'conNames', 'conBounds']],
+  ['sv.g.solar', ['sun', 'moon', 'planets', 'jovMoons', 'dwarfs']],
   ['sv.g.sats', ['sats', 'satsSunlitOnly']],
-  ['sv.g.deep', ['mw', 'dso']],
-  ['sv.g.help', ['gridAz', 'gridEq', 'ecliptic', 'ground', 'cardinals', 'atmosphere']],
+  ['sv.g.deep', ['mw', 'dso', 'dsoNames', 'showers']],
+  ['sv.g.grids', ['gridAz', 'gridEq', 'gridGal', 'ecliptic', 'equator', 'meridian']],
+  ['sv.g.sky', ['ground', 'cardinals', 'atmosphere', 'refraction']],
 ]
 function Filters() {
   const t = useT()
@@ -154,9 +156,15 @@ function Filters() {
       ))}
       <div className="grid gap-2">
         <div className="flex items-baseline justify-between text-sm"><span>{t('sv.magLim')}</span><span className="tabular-nums text-muted-foreground">{L.magLim.toFixed(1)} · {count} {t('sv.stars')}</span></div>
-        <Slider min={2} max={6.5} step={0.1} value={[L.magLim]} onValueChange={(v) => setLayer('magLim', v[0])} aria-label={t('sv.magLim')} />
+        <Slider min={2} max={8} step={0.1} value={[L.magLim]} onValueChange={(v) => setLayer('magLim', v[0])} aria-label={t('sv.magLim')} />
+        <p className="text-[11px] text-muted-foreground">{t('sv.magLim.h')}</p>
       </div>
-      <Button variant="ghost" size="sm" className="justify-self-start text-xs" onClick={() => layers.set({ ...layers.get(), stars: true, starNames: true, lines: true, conNames: true, sun: true, moon: true, planets: true, sats: true, satsSunlitOnly: false, mw: true, dso: true, gridAz: false, gridEq: false, ecliptic: false, ground: true, cardinals: true, atmosphere: true, magLim: 6 })}>{t('sv.reset')}</Button>
+      <div className="grid gap-2">
+        <div className="flex items-baseline justify-between text-sm"><span>{t('sv.bortle')}</span><span className="tabular-nums text-muted-foreground">{t('sv.bortle.v', { n: L.bortle })} · {bortleLimit(L.bortle).toFixed(1)}</span></div>
+        <Slider min={1} max={9} step={1} value={[L.bortle]} onValueChange={(v) => setLayer('bortle', v[0])} aria-label={t('sv.bortle')} />
+        <p className="text-[11px] text-muted-foreground">{t('sv.bortle.h')}</p>
+      </div>
+      <Button variant="ghost" size="sm" className="justify-self-start text-xs" onClick={() => { layers.set({ ...DEFAULT_LAYERS }); setLayer('magLim', DEFAULT_LAYERS.magLim) }}>{t('sv.reset')}</Button>
     </div>
   )
 }
