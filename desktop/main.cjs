@@ -15,7 +15,7 @@ let quitting = false
 // The updater's latest state lives here too, so a reloaded window (or one opened later) still knows a download is running or ready.
 let updState = null // { type: 'available'|'downloaded', version } | null
 const send = (msg) => {
-  if (msg.type === 'available' || msg.type === 'downloaded') updState = { type: msg.type, version: msg.version }
+  if ((msg.type === 'available' && !(updState && updState.type === 'failed')) || msg.type === 'downloaded') updState = { type: msg.type, version: msg.version }
   else if (msg.type === 'error' && updState && updState.type === 'available') updState = null
   if (win && !win.isDestroyed()) win.webContents.send('periapsis:update', msg)
 }
@@ -148,23 +148,63 @@ ipcMain.handle('periapsis:alertsCheckNow', () => pollNow())
 ipcMain.handle('periapsis:notify', (_e, n) => !!n && typeof n === 'object' && notify(n))
 
 // ---- automatic updates (installer build)
+// electron-updater downloads in the background. Installing is done by us, not by its quitAndInstall: that one runs the installer silently
+// and, when starting it fails (SmartScreen, a locked file …), retries through elevate.exe — an admin prompt for a per-user app, after which
+// the elevated installer can end up somewhere else and the app silently stays on the old version. Instead the downloaded installer is
+// opened normally through Windows (ShellExecute, visible progress, the app restarts when it finishes), every step is logged to
+// userData/update.log, and the next start checks whether the new version is really running.
+const upd = require('./update-logic.cjs')
+const logLine = (lvl, m) => {
+  try {
+    const f = userFile('update.log'), line = `${new Date().toISOString()} ${lvl} ${String(m && m.stack || m).slice(0, 800)}\n`
+    fs.mkdirSync(app.getPath('userData'), { recursive: true })
+    const old = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : ''
+    fs.writeFileSync(f, upd.trimLog(old + line))
+  } catch { /* ignore */ }
+}
+ipcMain.handle('periapsis:updateLog', () => { try { return fs.readFileSync(userFile('update.log'), 'utf8').slice(-12000) } catch { return '' } })
+const setupUrl = (v) => `https://github.com/JoelonHTML/periapsis/releases/download/v${v}/Periapsis-Setup-${v}.exe`
+/** Open the installer like a double-click (visible, Windows handles any prompt), then quit so it can replace the files. */
+async function runInstaller(file, version) {
+  writeJson('pending-update.json', { version, file, at: Date.now(), from: app.getVersion() })
+  logLine('INFO', `run installer ${file || '(none)'} for ${version}, exe=${app.getPath('exe')}`)
+  if (file && fs.existsSync(file)) {
+    const err = await shell.openPath(file)
+    if (err) { logLine('ERROR', `openPath failed: ${err}`); await shell.openExternal(setupUrl(version)); return false }
+  } else await shell.openExternal(setupUrl(version)) // no downloaded file: the browser downloads the Setup.exe
+  quitting = true
+  setTimeout(() => app.quit(), 600)
+  return true
+}
+
 function setupUpdater() {
   if (!app.isPackaged || PORTABLE) return
   const { autoUpdater } = require('electron-updater')
+  autoUpdater.logger = { info: (m) => logLine('INFO', m), warn: (m) => logLine('WARN', m), error: (m) => logLine('ERROR', m), debug: () => {} }
   autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true // an update that was downloaded is installed on the next close at the latest
+  autoUpdater.autoInstallOnAppQuit = false // installing only on request (runInstaller); a silent install on quit had the same failure mode
+  // did the last attempt work?
+  const pending = readJson('pending-update.json', null), outcome = upd.pendingOutcome(pending, app.getVersion())
+  if (outcome !== 'none') logLine('INFO', `previous install of ${pending && pending.version}: ${outcome} (running ${app.getVersion()})`)
+  if (outcome === 'installed' || outcome === 'stale') { try { fs.unlinkSync(userFile('pending-update.json')) } catch { /* ignore */ } }
+  if (outcome === 'failed') updState = { type: 'failed', version: pending.version }
   autoUpdater.on('download-progress', (p) => send({ type: 'progress', percent: Math.round(p.percent) }))
-  autoUpdater.on('update-available', (i) => send({ type: 'available', version: i.version }))
+  autoUpdater.on('update-available', (i) => { if (!updState || updState.type !== 'failed') send({ type: 'available', version: i.version }) })
   autoUpdater.on('update-downloaded', (i) => send({ type: 'downloaded', version: i.version }))
   autoUpdater.on('error', (e) => send({ type: 'error', message: String(e && e.message || e).slice(0, 200) }))
   ipcMain.handle('periapsis:checkUpdate', () => autoUpdater.checkForUpdates().then(() => true).catch((e) => String((e && e.message) || e).slice(0, 300))) // true, or why not
-  ipcMain.handle('periapsis:installUpdate', () => { quitting = true; autoUpdater.quitAndInstall(true, true) }) // silent, and start the app again (quitting: close-to-tray must not hold the window open)
+  ipcMain.handle('periapsis:installUpdate', () => runInstaller(autoUpdater.installerPath, (updState && updState.version) || ''))
+  ipcMain.handle('periapsis:openInstaller', () => {
+    const p = readJson('pending-update.json', null), v = (p && p.version) || (updState && updState.version)
+    return v ? runInstaller(p && p.file ? p.file : autoUpdater.installerPath, v) : false
+  })
   ipcMain.handle('periapsis:updateState', () => updState)
   setTimeout(() => { autoUpdater.checkForUpdates().catch(() => {}) }, 8000) // after start-up, in the background
 }
 if (!app.isPackaged || PORTABLE) {
   ipcMain.handle('periapsis:checkUpdate', () => 'not packaged')
   ipcMain.handle('periapsis:installUpdate', () => false)
+  ipcMain.handle('periapsis:openInstaller', () => false)
   ipcMain.handle('periapsis:updateState', () => null)
 }
 

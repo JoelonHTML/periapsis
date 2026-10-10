@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CheckCircle2, Download, Orbit, GraduationCap, Loader2, RefreshCw, RotateCcw, WifiOff, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer'
@@ -25,7 +26,7 @@ function UpdateCard() {
   const live = !!latest && (canLiveUpdate(latest) || isDesktop())
   const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
   const available = (st.phase === 'available' || st.phase === 'applyfail' || st.phase === 'needperm' || st.phase === 'installprompt' || st.phase === 'readyrestart') && latest
-  const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t(isDesktop() ? 'upd.fail.badpc' : 'upd.fail.bad'), storage: t('upd.fail.storage'), notready: t('upd.fail.notready') }[st.why] : ''
+  const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t(isDesktop() ? 'upd.fail.badpc' : 'upd.fail.bad'), storage: t('upd.fail.storage'), notready: t('upd.fail.notready'), installfail: t('upd.fail.install') }[st.why] : ''
   const msg = {
     idle: t('upd.idle'),
     checking: t('upd.checking'),
@@ -75,7 +76,24 @@ function UpdateCard() {
         : <p className="text-center text-[11px] text-muted-foreground">{t('upd.liveHint')}{' '}
             <button type="button" className="underline underline-offset-2" onClick={() => downloadApk(latest.apkUrl)}>{t('upd.apkInstead')}</button></p>)}
       {available && !live && <p className="text-center text-[11px] text-muted-foreground">{t('upd.apkHint')}</p>}
+      {st.phase === 'applyfail' && st.why === 'installfail' && <DesktopInstallHelp />}
     </section>
+  )
+}
+
+/** Windows: the last update did not install. Open the installer visibly (Windows shows its own prompt, if any) or copy the log for a bug report. */
+function DesktopInstallHelp() {
+  const t = useT()
+  const [copied, setCopied] = useState(false)
+  const d = desktop()
+  if (!d?.openInstaller) return null
+  return (
+    <div className="grid gap-2">
+      <Button className="h-11" onClick={() => void d.openInstaller?.()}><Download className="size-4" /> {t('upd.openInstaller')}</Button>
+      <Button variant="outline" className="h-11" onClick={async () => { try { await navigator.clipboard.writeText((await d.updateLog?.()) || '—'); setCopied(true) } catch { /* no clipboard */ } }}>
+        {copied ? t('upd.logCopied') : t('upd.copyLog')}
+      </Button>
+    </div>
   )
 }
 

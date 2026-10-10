@@ -10,7 +10,11 @@ export interface DesktopBridge {
   checkUpdate(): Promise<boolean | string>
   installUpdate(): Promise<unknown>
   /** What the background updater is doing (missing in builds before 0.13). */
-  updateState?(): Promise<{ type: 'available' | 'downloaded'; version: string } | null>
+  updateState?(): Promise<{ type: 'available' | 'downloaded' | 'failed'; version: string } | null>
+  /** Tail of userData/update.log (0.13.1+). */
+  updateLog?(): Promise<string>
+  /** Open the downloaded installer visibly and quit (0.13.1+). */
+  openInstaller?(): Promise<boolean>
   onUpdate(cb: (m: DesktopUpdateMsg) => void): () => void
   /** Notifications (absent in builds from before the alerts feature): config for the main-process poller + tray, status, a notification now, tap -> navigate. */
   alertsConfig?(cfg: { config: unknown; trayOn: boolean; autostart: boolean }): Promise<DesktopAlertsStatus>
@@ -42,7 +46,8 @@ export function initDesktop() {
   void d.updateState?.().then((u) => {
     if (!u) return
     latest = { version: u.version, apkUrl: '', notes: '' }
-    updates.set({ s: u.type === 'downloaded' ? { phase: 'readyrestart', latest } : { phase: 'downloading', latest } })
+    // 'failed': we started an installer before this start, yet the old version is still running
+    updates.set({ s: u.type === 'failed' ? { phase: 'applyfail', latest, why: 'installfail' } : u.type === 'downloaded' ? { phase: 'readyrestart', latest } : { phase: 'downloading', latest } })
   }).catch(() => {})
 }
 export const isPortable = () => portable

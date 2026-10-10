@@ -19,8 +19,9 @@ let inflight: Promise<void> | null = null
 export function refreshUpdates(current?: string): Promise<void> {
   if (inflight) return inflight
   // Windows: the background updater is already downloading / done — a GitHub check must not knock that back to "available"
-  const busy = updates.get().s.phase
-  if (busy === 'downloading' || busy === 'readyrestart' || busy === 'restarting') return Promise.resolve()
+  // (nor hide the "update did not install" help)
+  const cur = updates.get().s
+  if (cur.phase === 'downloading' || cur.phase === 'readyrestart' || cur.phase === 'restarting' || (cur.phase === 'applyfail' && cur.why === 'installfail')) return Promise.resolve()
   updates.set({ s: { phase: 'checking' } })
   inflight = getUpdateStatus(current).then((st) => {
     updates.set({ s: st.kind === 'ok' ? { phase: st.newer ? 'available' : 'latest', latest: st.latest } : { phase: st.kind } })

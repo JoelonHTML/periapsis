@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('periapsisDesktop', {
   checkUpdate: () => ipcRenderer.invoke('periapsis:checkUpdate'),
   installUpdate: () => ipcRenderer.invoke('periapsis:installUpdate'),
   updateState: () => ipcRenderer.invoke('periapsis:updateState'),
+  updateLog: () => ipcRenderer.invoke('periapsis:updateLog'),
+  openInstaller: () => ipcRenderer.invoke('periapsis:openInstaller'),
   alertsConfig: (o) => ipcRenderer.invoke('periapsis:alertsConfig', o),
   alertsStatus: () => ipcRenderer.invoke('periapsis:alertsStatus'),
   alertsCheckNow: () => ipcRenderer.invoke('periapsis:alertsCheckNow'),
