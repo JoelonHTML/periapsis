@@ -145,6 +145,25 @@ test('OVATION robustness: swapped columns, stray equatorial cells, rtsw solar wi
   const mag = [{ time_tag: '2026-10-10T19:57:00', active: true, bt: 12.1, bz_gsm: -8.4 }, { time_tag: '2026-10-10T19:50:00', active: true, bt: 5, bz_gsm: 2 }]
   assert.deepEqual(parseMag(mag), { t: Date.parse('2026-10-10T19:57:00Z'), bz: -8.4, bt: 12.1 })
 })
+test('APOD page with a site header (new layout): finds the picture and the real title, not "NASA Science"; junk pages throw', () => {
+  const html = `<!doctype html><html><head><title>APOD: 2026 October 10 - Moon and Venus at Dawn</title>
+<link rel=stylesheet href="/apod/style.css"></head><body>
+<header class=site><a href="https://science.nasa.gov"><img src='https://science.nasa.gov/wp-content/uploads/nasa-logo.svg' alt=NASA></a><b>NASA Science</b></header>
+<center><h1>Astronomy Picture of the Day</h1><p>2026 October 10<br>
+<a href='image/2610/MoonVenus_Big.jpg'><img src='image/2610/MoonVenus_1080.jpg' alt='Moon and Venus' style='max-width:100%'></a></center>
+<center><b>NASA Science</b> <b> Moon and Venus at Dawn </b><br><b>Image Credit &amp; Copyright:</b> A. Photographer</center>
+<p><b> Explanation: </b> A thin crescent Moon met brilliant Venus.</p><center><b> Tomorrow's picture: </b></center></body></html>`
+  const a = parseApod(html)
+  assert.equal(a.title, 'Moon and Venus at Dawn'); assert.equal(a.video, false); assert.equal(a.date, '2026-10-10')
+  assert.equal(a.url, 'https://apod.nasa.gov/apod/image/2610/MoonVenus_1080.jpg')
+  assert.equal(a.hdurl, 'https://apod.nasa.gov/apod/image/2610/MoonVenus_Big.jpg')
+  assert.equal(a.explanation, 'A thin crescent Moon met brilliant Venus.')
+  // a NASA landing page (redirect) has no APOD picture: throw so the next mirror is used
+  assert.throws(() => parseApod('<html><head><title>NASA Science</title></head><body><img src="/logo.svg"><b>NASA Science</b></body></html>'))
+  // video day from the page: still from YouTube
+  const v = parseApod(html.replace(/<a href='image[\s\S]*?<\/a>/, '<iframe width=960 height=540 src="https://www.youtube.com/embed/abcDEF123?rel=0"></iframe>'))
+  assert.equal(v.video, true); assert.equal(v.thumb, 'https://img.youtube.com/vi/abcDEF123/hqdefault.jpg')
+})
 test('launches: documented shape, missing fields, string info_urls', () => {
   const l = parseLaunches(launchesFixture(NOW))
   assert.equal(l.length, 3)

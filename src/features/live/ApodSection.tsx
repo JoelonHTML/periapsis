@@ -13,7 +13,7 @@ export function ApodSection() {
   const t = useT()
   const [key, setKey] = useState(readKey)
   const [draft, setDraft] = useState(readKey)
-  const apod = useFeed({ key: 'live.apod', url: `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(key || 'DEMO_KEY')}&thumbs=true`, fallbackUrl: [APOD_PAGE, APOD_MIRROR], maxAgeMs: 12 * 3600_000, minRetryMs: 30 * 60_000, parse: parseApod })
+  const apod = useFeed({ key: 'live.apod.v2', /* v2: drops entries the old, too lenient page reader cached */ url: `https://api.nasa.gov/planetary/apod?api_key=${encodeURIComponent(key || 'DEMO_KEY')}&thumbs=true`, fallbackUrl: [APOD_PAGE, APOD_MIRROR], maxAgeMs: 12 * 3600_000, minRetryMs: 30 * 60_000, parse: parseApod })
   const save = (k: string) => {
     try { if (k) localStorage.setItem(KEY, k); else localStorage.removeItem(KEY) } catch { /* private mode */ }
     setKey(k); setDraft(k)
