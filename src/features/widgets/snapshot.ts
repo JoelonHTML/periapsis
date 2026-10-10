@@ -2,7 +2,7 @@
 import { compassIdx, skyNight, solarNoon, type NightInfo, type Site } from '../tonight/sky.ts'
 import { buildEvents } from '../tonight/events.ts'
 import { localISO, parseISO, shiftISO } from '../tonight/fmt.ts'
-import * as tonight from '../tonight/texts.ts'
+import { eventTitle, tr } from '../tonight/eventTitle.ts'
 import { findPasses } from '../satellites/passes.ts'
 import { satrecOf, type SatRecord } from '../satellites/tle.ts'
 import { currentKp, gScale, type KpRow } from '../live/spaceweather.ts'
@@ -13,13 +13,6 @@ export const NIGHTS = 14
 export const DEFAULT_ALPHA = 0.85
 export const ACCENT = '#22d3ee'
 const DAY = 86400000
-
-const DICT: Record<L, Record<string, string>> = { nl: tonight.nl, en: tonight.en, el: tonight.el }
-const tr = (lang: L, key: string, vars?: Record<string, string | number>) => {
-  let s = DICT[lang][key] ?? tonight.nl[key] ?? key
-  if (vars) for (const k in vars) s = s.replaceAll(`{${k}}`, String(vars[k]))
-  return s
-}
 
 export interface SnapshotInput {
   site: Site & { name?: string | null }
@@ -69,16 +62,7 @@ export function buildSnapshot(inp: SnapshotInput) {
   })
 
   const events = buildEvents(now, 2).filter((e) => e.ms >= now && e.ms <= now + 30 * DAY).slice(0, 20).map((e) => {
-    let title: string
-    switch (e.kind) {
-      case 'moon': title = tr(lang, `sky.ev.moon.${e.phase}`); break
-      case 'season': title = tr(lang, `sky.ev.${e.season}`); break
-      case 'conj': title = tr(lang, 'sky.ev.conj', { a: name(e.a), b: name(e.b) }); break
-      case 'opp': title = tr(lang, 'sky.ev.opp', { p: name(e.a) }); break
-      case 'elong': title = tr(lang, e.evening ? 'sky.ev.elongE' : 'sky.ev.elongW', { p: name(e.a) }); break
-      case 'meteor': title = tr(lang, `sky.sh.${e.shower}`); break
-      default: title = tr(lang, `sky.ev.${e.kind}.${e.eclipse?.kind}`) // solar | lunar
-    }
+    const title = eventTitle(lang, e)
     return { ms: Math.round(e.ms), kind: e.kind, title }
   })
 
