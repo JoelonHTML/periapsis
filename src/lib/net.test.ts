@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 
 const mem = new Map<string, string>()
 ;(globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) }
-const { _resetNet, getCached } = await import('./net.ts')
+const { _resetNet, getCached, getCachedChain } = await import('./net.ts')
 
 const parse = (b: unknown) => { const o = b as { n?: number }; if (typeof o?.n !== 'number') throw new Error('bad'); return o.n }
 
@@ -38,5 +38,24 @@ test('offline / http error / bad data fall back to the cache with an error flag,
     const before = calls
     await getCached('t2', 'https://x', { maxAgeMs: 0, minRetryMs: 60_000, parse, now: 40 }) // throttled: no request
     assert.equal(calls, before)
+  } finally { globalThis.fetch = real; _resetNet() }
+})
+
+test('mirror chain: unreachable primary and a 503 page do not stop the third source; all dead keeps the primary error', async () => {
+  const real = globalThis.fetch
+  const hit: string[] = []
+  try {
+    globalThis.fetch = (async (u: string) => {
+      hit.push(u)
+      if (u.includes('api.')) throw new TypeError('net::ERR_CONNECTION_TIMED_OUT') // looks like 'offline'
+      if (u.includes('page')) return new Response('<html>Service Unavailable</html>', { status: 503 })
+      return new Response(JSON.stringify({ n: 42 }))
+    }) as typeof fetch
+    const r = await getCachedChain('chain', ['https://api.x', 'https://page.x', 'https://mirror.x'], { maxAgeMs: 0, minRetryMs: 0, parse, now: 0 })
+    assert.deepEqual([r.data, r.error, hit.length], [42, null, 3])
+    _resetNet(); hit.length = 0
+    globalThis.fetch = (async (u: string) => { hit.push(u); throw new TypeError('down ' + u) }) as typeof fetch
+    const d = await getCachedChain('chain2', ['https://a', 'https://b'], { maxAgeMs: 0, minRetryMs: 0, parse, now: 0 })
+    assert.deepEqual([d.error, hit.length], ['offline', 2]); assert.match(d.detail ?? '', /down https:\/\/a/)
   } finally { globalThis.fetch = real; _resetNet() }
 })

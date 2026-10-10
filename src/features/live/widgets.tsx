@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { ChevronDown, ExternalLink, RefreshCw } from 'lucide-react'
-import { getCached, type Fetched } from '@/lib/net'
+import { getCachedChain, type Fetched } from '@/lib/net'
 import { useT } from '@/lib/i18n'
 import { useSettings } from '@/lib/settings'
 import { ageParts, safeUrl } from './util.ts'
@@ -33,7 +33,7 @@ export function useNow(ms: number): number {
   return now
 }
 
-export interface FeedSpec<T> { key: string; url: string; fallbackUrl?: string; maxAgeMs: number; minRetryMs: number; parse: (b: unknown) => T; headers?: Record<string, string> }
+export interface FeedSpec<T> { key: string; url: string; fallbackUrl?: string | string[]; maxAgeMs: number; minRetryMs: number; parse: (b: unknown) => T; headers?: Record<string, string> }
 export interface Feed<T> { data: T | null; fetchedAt: number | null; error: Fetched<T>['error']; detail?: string; loading: boolean; note: boolean; refresh: () => void }
 
 /** One cached request: loads on mount (and when the url changes), `refresh` forces a reload (still obeying the retry throttle). */
@@ -48,9 +48,7 @@ export function useFeed<T>(spec: FeedSpec<T>): Feed<T> {
     const opts = { maxAgeMs: s.maxAgeMs, minRetryMs: s.minRetryMs, parse: s.parse, headers: s.headers, force }
     let r: Fetched<T>
     try {
-      r = await getCached(s.key, s.url, opts)
-      // Primary failed (even with a stale cache to show): try the fallback; keep the primary's diagnostics if that fails too.
-      if (r.error && r.error !== 'offline' && s.fallbackUrl) { const alt = await getCached(s.key, s.fallbackUrl, opts); if (!alt.error) r = alt }
+      r = await getCachedChain(s.key, [s.url, ...[s.fallbackUrl ?? []].flat()], opts)
     } catch { r = { data: null, fetchedAt: null, fromCache: false, error: 'offline' } }
     if (!alive.current) return
     setSt((p) => ({ data: r.data, fetchedAt: r.fetchedAt, error: r.error, detail: r.detail, loading: false, note: force && r.fromCache && !r.error && r.fetchedAt === p.fetchedAt }))

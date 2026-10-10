@@ -2,6 +2,8 @@
 import { isObj, strOf, safeUrl } from './util.ts'
 export interface Apod { date: string; title: string; explanation: string; url: string; hdurl: string | null; video: boolean; thumb: string | null; copyright: string | null }
 export const APOD_PAGE = 'https://apod.nasa.gov/apod/astropix.html'
+/** Community mirror of the APOD API (same JSON fields, no key, CORS on): last resort when both NASA hosts fail. */
+export const APOD_MIRROR = 'https://apod.ellanan.com/api'
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 const text = (h: string) => h.replace(/<[^>]*>/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
 const abs = (u: string | undefined) => (u ? safeUrl(new URL(u, APOD_PAGE).href) : null)
