@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronRight, Compass, Orbit, Search, Telescope, X } from 'lucide-react'
 import { keyFeatures, searchFeatures, type Feature } from '@/lib/feature-index'
 import { useSettings } from '@/lib/settings'
@@ -42,12 +42,39 @@ export function StartScreen() {
     const first = els[0], last = els[els.length - 1], a = document.activeElement
     if (e.shiftKey && (a === first || a === box.current)) { e.preventDefault(); last.focus() } else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus() }
   }
-  if (!home) return null
+  // Leaving: the chosen tile's photo zooms out to fill the screen while the rest fades, the world is opened underneath, then the photo
+  // dissolves into it. The screen stays mounted (`leave`) until that last fade is done. Reduced motion: straight in.
+  const [leave, setLeave] = useState<{ m: Mode; tab?: Parameters<typeof enterMode>[1]; r: DOMRect | null } | null>(null)
+  const zoom = useRef<HTMLDivElement>(null)
+  const go = (m: Mode, tab?: Parameters<typeof enterMode>[1], from?: Element | null) => {
+    if (leave) return
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { enterMode(m, tab); return }
+    tap()
+    setLeave({ m, tab, r: from ? from.getBoundingClientRect() : null })
+  }
+  useLayoutEffect(() => {
+    const el = zoom.current
+    if (!leave || !el) return
+    const r = leave.r, full = { left: '0px', top: '0px', width: '100vw', height: '100dvh', borderRadius: '0px' }
+    const grow = r
+      ? el.animate([{ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: '20px' }, full], { duration: 480, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' })
+      : el.animate([{ ...full, opacity: 0, transform: 'scale(1.04)' }, { ...full, opacity: 1, transform: 'scale(1)' }], { duration: 320, easing: 'ease-out', fill: 'forwards' })
+    let done = false
+    grow.finished.then(() => {
+      if (done) return
+      enterMode(leave.m, leave.tab) // the world renders underneath the full-screen photo
+      const fade = el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.06)' }], { duration: 520, delay: 120, easing: 'ease-in-out', fill: 'forwards' })
+      return fade.finished
+    }).catch(() => {}).finally(() => { if (!done) { setLeave(null); setQ('') } })
+    return () => { done = true }
+  }, [leave])
+  if (!home && !leave) return null
   const hits = searchFeatures(q, lang)
-  const open = (f: Feature) => { setQ(''); enterMode(f.mode, f.tab) }
+  const open = (f: Feature, from?: Element | null) => go(f.mode, f.tab, from)
   return (
-    <div ref={box} tabIndex={-1} onKeyDown={trap} aria-modal="true" className="tour-fade fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-background/85 outline-none backdrop-blur-md" role="dialog" aria-label={t('home.title')}>
-      <div className="mx-auto flex min-h-full w-full max-w-[1100px] flex-col justify-center px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <div ref={box} tabIndex={-1} onKeyDown={trap} aria-modal="true" className={`tour-fade fixed inset-0 z-50 overflow-y-auto overscroll-contain outline-none ${leave ? 'home-leaving' : 'bg-background/85 backdrop-blur-md'}`} role="dialog" aria-label={t('home.title')}>
+      {leave && <div ref={zoom} className="home-zoom" style={{ backgroundImage: `url(${PHOTO[leave.m]})` }} aria-hidden />}
+      <div className="home-body mx-auto flex min-h-full w-full max-w-[1100px] flex-col justify-center px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="home-in flex items-center justify-center gap-2 text-sm font-semibold tracking-wide text-muted-foreground"><Orbit className="size-5 text-cyan-400" /> Periapsis</div>
         <h1 className="home-in mt-2 mb-4 text-center text-2xl font-semibold">{t('home.title')}</h1>
         <label className="home-in relative mx-auto mb-4 block w-full max-w-lg">
@@ -63,7 +90,7 @@ export function StartScreen() {
               const Icon = ICON[f.mode]
               return (
                 <li key={f.id}>
-                  <button type="button" onClick={() => open(f)} className="flex min-h-14 w-full items-center gap-3 rounded-2xl border bg-card/90 p-3 text-left active:scale-[0.98]">
+                  <button type="button" onClick={(e) => open(f, e.currentTarget)} className="flex min-h-14 w-full items-center gap-3 rounded-2xl border bg-card/90 p-3 text-left active:scale-[0.98]">
                     <Icon className={`size-6 shrink-0 ${TINT[f.mode]}`} strokeWidth={1.6} />
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold">{f.txt[lang][0]}</span>
@@ -81,7 +108,7 @@ export function StartScreen() {
               const Icon = ICON[m]
               return (
                 // A real link (Tab-reachable, focus-visible = hover); the click opens the world in place.
-                <a key={m} href={`#tab=${modeTabs(m)[0]}`} onClick={(e) => { e.preventDefault(); enterMode(m) }}
+                <a key={m} href={`#tab=${modeTabs(m)[0]}`} onClick={(e) => { e.preventDefault(); go(m, undefined, e.currentTarget) }}
                   className={`home-cat home-in ${m === last ? 'home-cat--last' : ''}`} style={{ backgroundImage: `url(${PHOTO[m]})`, animationDelay: `${i * 0.15}s` }}>
                   <span className="home-cat__more">
                     <span className="block text-sm text-white/85">{t(`mode.${m}.h`)}</span>

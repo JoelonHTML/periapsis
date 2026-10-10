@@ -150,6 +150,11 @@
 .tour-ring { transition: left 260ms cubic-bezier(0.23, 1, 0.32, 1), top 260ms cubic-bezier(0.23, 1, 0.32, 1), width 260ms cubic-bezier(0.23, 1, 0.32, 1), height 260ms cubic-bezier(0.23, 1, 0.32, 1); }
 @keyframes tour-pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
 @keyframes tour-fade { from { opacity: 0; } }
+/* Leaving the start screen: everything but the zooming photo fades out quickly (the photo is drawn by .home-zoom on top). */
+.home-leaving { background: transparent; }
+.home-leaving .home-body { opacity: 0; transform: scale(.98); transition: opacity .28s ease-out, transform .28s ease-out; pointer-events: none; }
+.home-zoom { position: fixed; z-index: 3; background: #04060b center / cover no-repeat; pointer-events: none; will-change: left, top, width, height, opacity, transform; }
+.home-zoom::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(4,6,11,.7), rgba(4,6,11,.15)); }
 /* Start screen: world tiles as an accordion of photo strips (desktop), a 2-column grid (tablet) or a list (phone).
    Only flex-grow, the label position and the arrow opacity animate, so it stays smooth and interrupts cleanly. */
 .home-in { animation: home-in 1s ease-out backwards; }
