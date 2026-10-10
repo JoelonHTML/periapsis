@@ -9,6 +9,8 @@ export interface DesktopBridge {
   /** true, or the updater's error message (older builds answered false). */
   checkUpdate(): Promise<boolean | string>
   installUpdate(): Promise<unknown>
+  /** What the background updater is doing (missing in builds before 0.13). */
+  updateState?(): Promise<{ type: 'available' | 'downloaded'; version: string } | null>
   onUpdate(cb: (m: DesktopUpdateMsg) => void): () => void
 }
 export type DesktopUpdateMsg = { type: 'available' | 'downloaded'; version: string } | { type: 'progress'; percent: number } | { type: 'error'; message: string }
@@ -29,5 +31,11 @@ export function initDesktop() {
     else if (m.type === 'downloaded') updates.set({ s: { phase: 'readyrestart', latest: latest ?? { version: m.version, apkUrl: '', notes: '' } } })
     else if (m.type === 'error' && latest) updates.set({ s: { phase: 'applyfail', latest, why: 'bad-file' } })
   })
+  // a download that started (or finished) before this window loaded
+  void d.updateState?.().then((u) => {
+    if (!u) return
+    latest = { version: u.version, apkUrl: '', notes: '' }
+    updates.set({ s: u.type === 'downloaded' ? { phase: 'readyrestart', latest } : { phase: 'downloading', latest } })
+  }).catch(() => {})
 }
 export const isPortable = () => portable

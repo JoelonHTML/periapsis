@@ -6,7 +6,13 @@ const path = require('path')
 
 const PORTABLE = !!process.env.PORTABLE_EXECUTABLE_FILE
 let win = null
-const send = (msg) => { if (win && !win.isDestroyed()) win.webContents.send('periapsis:update', msg) }
+// The updater's latest state lives here too, so a reloaded window (or one opened later) still knows a download is running or ready.
+let updState = null // { type: 'available'|'downloaded', version } | null
+const send = (msg) => {
+  if (msg.type === 'available' || msg.type === 'downloaded') updState = { type: msg.type, version: msg.version }
+  else if (msg.type === 'error' && updState && updState.type === 'available') updState = null
+  if (win && !win.isDestroyed()) win.webContents.send('periapsis:update', msg)
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -50,11 +56,13 @@ function setupUpdater() {
   autoUpdater.on('error', (e) => send({ type: 'error', message: String(e && e.message || e).slice(0, 200) }))
   ipcMain.handle('periapsis:checkUpdate', () => autoUpdater.checkForUpdates().then(() => true).catch((e) => String((e && e.message) || e).slice(0, 300))) // true, or why not
   ipcMain.handle('periapsis:installUpdate', () => autoUpdater.quitAndInstall(true, true)) // silent, and start the app again
+  ipcMain.handle('periapsis:updateState', () => updState)
   setTimeout(() => { autoUpdater.checkForUpdates().catch(() => {}) }, 8000) // after start-up, in the background
 }
 if (!app.isPackaged || PORTABLE) {
   ipcMain.handle('periapsis:checkUpdate', () => 'not packaged')
   ipcMain.handle('periapsis:installUpdate', () => false)
+  ipcMain.handle('periapsis:updateState', () => null)
 }
 
 const lock = app.requestSingleInstanceLock()

@@ -24,7 +24,7 @@ function UpdateCard() {
   const live = !!latest && (canLiveUpdate(latest) || isDesktop())
   const busy = st.phase === 'checking' || st.phase === 'downloading' || st.phase === 'restarting'
   const available = (st.phase === 'available' || st.phase === 'applyfail' || st.phase === 'needperm' || st.phase === 'installprompt' || st.phase === 'readyrestart') && latest
-  const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t('upd.fail.bad'), storage: t('upd.fail.storage'), notready: t('upd.fail.notready') }[st.why] : ''
+  const failMsg = st.phase === 'applyfail' ? { offline: t('upd.offline'), 'needs-apk': t('upd.fail.needsapk'), 'bad-file': t(isDesktop() ? 'upd.fail.badpc' : 'upd.fail.bad'), storage: t('upd.fail.storage'), notready: t('upd.fail.notready') }[st.why] : ''
   const msg = {
     idle: t('upd.idle'),
     checking: t('upd.checking'),
