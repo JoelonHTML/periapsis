@@ -17,6 +17,7 @@ export const NOTIF: Record<L, Record<string, string>> = {
     sum_title: 'Vanavond te zien', sum_none: 'Geen planeten zichtbaar', sum_iss: 'ISS {time} ({el}°)',
     test_title: 'Test: meldingen werken', test_body: 'Zo ziet een melding van Periapsis eruit.',
     channel_sky: 'Hemel-agenda',
+    tray_open: 'Periapsis openen', tray_on: 'Meldingen', tray_quit: 'Afsluiten', tray_balloon: 'Periapsis blijft draaien in het systeemvak voor meldingen.',
   },
   en: {
     kp_title: 'Geomagnetic storm {g}', kp_body: 'Kp {kp} — aurora possible down to ~{lat}° latitude',
@@ -32,6 +33,7 @@ export const NOTIF: Record<L, Record<string, string>> = {
     sum_title: 'Tonight in the sky', sum_none: 'No planets visible', sum_iss: 'ISS {time} ({el}°)',
     test_title: 'Test: notifications work', test_body: 'This is what a Periapsis notification looks like.',
     channel_sky: 'Sky calendar',
+    tray_open: 'Open Periapsis', tray_on: 'Notifications', tray_quit: 'Quit', tray_balloon: 'Periapsis keeps running in the tray for notifications.',
   },
   el: {
     kp_title: 'Γεωμαγνητική καταιγίδα {g}', kp_body: 'Kp {kp} — πιθανό σέλας έως ~{lat}° γεωγραφικό πλάτος',
@@ -47,6 +49,7 @@ export const NOTIF: Record<L, Record<string, string>> = {
     sum_title: 'Απόψε στον ουρανό', sum_none: 'Κανένας πλανήτης ορατός', sum_iss: 'ISS {time} ({el}°)',
     test_title: 'Δοκιμή: οι ειδοποιήσεις λειτουργούν', test_body: 'Έτσι φαίνεται μια ειδοποίηση του Periapsis.',
     channel_sky: 'Ημερολόγιο ουρανού',
+    tray_open: 'Άνοιγμα Periapsis', tray_on: 'Ειδοποιήσεις', tray_quit: 'Έξοδος', tray_balloon: 'Το Periapsis συνεχίζει να τρέχει στην περιοχή ειδοποιήσεων.',
   },
 }
 
