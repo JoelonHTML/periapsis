@@ -7,6 +7,7 @@ import { markReady } from '@/lib/ota'
 import { initSettings } from '@/lib/settings-apply'
 import { initDesktop } from '@/lib/desktop'
 import { initWidgets } from '@/features/widgets/sync'
+import { initAlerts } from '@/features/alerts/sync'
 import { toJ2000 } from '@/lib/astro'
 import { runMga, type MgaInput } from '@/lib/mga'
 import { flybyWindow } from '@/lib/mga'
@@ -14,6 +15,7 @@ import { addShip, clock, fitRoute, jumpTo, openCloseup, removeShip, renameShip, 
 
 initDesktop() // Windows app only: automatic updates
 initSettings() // saved settings first, so deep-link params below still win
+initAlerts() // notifications: native worker config, local schedule, Windows tray bridge (no-op in a browser)
 initWidgets() // Android home-screen widgets: deep links + snapshot sync (no-op elsewhere)
 
 // Deep links: #view=galaxy&tab=galaxy&speed=3600&t=2038-11-03   (speed in s/s, t = UTC date)
