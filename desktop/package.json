@@ -13,7 +13,7 @@
     "appId": "nl.periapsis.desktop",
     "productName": "Periapsis",
     "copyright": "© Joël Nieuwkoop",
-    "files": ["main.cjs", "preload.cjs", "app/**/*", "package.json"],
+    "files": ["main.cjs", "preload.cjs", "alerts-logic.cjs", "build/icon.png", "app/**/*", "package.json"],
     "directories": { "output": "dist", "buildResources": "build" },
     "publish": [{ "provider": "github", "owner": "JoelonHTML", "repo": "periapsis" }],
     "win": { "icon": "build/icon.png", "target": ["nsis", "portable"] },
