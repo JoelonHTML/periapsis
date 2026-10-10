@@ -39,11 +39,15 @@ export interface Ovation { forecast: number | null; cells: number[] }
 export function parseOvation(body: unknown): Ovation {
   const list = isObj(body) ? body.coordinates : body
   if (!Array.isArray(list) || list.length === 0) throw new Error('no coordinates')
+  // Column order comes from the file's own "Data Format" ("[Longitude, Latitude, Aurora]"); a lat column with values beyond 90 means it is swapped.
+  const fmt = isObj(body) ? strOf(body['Data Format']).toLowerCase() : ''
+  let iLat = fmt && fmt.indexOf('lat') < fmt.indexOf('lon') ? 0 : 1, iLon = 1 - iLat
+  if (list.some((c) => Array.isArray(c) && Math.abs(numOf(c[iLat]) ?? 0) > 90)) [iLat, iLon] = [iLon, iLat]
   const cells: number[] = []
   let seen = 0
   for (const c of list) {
     if (!Array.isArray(c) || c.length < 3) continue
-    const lon = numOf(c[0]), lat = numOf(c[1]), p = numOf(c[2])
+    const lon = numOf(c[iLon]), lat = numOf(c[iLat]), p = numOf(c[2])
     if (lon === null || lat === null || p === null || Math.abs(lat) > 90) continue
     seen++
     if (p >= 1) cells.push(Math.round(lon), Math.round(lat), Math.round(p))
@@ -59,39 +63,49 @@ export function auroraAt(o: Ovation, lat: number, lon: number): number {
   for (let i = 0; i + 2 < o.cells.length; i += 3) if (o.cells[i] === lo && o.cells[i + 1] === la) return o.cells[i + 2]
   return 0
 }
-/** How far toward the equator the oval reaches (cells >= minP) around the observer's longitude (+-3°), in the observer's hemisphere. null = none. */
+/** How far toward the equator the oval reaches (cells >= minP) around the observer's longitude (+-3°), in the observer's hemisphere. null = none.
+ *  Starts at the strongest cell (the heart of the oval) and walks equatorward while the band is continuous (gaps up to 2°), so stray
+ *  low-latitude cells can't drag the edge to the equator; nothing equatorward of 20° counts (aurora never gets that low). */
 export function ovalEdge(o: Ovation, lat: number, lon: number, minP = 10): { lat: number; kmFromObserver: number } | null {
-  const north = lat >= 0, lo = wrapLon(lon)
-  let edge: number | null = null
+  const north = lat >= 0, lo = wrapLon(lon), best = new Map<number, number>() // |lat| -> max probability
   for (let i = 0; i + 2 < o.cells.length; i += 3) {
     const dl = Math.min((o.cells[i] - lo + 360) % 360, (lo - o.cells[i] + 360) % 360)
-    const la = o.cells[i + 1]
-    if (dl > 3 || o.cells[i + 2] < minP || (north ? la < 0 : la > 0)) continue
-    if (edge === null || (north ? la < edge : la > edge)) edge = la
+    const la = north ? o.cells[i + 1] : -o.cells[i + 1], p = o.cells[i + 2] // "poleward = larger" in either hemisphere
+    if (dl <= 3 && p >= minP && la >= 20) best.set(la, Math.max(p, best.get(la) ?? 0))
   }
-  if (edge === null) return null
-  return { lat: edge, kmFromObserver: Math.round(Math.abs(edge - lat) * 111.2) }
+  if (!best.size) return null
+  let edge = [...best].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0][0] // strongest; ties: the more equatorward
+  for (;;) { const next = [1, 2].map((d) => edge - d).find((l) => best.has(l)); if (next === undefined) break; edge = next }
+  const e = north ? edge : -edge
+  return { lat: e, kmFromObserver: Math.round(Math.abs(e - lat) * 111.2) }
 }
 
 // --- Solar wind: products/solar-wind/plasma-1-day.json = [["time_tag","density","speed","temperature"], ["2026-10-02 12:00:00.000","4.1","410.2","90000"], ...]
 export interface Plasma { t: number; speed: number | null; density: number | null }
 export function parsePlasma(body: unknown): Plasma {
-  const rows = tableRows(body)
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const speed = numOf(rows[i].speed), density = numOf(rows[i].density), t = parseUtc(rows[i].time_tag)
-    if (t !== null && speed !== null) return { t, speed, density }
+  // products/solar-wind (oldest first) or json/rtsw/rtsw_wind_1m.json ({time_tag, active, proton_speed, proton_density, ...}, newest first):
+  // take the newest valid row by time, preferring the spacecraft marked active.
+  let best: Plasma | null = null, bestActive = false
+  for (const r of tableRows(body)) {
+    const speed = numOf(r.speed ?? r.proton_speed), density = numOf(r.density ?? r.proton_density), t = parseUtc(r.time_tag), act = r.active !== false
+    if (t === null || speed === null) continue
+    if (!best || (act && !bestActive) || (act === bestActive && t > best.t)) { best = { t, speed, density }; bestActive = act }
   }
-  throw new Error('no plasma data')
+  if (!best) throw new Error('no plasma data')
+  return best
 }
 // products/solar-wind/mag-1-day.json = [["time_tag","bx_gsm","by_gsm","bz_gsm","lon_gsm","lat_gsm","bt"], ...]
 export interface Mag { t: number; bz: number; bt: number | null }
 export function parseMag(body: unknown): Mag {
-  const rows = tableRows(body)
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const bz = numOf(rows[i].bz_gsm ?? rows[i].bz), bt = numOf(rows[i].bt), t = parseUtc(rows[i].time_tag)
-    if (t !== null && bz !== null) return { t, bz, bt }
+  // products/solar-wind/mag-1-day.json or json/rtsw/rtsw_mag_1m.json ({time_tag, active, bt, bz_gsm, ...}): newest valid row, active first
+  let best: Mag | null = null, bestActive = false
+  for (const r of tableRows(body)) {
+    const bz = numOf(r.bz_gsm ?? r.bz), bt = numOf(r.bt), t = parseUtc(r.time_tag), act = r.active !== false
+    if (t === null || bz === null) continue
+    if (!best || (act && !bestActive) || (act === bestActive && t > best.t)) { best = { t, bz, bt }; bestActive = act }
   }
-  throw new Error('no mag data')
+  if (!best) throw new Error('no mag data')
+  return best
 }
 
 // --- X-ray flares: json/goes/primary/xray-flares-latest.json = [{"time_tag","begin_time","begin_class","max_time","max_class":"C1.2","max_xrlong","end_time","end_class",...}]

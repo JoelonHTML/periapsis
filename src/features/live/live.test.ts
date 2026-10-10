@@ -123,6 +123,28 @@ test('APOD: web page fallback and pages without an image url', () => {
   assert.equal(other.url, 'https://apod.nasa.gov/apod/ap261008.html'); assert.equal(other.video, true)
   assert.throws(() => parseApod('<html>Service Unavailable</html>'))
 })
+test('OVATION robustness: swapped columns, stray equatorial cells, rtsw solar wind (newest first, active spacecraft)', () => {
+  // file that lists [lat, lon, p] and says so
+  const sw = parseOvation({ 'Data Format': '[Latitude, Longitude, Aurora]', coordinates: [[62, 5, 40], [61, 5, 30], [60, 5, 12]] })
+  assert.deepEqual(sw.cells.slice(0, 3), [5, 62, 40])
+  // unlabeled but swapped (a "lat" column beyond 90): detected
+  assert.deepEqual(parseOvation({ coordinates: [[62, 300, 40]] }).cells, [300, 62, 40])
+  // band 66..58 °N around 5°E plus noise near the equator: edge is the band's equatorward end, not 0°
+  const cells: number[] = []
+  for (let la = 70; la >= 58; la--) cells.push(5, la, la >= 64 ? 60 : 20)
+  cells.push(5, 0, 15, 5, 1, 12, 5, 30, 11)
+  const e = ovalEdge({ forecast: null, cells }, 51.5, 4.5)!
+  assert.equal(e.lat, 58); assert.equal(e.kmFromObserver, Math.round(6.5 * 111.2))
+  // rtsw files: objects, newest first, two spacecraft
+  const wind = [
+    { time_tag: '2026-10-10T19:59:00', active: false, source: 'ACE', proton_speed: 999, proton_density: 1 },
+    { time_tag: '2026-10-10T19:58:00', active: true, source: 'DSCOVR', proton_speed: 512.3, proton_density: 6.1 },
+    { time_tag: '2026-10-10T19:30:00', active: true, source: 'DSCOVR', proton_speed: 400, proton_density: 3 },
+  ]
+  assert.deepEqual(parsePlasma(wind), { t: Date.parse('2026-10-10T19:58:00Z'), speed: 512.3, density: 6.1 })
+  const mag = [{ time_tag: '2026-10-10T19:57:00', active: true, bt: 12.1, bz_gsm: -8.4 }, { time_tag: '2026-10-10T19:50:00', active: true, bt: 5, bz_gsm: 2 }]
+  assert.deepEqual(parseMag(mag), { t: Date.parse('2026-10-10T19:57:00Z'), bz: -8.4, bt: 12.1 })
+})
 test('launches: documented shape, missing fields, string info_urls', () => {
   const l = parseLaunches(launchesFixture(NOW))
   assert.equal(l.length, 3)

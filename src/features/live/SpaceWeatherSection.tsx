@@ -16,8 +16,8 @@ export function SpaceWeather() {
   const obs = useObserver((s) => s)
   const kp = useFeed({ key: 'live.kp', url: BASE + 'products/noaa-planetary-k-index-forecast.json', maxAgeMs: MAX, minRetryMs: RETRY, parse: parseKpForecast })
   const ov = useFeed({ key: 'live.ovation', url: BASE + 'json/ovation_aurora_latest.json', maxAgeMs: 30 * 60_000, minRetryMs: RETRY, parse: parseOvation })
-  const pl = useFeed({ key: 'live.plasma', url: BASE + 'products/solar-wind/plasma-1-day.json', maxAgeMs: MAX, minRetryMs: RETRY, parse: parsePlasma })
-  const mg = useFeed({ key: 'live.mag', url: BASE + 'products/solar-wind/mag-1-day.json', maxAgeMs: MAX, minRetryMs: RETRY, parse: parseMag })
+  const pl = useFeed({ key: 'live.plasma', url: BASE + 'json/rtsw/rtsw_wind_1m.json', fallbackUrl: BASE + 'products/solar-wind/plasma-1-day.json', maxAgeMs: MAX, minRetryMs: RETRY, parse: parsePlasma })
+  const mg = useFeed({ key: 'live.mag', url: BASE + 'json/rtsw/rtsw_mag_1m.json', fallbackUrl: BASE + 'products/solar-wind/mag-1-day.json', maxAgeMs: MAX, minRetryMs: RETRY, parse: parseMag })
   const fl = useFeed({ key: 'live.flare', url: BASE + 'json/goes/primary/xray-flares-latest.json', maxAgeMs: 30 * 60_000, minRetryMs: RETRY, parse: parseFlare })
   const feeds = [kp, ov, pl, mg, fl]
   const n1 = (x: number, d = 0) => x.toLocaleString(loc, { minimumFractionDigits: d, maximumFractionDigits: d }).replace('-', '−')
