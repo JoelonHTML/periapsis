@@ -59,6 +59,14 @@ export async function getCached<T>(key: string, url: string, opts: { maxAgeMs: n
   return { data: v, fetchedAt: now, fromCache: false, error: null }
 }
 
+/** getCached over a list of mirrors: the first URL is the primary, the rest are tried in order when it fails for any reason (an unreachable
+ *  host looks like 'offline' too, so it is no reason to skip them). All share one cache key. If every one fails, the primary's diagnostics stay. */
+export async function getCachedChain<T>(key: string, urls: string[], opts: Parameters<typeof getCached<T>>[2]): Promise<Fetched<T>> {
+  let r = await getCached(key, urls[0], opts)
+  for (const u of urls.slice(1)) { if (!r.error) break; const a = await getCached(key, u, opts); if (!a.error) r = a }
+  return r
+}
+
 /** First characters of whatever the server sent, flattened, for the diagnostics line. */
 function snippet(body: unknown): string {
   const s = typeof body === 'string' ? body : (() => { try { return JSON.stringify(body) } catch { return '' } })()
