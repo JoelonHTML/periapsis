@@ -10,7 +10,14 @@ export interface DesktopBridge {
   checkUpdate(): Promise<boolean | string>
   installUpdate(): Promise<unknown>
   onUpdate(cb: (m: DesktopUpdateMsg) => void): () => void
+  /** Notifications (absent in builds from before the alerts feature): config for the main-process poller + tray, status, a notification now, tap -> navigate. */
+  alertsConfig?(cfg: { config: unknown; trayOn: boolean; autostart: boolean }): Promise<DesktopAlertsStatus>
+  alertsStatus?(): Promise<DesktopAlertsStatus>
+  alertsCheckNow?(): Promise<DesktopAlertsStatus>
+  notify?(n: { title: string; body: string; link?: string }): Promise<boolean>
+  onNavigate?(cb: (link: string) => void): () => void
 }
+export interface DesktopAlertsStatus { lastRun: number | null; lastError: string | null; supported: boolean }
 export type DesktopUpdateMsg = { type: 'available' | 'downloaded'; version: string } | { type: 'progress'; percent: number } | { type: 'error'; message: string }
 
 export const desktop = (): DesktopBridge | null => (globalThis as { periapsisDesktop?: DesktopBridge }).periapsisDesktop ?? null
